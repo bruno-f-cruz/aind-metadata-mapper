@@ -55,6 +55,15 @@ class TestBergamoEtl(unittest.TestCase):
         )
         cls.expected_session = expected_session_contents
 
+    def test_get_tif_file_locations(self):
+        """Tests _get_tif_file_locations method"""
+        input_source = Path(r"bci")
+        settings = JobSettings.model_construct(input_source=input_source)
+        etl = BergamoEtl(job_settings=settings)
+        foobar = etl._get_tif_file_locations()
+        print(foobar)
+
+
     def test_class_constructor(self):
         """Tests that the class can be constructed from a json string"""
         settings1 = self.example_job_settings.model_copy(deep=True)
@@ -66,7 +75,7 @@ class TestBergamoEtl(unittest.TestCase):
 
     @patch("aind_metadata_mapper.bergamo.session.ScanImageTiffReader")
     def test_extract(self, mock_reader: MagicMock):
-        """Tests that the raw image info is extracted correcetly."""
+        """Tests that the raw image info is extracted correctly."""
         mock_context = mock_reader.return_value.__enter__.return_value
         mock_context.metadata.return_value = self.example_metadata
         mock_context.description.return_value = self.example_description0

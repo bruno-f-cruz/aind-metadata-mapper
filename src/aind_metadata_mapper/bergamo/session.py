@@ -1,5 +1,15 @@
 """Module to map bergamo metadata into a session model"""
 
+# if raw_info1.reader_metadata_header["hIntegrationRoiManager"]["enable"] and raw_info1.reader_metadata_header["hIntegrationRoiManager"]["outputChannelsEnabled"] both true
+#
+#   then behavior
+#
+# if neither behavior or photostim then spont or stack
+#
+# if raw_info1.reader_metadata_header["hStackManager"]["enable"] is true
+#   then stack
+
+
 import argparse
 import json
 import logging
@@ -8,6 +18,7 @@ import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -99,11 +110,39 @@ class JobSettings(BaseSettings):
 
 @dataclass(frozen=True)
 class RawImageInfo:
-    """Metadata from tif files"""
+    """Raw metadata from tif files"""
 
-    metadata: str
-    description0: str
-    shape: List[int]
+    file_path: Path
+    reader_metadata_header: dict
+    reader_metadata_json: dict
+    reader_description_first: dict
+    reader_description_last: dict
+    # Looks like [620, 800, 800]
+    # [num_of_frames, pixel_width, pixel_height]?
+    reader_shape: List[int]
+
+
+@dataclass(frozen=True)
+class ParsedMetadataInfo:
+    """Tif file metadata that's needed downstream"""
+
+    file_path: Path
+    h_roi_manager: dict
+    h_beams: dict
+    h_fast_z: dict
+    imaging_roi_group: dict
+    photostim_roi_groups: List[dict]
+
+    last_end_of_acquisition: Optional[bool]
+    last_frame_numbers: Optional[int]
+    last_frame_timestamps_sec: Optional[Decimal]
+    last_epoch: Optional[datetime]
+    first_end_of_acquisition: Optional[bool]
+    first_frame_numbers: Optional[int]
+    first_frame_timestamps_sec: Optional[Decimal]
+    first_epoch: Optional[datetime]
+
+    reader_shape: List[int]
 
 
 @dataclass(frozen=True)
@@ -139,6 +178,167 @@ class BergamoEtl(GenericEtl[JobSettings]):
         else:
             job_settings_model = job_settings
         super().__init__(job_settings=job_settings_model)
+
+    def _get_tif_file_locations(self) -> List[Tuple[Path, Path]]:
+        """Scans the input source directory and returns a tuple of
+        the first and last file in a tif group. For example, if the directory had
+        [neuron2_00001.tif, neuron2_00002.tif, stackPost_00001.tif,
+        stackPost_00002.tif, stackPost_00003.tif], then it will return
+        [(neuron2_00001.tif, neuron2_00002.tif),
+        (stackPost_00001.tif, stackPost_00003.tif)]
+        """
+        compiled_regex = re.compile(r"^(.*)_.*?(\d+).tif+$")
+        tif_file_map = {}
+        for root, dirs, files in os.walk(self.job_settings.input_source):
+            for name in files:
+                matched = re.match(compiled_regex, name)
+                if matched:
+                    groups = matched.groups()
+                    file_stem = groups[0]
+                    tif_number = groups[1]
+                    tif_filepath = Path(os.path.join(root, name))
+                    if tif_file_map.get(file_stem) is None:
+                        tif_file_map[file_stem] = ((tif_filepath, tif_number), (tif_filepath, tif_number))
+                    else:
+                        old_info = tif_file_map[file_stem]
+                        old_start_number = old_info[0][1]
+                        old_end_number = old_info[1][1]
+                        if tif_number < old_start_number:
+                            new_start = (tif_filepath, tif_number)
+                        else:
+                            new_start = old_info[0]
+                        if tif_number > old_end_number:
+                            new_end = (tif_filepath, tif_number)
+                        else:
+                            new_end = old_info[1]
+                        tif_file_map[file_stem] = (new_start, new_end)
+
+            # Only scan the top level files
+            break
+        return [(v[0][0], v[1][0]) for v in tif_file_map.values()]
+
+    def _extract_raw_info_from_file(self, file_path: Path) -> RawImageInfo:
+        with ScanImageTiffReader(str(file_path)) as reader:
+            reader_metadata = reader.metadata()
+            reader_shape = reader.shape()
+            reader_description_first = reader.description(0)
+            reader_description_last = reader.description(len(reader) - 1)
+        metadata_first_part = reader_metadata.split("\n\n")[0]
+        flat_metadata_header_dict = dict(
+            [
+                (s.split(" = ", 1)[0], s.split(" = ", 1)[1])
+                for s in metadata_first_part.split("\n")
+            ]
+        )
+        metadata_dict = self._flat_dict_to_nested(flat_metadata_header_dict)
+        reader_metadata_json = json.loads(reader_metadata.split("\n\n")[1])
+        # Move SI dictionary up one level
+        if "SI" in metadata_dict.keys():
+            si_contents = metadata_dict.pop("SI")
+            metadata_dict.update(si_contents)
+        description_first_image_dict = dict(
+            [
+                (s.split(" = ", 1)[0], s.split(" = ", 1)[1])
+                for s in reader_description_first.strip().split("\n")
+            ]
+        )
+        description_last_image_dict = dict(
+            [
+                (s.split(" = ", 1)[0], s.split(" = ", 1)[1])
+                for s in reader_description_last.strip().split("\n")
+            ]
+        )
+        return RawImageInfo(
+            file_path=file_path,
+            reader_shape=reader_shape,
+            reader_metadata_header=metadata_dict,
+            reader_metadata_json=reader_metadata_json,
+            reader_description_first=description_first_image_dict,
+            reader_description_last=description_last_image_dict
+        )
+
+    @staticmethod
+    def _parse_raw_metadata(raw_image_info: RawImageInfo) -> ParsedMetadataInfo:
+        h_roi_manager = raw_image_info.reader_metadata_header.get("hRoiManager", {})
+        h_beams = raw_image_info.reader_metadata_header.get("hBeams", {})
+        h_fast_z = raw_image_info.reader_metadata_header.get("hFastZ", {})
+        roi_groups = raw_image_info.reader_metadata_json.get("RoiGroups", {})
+        imaging_roi_group = roi_groups.get("imagingRoiGroup", {})
+        photostim_roi_groups = roi_groups.get("photostimRoiGroups", [])
+
+        if raw_image_info.reader_description_last.get("endOfAcquisition") == '1':
+            reader_description_last_end_of_acquisition = True
+        elif raw_image_info.reader_description_last.get("endOfAcquisition") == '0':
+            reader_description_last_end_of_acquisition = False
+        else:
+            reader_description_last_end_of_acquisition = None
+        if raw_image_info.reader_description_last.get("frameNumbers") is None:
+            reader_description_last_frame_numbers = None
+        else:
+            reader_description_last_frame_numbers = int(raw_image_info.reader_description_last.get("frameNumbers"))
+        if raw_image_info.reader_description_last.get("frameTimestamps_sec") is None:
+            reader_description_last_frame_timestamps_sec = None
+        else:
+            reader_description_last_frame_timestamps_sec = Decimal(raw_image_info.reader_description_last.get("frameTimestamps_sec"))
+        if raw_image_info.reader_description_last.get("epoch") is None:
+            reader_description_last_epoch = None
+        else:
+            reader_description_last_epoch = datetime.strptime(raw_image_info.reader_description_last.get("epoch"), "[%Y %m %d %H %M %S.%f]")
+
+        if raw_image_info.reader_description_first.get("endOfAcquisition") == '1':
+            reader_description_first_end_of_acquisition = True
+        elif raw_image_info.reader_description_first.get("endOfAcquisition") == '0':
+            reader_description_first_end_of_acquisition = False
+        else:
+            reader_description_first_end_of_acquisition = None
+        if raw_image_info.reader_description_first.get("frameNumbers") is None:
+            reader_description_first_frame_numbers = None
+        else:
+            reader_description_first_frame_numbers = int(raw_image_info.reader_description_first.get("frameNumbers"))
+        if raw_image_info.reader_description_first.get("frameTimestamps_sec") is None:
+            reader_description_first_frame_timestamps_sec = None
+        else:
+            reader_description_first_frame_timestamps_sec = Decimal(raw_image_info.reader_description_first.get("frameTimestamps_sec"))
+        if raw_image_info.reader_description_first.get("epoch") is None:
+            reader_description_first_epoch = None
+        else:
+            reader_description_first_epoch = datetime.strptime(raw_image_info.reader_description_first.get("epoch"), "[%Y %m %d %H %M %S.%f]")
+
+        return ParsedMetadataInfo(
+            file_path=raw_image_info.file_path,
+            h_roi_manager=h_roi_manager,
+            h_beams=h_beams,
+            h_fast_z=h_fast_z,
+            imaging_roi_group=imaging_roi_group,
+            photostim_roi_groups=photostim_roi_groups,
+            last_end_of_acquisition=reader_description_last_end_of_acquisition,
+            last_frame_numbers=reader_description_last_frame_numbers,
+            last_frame_timestamps_sec=reader_description_last_frame_timestamps_sec,
+            last_epoch=reader_description_last_epoch,
+            first_end_of_acquisition=reader_description_first_end_of_acquisition,
+            first_frame_numbers=reader_description_first_frame_numbers,
+            first_frame_timestamps_sec=reader_description_first_frame_timestamps_sec,
+            first_epoch=reader_description_first_epoch,
+            reader_shape=raw_image_info.reader_shape
+        )
+
+    def _extract_parsed_metadata_info_from_files(
+            self, tif_file_locations: List[Tuple[Path, Path]]
+    ) -> Dict[str, Tuple[ParsedMetadataInfo, ParsedMetadataInfo]]:
+        compiled_regex = re.compile(r"^(.*)_.*?(\d+).tif+$")
+        tif_file_map = {}
+        for file_locations in tif_file_locations:
+            first_file = file_locations[0]
+            last_file = file_locations[1]
+            file_stem = str(re.match(compiled_regex, first_file.name).groups()[0])
+            first_file_raw_image_info = self._extract_raw_info_from_file(first_file)
+            last_file_raw_image_info = self._extract_raw_info_from_file(last_file)
+            first_file_parsed_info = self._parse_raw_metadata(first_file_raw_image_info)
+            last_file_parsed_info = self._parse_raw_metadata(last_file_raw_image_info)
+            tif_file_map[file_stem] = (first_file_parsed_info, last_file_parsed_info)
+        return tif_file_map
+
+
 
     @staticmethod
     def _flat_dict_to_nested(flat: dict, key_delim: str = ".") -> dict:
