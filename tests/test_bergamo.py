@@ -63,7 +63,6 @@ class TestBergamoEtl(unittest.TestCase):
         foobar = etl._get_tif_file_locations()
         print(foobar)
 
-
     def test_class_constructor(self):
         """Tests that the class can be constructed from a json string"""
         settings1 = self.example_job_settings.model_copy(deep=True)
