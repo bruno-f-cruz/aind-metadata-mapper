@@ -219,6 +219,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 "outputChannelsEnabled"
             )
             == "true"
+            and header.get("extTrigEnable", {}) == "1"
         ):
             return TifFileGroup.BEHAVIOR
         elif header.get("hStackManager", {}).get("enable") == "true":
@@ -300,7 +301,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
             group_index=list_index,
             number_of_neurons=number_of_neurons,
             stimulation_laser_power=stimulation_laser_power,
-            stimulation_laser_power_unit=PowerUnit.MW,
+            stimulation_laser_power_unit=PowerUnit.PERCENT,
             number_trials=number_of_trials,
             number_spirals=number_spirals,
             spiral_duration=spiral_duration,
@@ -312,7 +313,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
     ) -> StimulusEpoch:
 
         # Number of trials should equal the number of tif files in the
-        # photo_stim group
+        # photo_stim group?
         number_of_trials = photo_stim_info.number_of_tif_files
         sequence_stimulus = json.loads(
             photo_stim_info.h_photostim.get(
@@ -330,9 +331,10 @@ class BergamoEtl(GenericEtl[JobSettings]):
             )
             for e in enumerate(photo_stim_info.photostim_roi_groups)
         ]
+        # Look into this?
         inter_trial_interval = 1 / Decimal(
             photo_stim_info.h_roi_manager["scanFrameRate"]
-        )
+        ) * photo_stim_info.reader_shape[0]
         stimulus_start_time = datetime.strptime(
             photo_stim_info.reader_description_last["epoch"],
             "[%Y %m %d %H %M %S.%f]",
