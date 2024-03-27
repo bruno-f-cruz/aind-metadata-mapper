@@ -1,4 +1,4 @@
-from bruker2nifti._metadata import BrukerMetadata
+from aind_metadata_mapper.bruker.MRI_ingest.bruker2nifti._metadata import BrukerMetadata
 from pathlib import Path
 from aind_data_schema.models.coordinates import Rotation3dTransform, Scale3dTransform, Translation3dTransform
 from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
@@ -7,6 +7,13 @@ from aind_data_schema.models.units import MassUnit, TimeUnit
 from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
 from datetime import datetime
 from pydantic_settings import BaseSettings
+from aind_metadata_mapper.core import GenericEtl, JobResponse
+from dataclasses import dataclass
+from aind_data_schema.base import AindCoreModel
+from typing import Any, Generic, Optional, TypeVar, Union
+
+
+
 
 
 import traceback
@@ -19,6 +26,7 @@ from typing import List, Optional, Union
 class JobSettings(BaseSettings):
     """Data that needs to be input by user."""
 
+    data_path: Path 
     output_directory: Optional[Path] = Field(
         default=None,
         description=(
@@ -36,14 +44,56 @@ class JobSettings(BaseSettings):
     notes: str
 
 
+# @dataclass(frozen=True)
+# class ExtractedMetadata:
+#     """Raw Bruker data gets parsted here."""
+
+#     metadata: BrukerMetadata
+#     n_scans: List[str]
+
 
 class MRIEtl(GenericEtl[JobSettings]):
-    def __init__(self, data_path):
-        self.metadata = BrukerMetadata(data_path)
-        self.metadata.parse_scans()
-        self.metadata.parse_subject()
-        self.n_scans = self.metadata.list_scans()
+    def __init__(self, job_settings: JobSettings):
+        """
+        Class constructor for Base etl class.
+        Parameters
+        ----------
+        job_settings: Union[JobSettings, str]
+          Variables for a particular session
+        """
+        if isinstance(job_settings, str):
+            job_settings_model = JobSettings.model_validate_json(job_settings)
+        else:
+            job_settings_model = job_settings
+        super().__init__(job_settings=job_settings_model)
+        
 
+
+    def _extract(self) -> BrukerMetadata:
+        """Extract the data from the bruker files."""
+        metadata = BrukerMetadata(self.job_settings.data_path)
+        metadata.parse_scans()
+        metadata.parse_subject()
+        # self.n_scans = self.metadata.list_scans()
+        return metadata
+
+    def _transform(self, extracted_source: Any) -> AindCoreModel:
+        return self.load_mri_session(
+            experimenter=self.job_settings.experimenter_full_name,
+            primary_scan_number=self.job_settings.primary_scan_number,
+            setup_scan_number=self.job_settings.setup_scan_number,
+            scan_location=self.job_settings.scan_location,
+            magnet_strength=self.job_settings.MagneticStrength
+        )
+
+    def run_job(self) -> JobResponse:
+        extracted = self._extract()
+        transformed = self._transform(extracted)
+
+        job_response = self._load(
+            transformed,
+            self.job_settings.output_directory
+        )
 
     def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str, scan_location: ScannerLocation, magnet_strength: MagneticStrength) -> MRIScan:
 
