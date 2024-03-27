@@ -6,12 +6,38 @@ from decimal import Decimal
 from aind_data_schema.models.units import MassUnit, TimeUnit
 from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
 from datetime import datetime
+from pydantic_settings import BaseSettings
+
 
 import traceback
 import logging
 
+from pydantic import Field
+from typing import List, Optional, Union
 
-class MRILoader:
+
+class JobSettings(BaseSettings):
+    """Data that needs to be input by user."""
+
+    output_directory: Optional[Path] = Field(
+        default=None,
+        description=(
+            "Directory where to save the json file to. If None, then json"
+            " contents will be returned in the Response message."
+        ),
+    )
+
+    string_to_parse: str
+    experimenter_full_name: List[str]
+    primary_scan_number: int
+    setup_scan_number: int
+    scan_location: ScannerLocation
+    MagneticStrength: MagneticStrength
+    notes: str
+
+
+
+class MRIEtl(GenericEtl[JobSettings]):
     def __init__(self, data_path):
         self.metadata = BrukerMetadata(data_path)
         self.metadata.parse_scans()
