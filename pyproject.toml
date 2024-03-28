@@ -21,7 +21,8 @@ dependencies = [
     "scanimage-tiff-reader==1.4.1.4",
     "tifffile==2024.2.12",
     "pydantic-settings>=2.0",
-    "pillow"
+    "pillow",
+    "bruker2nifti==1.0.4"
 ]
 
 [project.optional-dependencies]

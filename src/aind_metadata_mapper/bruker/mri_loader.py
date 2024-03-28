@@ -12,10 +12,6 @@ from dataclasses import dataclass
 from aind_data_schema.base import AindCoreModel
 from typing import Any, Generic, Optional, TypeVar, Union
 
-
-
-
-
 import traceback
 import logging
 
@@ -35,7 +31,6 @@ class JobSettings(BaseSettings):
         ),
     )
 
-    string_to_parse: str
     experimenter_full_name: List[str]
     primary_scan_number: int
     setup_scan_number: int
@@ -94,6 +89,8 @@ class MRIEtl(GenericEtl[JobSettings]):
             transformed,
             self.job_settings.output_directory
         )
+
+        return job_response
 
     def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str, scan_location: ScannerLocation, magnet_strength: MagneticStrength) -> MRIScan:
 
