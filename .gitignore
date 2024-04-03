@@ -137,3 +137,6 @@ dmypy.json
 
 # MacOs
 **/.DS_Store
+
+# personal
+src/aind_metadata_mapper/bruker/MRI_ingest/MRI_files
