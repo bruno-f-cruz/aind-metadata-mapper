@@ -5,6 +5,9 @@ import os
 import unittest
 from datetime import datetime
 
+from unittest.mock import MagicMock, patch
+
+
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
 from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
 from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
@@ -13,6 +16,7 @@ from aind_metadata_mapper.bruker.MRI_ingest.bruker2nifti._metadata import Bruker
 
 EXAMPLE_MRI_INPUT = "src/aind_metadata_mapper/bruker/MRI_ingest/MRI_files/RawData-2023_07_21/RAW/DL_AI2.kX2"
 EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
+
 
 
 class TestMRIWriter(unittest.TestCase):
@@ -48,11 +52,19 @@ class TestMRIWriter(unittest.TestCase):
 
         self.assertEqual(etl1.job_settings, etl0.job_settings)
 
-    
-    def test_extract(self):
+    def test_etl(self) -> None:
         """Tests that the extract method returns the correct data."""
 
-        extracted_data = MRIEtl(self.example_job_settings)._extract()
+        class dummy_input:
+            def __init__(self, scan_data, subject_data):
+                self.scan_data = scan_data
+                self.subject_data = subject_data
+
+        with open(EXAMPLE_MRI_INPUT, "r") as f:
+            raw_md_contents = f.read(
+
+        etl = MRIEtl(self.example_job_settings)
+
         expected_data = BrukerMetadata(EXAMPLE_MRI_INPUT)
 
         self.assertEqual(extracted_data, expected_data)

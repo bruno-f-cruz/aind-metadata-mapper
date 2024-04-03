@@ -69,10 +69,15 @@ class MRIEtl(GenericEtl[JobSettings]):
         metadata = BrukerMetadata(self.job_settings.data_path)
         metadata.parse_scans()
         metadata.parse_subject()
+
         # self.n_scans = self.metadata.list_scans()
         return metadata
 
-    def _transform(self, extracted_source: Any) -> AindCoreModel:
+    def _transform(self, input_metadata) -> AindCoreModel:
+
+        self.scan_data = input_metadata.scan_data
+        self.subject_data = input_metadata.subject_data
+
         return self.load_mri_session(
             experimenter=self.job_settings.experimenter_full_name,
             primary_scan_number=self.job_settings.primary_scan_number,
@@ -132,10 +137,10 @@ class MRIEtl(GenericEtl[JobSettings]):
     def make_model_from_scan(self, scan_index: str, scan_type, primary_scan: bool) -> MRIScan:
         logging.info(f'loading scan {scan_index}')   
 
-        self.cur_visu_pars = self.metadata.scan_data[scan_index]['recons']['1']['visu_pars']
-        self.cur_method = self.metadata.scan_data[scan_index]['method']
+        self.cur_visu_pars = self.scan_data[scan_index]['recons']['1']['visu_pars']
+        self.cur_method = self.scan_data[scan_index]['method']
 
-        subj_pos = self.metadata.subject_data["SUBJECT_position"]
+        subj_pos = self.subject_data["SUBJECT_position"]
         if 'supine' in subj_pos.lower():
             subj_pos = 'Supine'
         elif 'prone' in subj_pos.lower():
