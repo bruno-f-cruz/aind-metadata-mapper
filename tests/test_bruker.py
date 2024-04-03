@@ -17,6 +17,8 @@ from aind_metadata_mapper.bruker.MRI_ingest.bruker2nifti._metadata import Bruker
 EXAMPLE_MRI_INPUT = "src/aind_metadata_mapper/bruker/MRI_ingest/MRI_files/RawData-2023_07_21/RAW/DL_AI2.kX2"
 EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 
+TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
+TEST_INPUT_SUBJECT_DATA = "tests/resources/bruker/test_output_subject"
 
 
 class TestMRIWriter(unittest.TestCase):
@@ -60,8 +62,14 @@ class TestMRIWriter(unittest.TestCase):
                 self.scan_data = scan_data
                 self.subject_data = subject_data
 
-        with open(EXAMPLE_MRI_INPUT, "r") as f:
-            raw_md_contents = f.read(
+        with open(TEST_INPUT_SCAN_DATA, "r") as f:
+            scan_data = json.load(f)
+
+        with open(TEST_INPUT_SUBJECT_DATA, "r") as f:
+            subject_data = json.load(f)
+
+        print(scan_data)
+        print(subject_data)
 
         etl = MRIEtl(self.example_job_settings)
 
