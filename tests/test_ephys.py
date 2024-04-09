@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import unittest
+import zoneinfo
 from pathlib import Path
 from xml.dom import minidom
 
@@ -28,6 +29,8 @@ EXPECTED_SESSION = RESOURCES_DIR / "ephys_session.json"
 
 class TestSchemaWriter(unittest.TestCase):
     """Test methods in SchemaWriter class."""
+
+    maxDiff = None  # show full diff without truncation
 
     @classmethod
     def setUpClass(cls):
@@ -218,7 +221,27 @@ class TestSchemaWriter(unittest.TestCase):
         )
         parsed_info = etl_job1._extract()
         actual_session = etl_job1._transform(parsed_info)
-        self.assertEqual(self.expected_session, actual_session)
+        actual_session.session_start_time = (
+            actual_session.session_start_time.replace(
+                tzinfo=zoneinfo.ZoneInfo("UTC")
+            )
+        )
+        actual_session.session_end_time = (
+            actual_session.session_end_time.replace(
+                tzinfo=zoneinfo.ZoneInfo("UTC")
+            )
+        )
+        for stream in actual_session.data_streams:
+            stream.stream_start_time = stream.stream_start_time.replace(
+                tzinfo=zoneinfo.ZoneInfo("UTC")
+            )
+            stream.stream_end_time = stream.stream_end_time.replace(
+                tzinfo=zoneinfo.ZoneInfo("UTC")
+            )
+        self.assertEqual(
+            self.expected_session.model_dump(),
+            actual_session.model_dump(),
+        )
 
 
 if __name__ == "__main__":
