@@ -106,12 +106,6 @@ class EphysEtl(BaseEtl):
             session_stream["stream_end_time"] = datetime.strptime(
                 stage[-1][0], "%Y/%m/%d %H:%M:%S.%f"
             )
-            session_stream["mouse_platform_name"] = data_stream[
-                "mouse_platform_name"
-            ]
-            session_stream["active_mouse_platform"] = data_stream[
-                "active_mouse_platform"
-            ]
             session_stream["stream_modalities"] = [Modality.ECEPHYS]
             session_stream["stick_microscopes"] = stick_microscopes
             session_stream["camera_names"] = camera_names
@@ -133,6 +127,13 @@ class EphysEtl(BaseEtl):
                 session_stream["ephys_modules"].append(ephys_module)
 
             ephys_session["data_streams"].append(session_stream)
+
+        ephys_session["mouse_platform_name"] = data_stream[
+            "mouse_platform_name"
+        ]
+        ephys_session["active_mouse_platform"] = data_stream[
+            "active_mouse_platform"
+        ]
 
         end_times = [
             datetime.strptime(x[-1][0], "%Y/%m/%d %H:%M:%S.%f")
