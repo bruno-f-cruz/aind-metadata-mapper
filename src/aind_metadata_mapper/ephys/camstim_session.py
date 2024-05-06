@@ -121,7 +121,7 @@ class CamstimSession():
         self.stim_epochs = self.epochs_from_stim_table()
 
         if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
-            opto_conditions = self.experiment_info[self.project_name].get('opto_conditions', DEFAULT_OPTO_CONDITIONS)
+            opto_conditions = self.json_settings[self.project_name].get('opto_conditions', DEFAULT_OPTO_CONDITIONS)
             stim_utils.build_optogenetics_table(self.opto_pkl_path, self.sync_path, opto_conditions, self.opto_table_path)
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
