@@ -19,71 +19,6 @@ from utils import process_ephys_sync as stim_utils
 from utils import pickle_functions as pkl_utils
 
 
-# defaults
-DEFAULT_OPTO_CONDITIONS = {
-    "0": {
-        "duration": .01,
-        "name": "1Hz_10ms",
-        "condition": "10 ms pulse at 1 Hz"
-    },
-    "1": {
-        "duration": .002,
-        "name": "1Hz_2ms",
-        "condition": "2 ms pulse at 1 Hz"
-    },
-    "2": {
-        "duration": 1.0,
-        "name": "5Hz_2ms",
-        "condition": "2 ms pulses at 5 Hz"
-    },
-    "3": {
-        "duration": 1.0,
-        "name": "10Hz_2ms",
-        "condition": "2 ms pulses at 10 Hz'"
-    },
-    "4": {
-        "duration": 1.0,
-        "name": "20Hz_2ms",
-        "condition": "2 ms pulses at 20 Hz"
-    },
-    "5": {
-        "duration": 1.0,
-        "name": "30Hz_2ms",
-        "condition": "2 ms pulses at 30 Hz"
-    },
-    "6": {
-        "duration": 1.0,
-        "name": "40Hz_2ms",
-        "condition": "2 ms pulses at 40 Hz"
-    },
-    "7": {
-        "duration": 1.0,
-        "name": "50Hz_2ms",
-        "condition": "2 ms pulses at 50 Hz"
-    },
-    "8": {
-        "duration": 1.0,
-        "name": "60Hz_2ms",
-        "condition": "2 ms pulses at 60 Hz"
-    },
-    "9": {
-        "duration": 1.0,
-        "name": "80Hz_2ms",
-        "condition": "2 ms pulses at 80 Hz"
-    },
-    "10": {
-        "duration": 1.0,
-        "name": "square_1s",
-        "condition": "1 second square pulse: continuously on for 1s"
-    },
-    "11": {
-        "duration": 1.0,
-        "name": "cosine_1s",
-        "condition": "cosine pulse"
-    },
-}
-
-
 class CamstimSession():
     json_settings: dict = None
     npexp_path: Path
@@ -104,7 +39,6 @@ class CamstimSession():
 
         self.motor_locs_path = self.npexp_path / f'{self.folder}.motor-locs.csv'
         self.pkl_path = self.npexp_path / f'{self.folder}.stim.pkl'
-        self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
         self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv' 
         self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv' 
         self.sync_path = self.npexp_path / f'{self.folder}.sync'
@@ -120,9 +54,6 @@ class CamstimSession():
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
 
-        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
-            opto_conditions = self.json_settings[self.project_name].get('opto_conditions', DEFAULT_OPTO_CONDITIONS)
-            stim_utils.build_optogenetics_table(self.opto_pkl_path, self.sync_path, opto_conditions, self.opto_table_path)
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
 
