@@ -166,7 +166,7 @@ class CamstimSession():
         return tuple(available_probes)
 
 
-    def manipulator_coords(self, probe_name: str, newscale_coords: pd.DataFrame) -> SchemaCoordinates, str:
+    def manipulator_coords(self, probe_name: str, newscale_coords: pd.DataFrame) -> tuple[SchemaCoordinates, str]:
         """
         Returns the schema coordinates object containing probe's manipulator coordinates accrdong to newscale, and associated 'notes'
         If the newscale coords don't include this probe (shouldn't happen), return coords with 0.0s and notes indicating no coordinate info available
@@ -219,8 +219,8 @@ class CamstimSession():
         stream_last_time = max(timing.stop_time for timing in ephys_timing_data)
 
         return session_schema.Stream(
-            stream_start_time=self.start_time + datetime.timedelta(seconds=stream_first_time),
-            stream_end_time=self.start_time + datetime.timedelta(seconds=stream_last_time),
+            stream_start_time=self.session_start + datetime.timedelta(seconds=stream_first_time),
+            stream_end_time=self.session_start + datetime.timedelta(seconds=stream_last_time),
             ephys_modules=self.ephys_modules(),
             stick_microscopes=[],
             stream_modalities=[SchemaModality.ECEPHYS]
@@ -309,7 +309,7 @@ class CamstimSession():
         return opto_epoch
 
 
-    def extract_stim_epochs(stim_table: pd.DataFrame) -> list[list[str, int, int, dict, set]]:
+    def extract_stim_epochs(self, stim_table: pd.DataFrame) -> list[list[str, int, int, dict, set]]:
         """
         Returns a list of stimulus epochs, where an epoch takes the form (name, start, stop, params_dict, template names).
         Iterates over the stimulus epochs table, identifying epochs based on when the 'stim_name' field of the table changes.
