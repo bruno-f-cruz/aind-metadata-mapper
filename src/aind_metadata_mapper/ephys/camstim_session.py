@@ -62,9 +62,9 @@ class CamstimSession():
 
     def generate_session_json(self) -> None:
         """
-        Creates the session.json file
+        Creates the session schema json
         """
-        session_json = session_schema.Session(
+        self.session_json = session_schema.Session(
             experimenter_full_name=[self.platform_json['operatorID'].replace('.', ' ').title()],
             session_start_time=self.session_start,
             session_end_time=self.session_end,
@@ -79,7 +79,13 @@ class CamstimSession():
             reward_consumed_unit='milliliter',
             notes='',
         )
-        session_json.write_standard_file(self.npexp_path)
+
+
+    def write_session_json(self) -> None:
+        """
+        Writes the session json to a session.json file
+        """
+        self.session_json.write_standard_file(self.npexp_path)
         print(f'File created at {str(self.npexp_path)}/session.json')
 
 

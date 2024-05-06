@@ -11,6 +11,8 @@ from xml.dom import minidom
 from aind_data_schema.core.session import Session
 
 from aind_metadata_mapper.ephys.session import EphysEtl
+from aind_metadata_mapper.ephys.camstim_session import CamstimSession
+
 
 RESOURCES_DIR = (
     Path(os.path.dirname(os.path.realpath(__file__))) / "resources" / "ephys"
@@ -25,6 +27,8 @@ EXAMPLE_OPENEPHYS_LOGS = [
 ]
 
 EXPECTED_SESSION = RESOURCES_DIR / "ephys_session.json"
+
+EXPECTED_CAMSTIM_JSON = RESOURCES_DIR / "camstim_ephys_session.json"
 
 
 class TestEphysSession(unittest.TestCase):
@@ -242,6 +246,25 @@ class TestEphysSession(unittest.TestCase):
             self.expected_session.model_dump(),
             actual_session.model_dump(),
         )
+
+
+class TestCamstimEphysSession(unittest.TestCase):
+    """Test methods in camstim ephys session module."""
+
+    @classmethod
+    def setUpClass(cls):
+        self.expected_json = json.load(EXPECTED_CAMSTIM_JSON)
+    
+
+    def test_generate_json(cls):
+        json_settings = {
+            "description": "OpenScope's Temporal Barcoding project",
+            "iacuc_protocol": "2117",
+            "session_type": ""
+        }
+        camstim_session_mapper = CamstimSession("1315994569", json_settings)
+        output_session_json = camstim_session_mapper.generate_session_json()
+        self.assertEqual(self.expected_json, output_session_json)
 
 
 if __name__ == "__main__":
