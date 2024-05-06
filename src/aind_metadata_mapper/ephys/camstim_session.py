@@ -1,3 +1,7 @@
+"""
+File containing CamstimSession class
+"""
+
 import argparse
 import datetime
 import io
@@ -19,26 +23,33 @@ from aind_data_schema.models.coordinates import (
 )
 from aind_data_schema.models.modalities import Modality as SchemaModality
 from utils import pickle_functions as pkl_utils
-from utils import process_ephys_sync as stim_utils
 
 
 class CamstimSession:
+    """
+    An Ephys session, designed for OpenScope, employing neuropixel probes with visual and optogenetic stimulus from Camstim.
+    """
     json_settings: dict = None
     npexp_path: Path
     recording_dir: Path
 
     def __init__(self, session_id: str, json_settings: dict) -> None:
+        """
+        Determine needed input filepaths from np-exp and lims, get session
+        start and end times from sync file, and extract epochs from stim
+        tables. 
+        """
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
         self.mtrain = session_inst.mtrain
         self.npexp_path = session_inst.npexp_path
         self.folder = session_inst.folder
-        # sometimes data files are deleted on npexp, better to try files on lims
+        # sometimes data files are deleted on npexp so try files on lims
         try:
             self.recording_dir = npc_ephys.get_single_oebin_path(
                 session_inst.lims_path
             ).parent
-        except:
+        except FileNotFoundError:
             self.recording_dir = npc_ephys.get_single_oebin_path(
                 session_inst.npexp_path
             ).parent
@@ -114,8 +125,9 @@ class CamstimSession:
 
     def get_available_probes(self) -> tuple[str]:
         """
-        Returns a list of probe letters among ABCDEF that are inserted according to platform.json
-        If platform.json has no insertion record, returns all probes (this could cause problems).
+        Returns a list of probe letters among ABCDEF that are inserted
+        according to platform.json. If platform.json has no insertion record,
+        returns all probes (this could cause problems).
         """
         insertion_notes = self.platform_json["InsertionNotes"]
         if insertion_notes == {}:
@@ -135,8 +147,10 @@ class CamstimSession:
         self, probe_name: str, newscale_coords: pd.DataFrame
     ) -> tuple[SchemaCoordinates, str]:
         """
-        Returns the schema coordinates object containing probe's manipulator coordinates accrdong to newscale, and associated 'notes'
-        If the newscale coords don't include this probe (shouldn't happen), return coords with 0.0s and notes indicating no coordinate info available
+        Returns the schema coordinates object containing probe's manipulator
+        coordinates accrdong to newscale, and associated 'notes'. If the
+        newscale coords don't include this probe (shouldn't happen), return
+        coords with 0.0s and notes indicating no coordinate info available
         """
         probe_row = newscale_coords.query(f"electrode_group == '{probe_name}'")
         if probe_row.empty:
@@ -187,7 +201,8 @@ class CamstimSession:
 
     def ephys_stream(self) -> session_schema.Stream:
         """
-        Returns schema ephys datastream, including the list of ephys modules and the ephys start and end times.
+        Returns schema ephys datastream, including the list of ephys modules
+        and the ephys start and end times.
         """
         times = npc_ephys.get_ephys_timing_on_sync(
             sync=self.sync_path, recording_dirs=[self.recording_dir]
@@ -254,7 +269,8 @@ class CamstimSession:
 
     def data_streams(self) -> tuple[session_schema.Stream, ...]:
         """
-        Return three schema datastreams; ephys, behavior, and behavior videos. May be extended.
+        Return three schema datastreams; ephys, behavior, and behavior videos.
+        May be extended.
         """
         data_streams = []
         data_streams.append(self.ephys_stream())
@@ -264,9 +280,11 @@ class CamstimSession:
 
     def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
         """
-        From the optogenetic stimulation table, returns a single schema stimulus epoch representing the optotagging period.
-        Include all unknown table columns (not start_time, stop_time, stim_name) as parameters, and include the set of all
-        of that column's values as the parameter values.
+        From the optogenetic stimulation table, returns a single schema
+        stimulus epoch representing the optotagging period. Include all
+        unknown table columns (not start_time, stop_time, stim_name) as
+        parameters, and include the set of all of that column's values as the
+        parameter values.
         """
         stim = aind_data_schema.core.session.StimulusModality
 
@@ -309,18 +327,22 @@ class CamstimSession:
         self, stim_table: pd.DataFrame
     ) -> list[list[str, int, int, dict, set]]:
         """
-        Returns a list of stimulus epochs, where an epoch takes the form (name, start, stop, params_dict, template names).
-        Iterates over the stimulus epochs table, identifying epochs based on when the 'stim_name' field of the table changes.
+        Returns a list of stimulus epochs, where an epoch takes the form
+        (name, start, stop, params_dict, template names). Iterates over the
+        stimulus epochs table, identifying epochs based on when the
+        'stim_name' field of the table changes.
 
-        For each epoch, every unknown column (not start_time, stop_time, stim_name, stim_type, or frame) are listed as parameters,
-        and the set of values for that column are listed as parameter values.
+        For each epoch, every unknown column (not start_time, stop_time,
+        stim_name, stim_type, or frame) are listed as parameters, and the set
+        of values for that column are listed as parameter values.
         """
         epochs = []
 
         current_epoch = [None, 0.0, 0.0, {}, set()]
         epoch_start_idx = 0
         for current_idx, row in stim_table.iterrows():
-            # if the stim name changes, summarize current epoch's parameters and start a new epoch
+            # if the stim name changes, summarize current epoch's parameters
+            # and start a new epoch
             if row["stim_name"] != current_epoch[0]:
                 for column in stim_table:
                     if column not in (
@@ -346,11 +368,13 @@ class CamstimSession:
                     {},
                     set(),
                 ]
-            # if stim name hasn't changed, we are in the same epoch, keep pushing the stop time
+            # if stim name hasn't changed, we are in the same epoch, keep
+            # pushing the stop time
             else:
                 current_epoch[2] = row["stop_time"]
 
-            # if this row is a movie or image set, record it's stim name in the epoch's templates entry
+            # if this row is a movie or image set, record it's stim name in
+            # the epoch's templates entry
             if (
                 "image" in row.get("stim_type", "").lower()
                 or "movie" in row.get("stim_type", "").lower()
@@ -362,8 +386,10 @@ class CamstimSession:
 
     def epochs_from_stim_table(self) -> list[session_schema.StimulusEpoch]:
         """
-        From the stimulus epochs table, return a list of schema stimulus epochs representing the various periods of stimulus from the session.
-        Also include the camstim version from pickle file and stimulus script used from mtrain.
+        From the stimulus epochs table, return a list of schema stimulus
+        epochs representing the various periods of stimulus from the session.
+        Also include the camstim version from pickle file and stimulus script
+        used from mtrain.
         """
         stim = aind_data_schema.core.session.StimulusModality
 
@@ -412,21 +438,29 @@ class CamstimSession:
 
 
 def parse_args() -> argparse.Namespace:
+    """
+    Parse Arguments
+    """
     parser = argparse.ArgumentParser(
         description="Generate a session.json file for an ephys session"
     )
     parser.add_argument(
         "session_id",
-        help="session ID (lims or np-exp foldername) or path to session folder",
+        help=("session ID (lims or np-exp foldername) or path to session"
+              "folder"),
     )
     parser.add_argument(
         "json-settings",
-        help='json containing at minimum the fields "session_type" and "iacuc protocol"',
+        help=('json containing at minimum the fields "session_type" and'
+              '"iacuc protocol"')
     )
     return parser.parse_args()
 
 
 def main() -> None:
+    """
+    Run Main
+    """
     sessionETL = CamstimSession(**vars(parse_args()))
     sessionETL.generate_session_json()
 

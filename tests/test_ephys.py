@@ -252,9 +252,15 @@ class TestCamstimEphysSession(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        self.expected_json = json.load(EXPECTED_CAMSTIM_JSON)
+        """
+        Load expected json
+        """
+        cls.expected_json = json.load(EXPECTED_CAMSTIM_JSON)
 
     def test_generate_json(cls):
+        """
+        Attempt to generate a temporal barcoding json
+        """
         json_settings = {
             "description": "OpenScope's Temporal Barcoding project",
             "iacuc_protocol": "2117",
@@ -262,7 +268,7 @@ class TestCamstimEphysSession(unittest.TestCase):
         }
         camstim_session_mapper = CamstimSession("1315994569", json_settings)
         output_session_json = camstim_session_mapper.generate_session_json()
-        self.assertEqual(self.expected_json, output_session_json)
+        cls.assertEqual(cls.expected_json, output_session_json)
 
 
 if __name__ == "__main__":
