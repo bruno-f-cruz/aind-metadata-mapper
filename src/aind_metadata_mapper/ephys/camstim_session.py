@@ -27,8 +27,10 @@ from utils import pickle_functions as pkl_utils
 
 class CamstimSession:
     """
-    An Ephys session, designed for OpenScope, employing neuropixel probes with visual and optogenetic stimulus from Camstim.
+    An Ephys session, designed for OpenScope, employing neuropixel
+    probes with visual and optogenetic stimulus from Camstim.
     """
+
     json_settings: dict = None
     npexp_path: Path
     recording_dir: Path
@@ -37,7 +39,7 @@ class CamstimSession:
         """
         Determine needed input filepaths from np-exp and lims, get session
         start and end times from sync file, and extract epochs from stim
-        tables. 
+        tables.
         """
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
@@ -446,13 +448,17 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "session_id",
-        help=("session ID (lims or np-exp foldername) or path to session"
-              "folder"),
+        help=(
+            "session ID (lims or np-exp foldername) or path to session"
+            "folder"
+        ),
     )
     parser.add_argument(
         "json-settings",
-        help=('json containing at minimum the fields "session_type" and'
-              '"iacuc protocol"')
+        help=(
+            'json containing at minimum the fields "session_type" and'
+            '"iacuc protocol"'
+        ),
     )
     return parser.parse_args()
 
