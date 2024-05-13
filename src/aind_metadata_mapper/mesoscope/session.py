@@ -10,6 +10,7 @@ from typing import List, Union
 import tifffile
 from aind_data_schema.core.session import FieldOfView, Session, Stream
 from aind_data_schema.models.modalities import Modality
+from aind_data_schema.models.units import SizeUnit, PowerUnit
 from PIL import Image
 from PIL.TiffTags import TAGS
 from pydantic import Field
@@ -142,10 +143,11 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         meta = self._read_metadata(timeseries)
         fovs = []
         data_streams = []
+        count = 0
         for group in imaging_plane_groups:
             for plane in group["imaging_planes"]:
                 fov = FieldOfView(
-                    index=int(group["local_z_stack_tif"].split(".")[0][-1]),
+                    index=count,
                     fov_coordinate_ml=self.job_settings.fov_coordinate_ml,
                     fov_coordinate_ap=self.job_settings.fov_coordinate_ap,
                     fov_reference=self.job_settings.fov_reference,
@@ -158,11 +160,15 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     fov_width=meta[0]["SI.hRoiManager.pixelsPerLine"],
                     fov_height=meta[0]["SI.hRoiManager.linesPerFrame"],
                     frame_rate=group["acquisition_framerate_Hz"],
-                    # scanfield_z=plane["scanimage_scanfield_z"],
-                    # scanfield_z_unit=SizeUnit.UM,
-                    # power=plane["scanimage_power"],
+                    scanfield_z=plane["scanimage_scanfield_z"],
+                    scanfield_z_unit=SizeUnit.UM,
+                    power=plane["scanimage_power"],
+                    power_unit=PowerUnit.MW,
+                    coupled_fov_index=int(group["local_z_stack_tif"].split(".")[0][-1]),
+                    scanimage_roi_index=plane["scanimage_roi_index"]
                 )
                 fovs.append(fov)
+                count += 1
         data_streams.append(
             Stream(
                 camera_names=["Mesoscope"],
