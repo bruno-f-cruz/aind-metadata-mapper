@@ -266,7 +266,7 @@ class TestCamstimEphysSession(unittest.TestCase):
             "iacuc_protocol": "2117",
             "session_type": "",
         }
-        camstim_session_mapper = CamstimSession("1315994569", json_settings)
+        camstim_session_mapper = CamstimEphysSession("1315994569", json_settings)
         output_session_json = camstim_session_mapper.generate_session_json()
         cls.assertEqual(cls.expected_json, output_session_json)
 

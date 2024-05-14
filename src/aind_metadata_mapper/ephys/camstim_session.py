@@ -1,5 +1,5 @@
 """
-File containing CamstimSession class
+File containing CamstimEphysSession class
 """
 
 import argparse
@@ -25,7 +25,7 @@ from aind_data_schema.models.modalities import Modality as SchemaModality
 from utils import pickle_functions as pkl_utils
 
 
-class CamstimSession:
+class CamstimEphysSession:
     """
     An Ephys session, designed for OpenScope, employing neuropixel probes with visual and optogenetic stimulus from Camstim.
     """
@@ -152,7 +152,10 @@ class CamstimSession:
         newscale coords don't include this probe (shouldn't happen), return
         coords with 0.0s and notes indicating no coordinate info available
         """
-        probe_row = newscale_coords.query(f"electrode_group == '{probe_name}'")
+        try:
+            probe_row = newscale_coords.query(f"electrode_group == '{probe_name}'")
+        except pd.errors.UndefinedVariableError:
+            probe_row = newscale_coords.query(f"electrode_group_name == '{probe_name}'")
         if probe_row.empty:
             return (
                 SchemaCoordinates(
@@ -168,14 +171,13 @@ class CamstimSession:
             )
         return SchemaCoordinates(x=x, y=y, z=z, unit="micrometer"), ""
 
-    def ephys_modules(self) -> session_schema.EphysModule:
+    def ephys_modules(self) -> list:
         """
         Return list of schema ephys modules for each available probe.
         """
         newscale_coords = npc_sessions.get_newscale_coordinates(
             self.motor_locs_path
         )
-        print(newscale_coords)
 
         ephys_modules = []
         for probe_letter in self.available_probes:
@@ -461,7 +463,7 @@ def main() -> None:
     """
     Run Main
     """
-    sessionETL = CamstimSession(**vars(parse_args()))
+    sessionETL = CamstimEphysSession(**vars(parse_args()))
     sessionETL.generate_session_json()
 
 
