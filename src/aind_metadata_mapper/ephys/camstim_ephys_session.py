@@ -8,6 +8,7 @@ import io
 import json
 from pathlib import Path
 
+import aind_metadata_mapper.stimulus.camstim
 import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
@@ -18,14 +19,12 @@ import npc_sessions
 import npc_sync
 import numpy as np
 import pandas as pd
-from aind_data_schema.models.coordinates import (
-    Coordinates3d as SchemaCoordinates,
-)
-from aind_data_schema.models.modalities import Modality as SchemaModality
+import aind_data_schema.components.coordinates
+import aind_data_schema_models.modalities
 from utils import pickle_functions as pkl_utils
 
 
-class CamstimEphysSession:
+class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
     """
     An Ephys session, designed for OpenScope, employing neuropixel
     probes with visual and optogenetic stimulus from Camstim.
@@ -147,7 +146,7 @@ class CamstimEphysSession:
 
     def manipulator_coords(
         self, probe_name: str, newscale_coords: pd.DataFrame
-    ) -> tuple[SchemaCoordinates, str]:
+    ) -> tuple[aind_data_schema.components.coordinates.Coordinates3d, str]:
         """
         Returns the schema coordinates object containing probe's manipulator
         coordinates accrdong to newscale, and associated 'notes'. If the
@@ -160,7 +159,7 @@ class CamstimEphysSession:
             probe_row = newscale_coords.query(f"electrode_group_name == '{probe_name}'")
         if probe_row.empty:
             return (
-                SchemaCoordinates(
+                aind_data_schema.models.coordinates.Coordinates3d(
                     x="0.0", y="0.0", z="0.0", unit="micrometer"
                 ),
                 "Coordinate info not available",
@@ -171,7 +170,12 @@ class CamstimEphysSession:
                 probe_row["y"].item(),
                 probe_row["z"].item(),
             )
-        return SchemaCoordinates(x=x, y=y, z=z, unit="micrometer"), ""
+        return aind_data_schema.components.coordinates.Coordinates3d(
+                x=x,
+                y=y,
+                z=z,
+                unit="micrometer"
+            ), ""
 
     def ephys_modules(self) -> list:
         """
@@ -208,6 +212,8 @@ class CamstimEphysSession:
         Returns schema ephys datastream, including the list of ephys modules
         and the ephys start and end times.
         """
+        modality = aind_data_schema_models.modalities.Modality
+
         times = npc_ephys.get_ephys_timing_on_sync(
             sync=self.sync_path, recording_dirs=[self.recording_dir]
         )
@@ -233,17 +239,18 @@ class CamstimEphysSession:
             + datetime.timedelta(seconds=stream_last_time),
             ephys_modules=self.ephys_modules(),
             stick_microscopes=[],
-            stream_modalities=[SchemaModality.ECEPHYS],
+            stream_modalities=[modality.ECEPHYS],
         )
 
     def sync_stream(self) -> session_schema.Stream:
         """
         Returns schema behavior stream for the sync timing.
         """
+        modality = aind_data_schema_models.modalities.Modality
         return session_schema.Stream(
             stream_start_time=self.session_start,
             stream_end_time=self.session_end,
-            stream_modalities=[SchemaModality.BEHAVIOR],
+            stream_modalities=[modality.BEHAVIOR],
             daq_names=["Sync"],
         )
 
@@ -251,6 +258,7 @@ class CamstimEphysSession:
         """
         Returns schema behavior videos stream for video timing
         """
+        modality = aind_data_schema_models.modalities.Modality
         video_frame_times = npc_mvr.mvr.get_video_frame_times(
             self.sync_path, self.npexp_path
         )
@@ -268,7 +276,7 @@ class CamstimEphysSession:
             stream_end_time=self.session_start
             + datetime.timedelta(seconds=stream_last_time),
             camera_names=["Front camera", "Side camera", "Eye camera"],
-            stream_modalities=[SchemaModality.BEHAVIOR_VIDEOS],
+            stream_modalities=[modality.BEHAVIOR_VIDEOS],
         )
 
     def data_streams(self) -> tuple[session_schema.Stream, ...]:
@@ -281,164 +289,6 @@ class CamstimEphysSession:
         data_streams.append(self.sync_stream())
         data_streams.append(self.video_stream())
         return tuple(data_streams)
-
-    def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
-        """
-        From the optogenetic stimulation table, returns a single schema
-        stimulus epoch representing the optotagging period. Include all
-        unknown table columns (not start_time, stop_time, stim_name) as
-        parameters, and include the set of all of that column's values as the
-        parameter values.
-        """
-        stim = aind_data_schema.core.session.StimulusModality
-
-        script_obj = aind_data_schema.models.devices.Software(
-            name=self.mtrain["regimen"]["name"],
-            version="1.0",
-            url=self.mtrain["regimen"]["script"],
-        )
-
-        opto_table = pd.read_csv(self.opto_table_path)
-
-        opto_params = {}
-        for column in opto_table:
-            if column in ("start_time", "stop_time", "stim_name"):
-                continue
-            param_set = set(opto_table[column].dropna())
-            opto_params[column] = param_set
-
-        params_obj = session_schema.VisualStimulation(
-            stimulus_name="Optogenetic Stimulation",
-            stimulus_parameters=opto_params,
-            stimulus_template_name=[],
-        )
-
-        opto_epoch = session_schema.StimulusEpoch(
-            stimulus_start_time=self.session_start
-            + datetime.timedelta(seconds=opto_table.start_time.iloc[0]),
-            stimulus_end_time=self.session_start
-            + datetime.timedelta(seconds=opto_table.start_time.iloc[-1]),
-            stimulus_name="Optogenetic Stimulation",
-            software=[],
-            script=script_obj,
-            stimulus_modalities=[stim.OPTOGENETICS],
-            stimulus_parameters=[params_obj],
-        )
-
-        return opto_epoch
-
-    def extract_stim_epochs(
-        self, stim_table: pd.DataFrame
-    ) -> list[list[str, int, int, dict, set]]:
-        """
-        Returns a list of stimulus epochs, where an epoch takes the form
-        (name, start, stop, params_dict, template names). Iterates over the
-        stimulus epochs table, identifying epochs based on when the
-        'stim_name' field of the table changes.
-
-        For each epoch, every unknown column (not start_time, stop_time,
-        stim_name, stim_type, or frame) are listed as parameters, and the set
-        of values for that column are listed as parameter values.
-        """
-        epochs = []
-
-        current_epoch = [None, 0.0, 0.0, {}, set()]
-        epoch_start_idx = 0
-        for current_idx, row in stim_table.iterrows():
-            # if the stim name changes, summarize current epoch's parameters
-            # and start a new epoch
-            if row["stim_name"] != current_epoch[0]:
-                for column in stim_table:
-                    if column not in (
-                        "start_time",
-                        "stop_time",
-                        "stim_name",
-                        "stim_type",
-                        "frame",
-                    ):
-                        param_set = set(
-                            stim_table[column][
-                                epoch_start_idx:current_idx
-                            ].dropna()
-                        )
-                        current_epoch[3][column] = param_set
-
-                epochs.append(current_epoch)
-                epoch_start_idx = current_idx
-                current_epoch = [
-                    row["stim_name"],
-                    row["start_time"],
-                    row["stop_time"],
-                    {},
-                    set(),
-                ]
-            # if stim name hasn't changed, we are in the same epoch, keep
-            # pushing the stop time
-            else:
-                current_epoch[2] = row["stop_time"]
-
-            # if this row is a movie or image set, record it's stim name in
-            # the epoch's templates entry
-            if (
-                "image" in row.get("stim_type", "").lower()
-                or "movie" in row.get("stim_type", "").lower()
-            ):
-                current_epoch[4].add(row["stim_name"])
-
-        # slice off dummy epoch from beginning
-        return epochs[1:]
-
-    def epochs_from_stim_table(self) -> list[session_schema.StimulusEpoch]:
-        """
-        From the stimulus epochs table, return a list of schema stimulus
-        epochs representing the various periods of stimulus from the session.
-        Also include the camstim version from pickle file and stimulus script
-        used from mtrain.
-        """
-        stim = aind_data_schema.core.session.StimulusModality
-
-        software_obj = aind_data_schema.models.devices.Software(
-            name="camstim",
-            version=pkl_utils.load_pkl(self.pkl_path)["platform"][
-                "camstim"
-            ].split("+")[0],
-            url="https://eng-gitlab.corp.alleninstitute.org/braintv/camstim",
-        )
-
-        script_obj = aind_data_schema.models.devices.Software(
-            name=self.mtrain["regimen"]["name"],
-            version="1.0",
-            url=self.mtrain["regimen"]["script"],
-        )
-
-        schema_epochs = []
-        for (
-            epoch_name,
-            epoch_start,
-            epoch_end,
-            stim_params,
-            stim_template_names,
-        ) in self.extract_stim_epochs(pd.read_csv(self.stim_table_path)):
-            params_obj = session_schema.VisualStimulation(
-                stimulus_name=epoch_name,
-                stimulus_parameters=stim_params,
-                stimulus_template_name=stim_template_names,
-            )
-
-            epoch_obj = session_schema.StimulusEpoch(
-                stimulus_start_time=self.session_start
-                + datetime.timedelta(seconds=epoch_start),
-                stimulus_end_time=self.session_start
-                + datetime.timedelta(seconds=epoch_end),
-                stimulus_name=epoch_name,
-                software=[software_obj],
-                script=script_obj,
-                stimulus_modalities=[stim.VISUAL],
-                stimulus_parameters=[params_obj],
-            )
-            schema_epochs.append(epoch_obj)
-
-        return schema_epochs
 
 
 def parse_args() -> argparse.Namespace:
