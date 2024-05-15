@@ -15,7 +15,6 @@ import aind_data_schema_models.modalities
 import np_session
 import npc_ephys
 import npc_mvr
-import npc_session
 import npc_sessions
 import npc_sync
 import numpy as np
@@ -218,6 +217,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         and the ephys start and end times.
         """
         modality = aind_data_schema_models.modalities.Modality
+        extract_probe_letter = lambda probe_name: probe_name[-1]
 
         times = npc_ephys.get_ephys_timing_on_sync(
             sync=self.sync_path, recording_dirs=[self.recording_dir]
@@ -225,7 +225,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         ephys_timing_data = tuple(
             timing
             for timing in times
-            if (p := npc_session.extract_probe_letter(timing.device.name))
+            if (p := extract_probe_letter(timing.device.name))
             is None
             or p in self.available_probes
         )
