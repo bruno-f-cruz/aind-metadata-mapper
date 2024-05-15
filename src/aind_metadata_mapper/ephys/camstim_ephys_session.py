@@ -8,9 +8,10 @@ import io
 import json
 from pathlib import Path
 
-import aind_metadata_mapper.stimulus.camstim
 import aind_data_schema
+import aind_data_schema.components.coordinates
 import aind_data_schema.core.session as session_schema
+import aind_data_schema_models.modalities
 import np_session
 import npc_ephys
 import npc_mvr
@@ -19,9 +20,9 @@ import npc_sessions
 import npc_sync
 import numpy as np
 import pandas as pd
-import aind_data_schema.components.coordinates
-import aind_data_schema_models.modalities
 from utils import pickle_functions as pkl_utils
+
+import aind_metadata_mapper.stimulus.camstim
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -154,9 +155,13 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         coords with 0.0s and notes indicating no coordinate info available
         """
         try:
-            probe_row = newscale_coords.query(f"electrode_group == '{probe_name}'")
+            probe_row = newscale_coords.query(
+                f"electrode_group == '{probe_name}'"
+            )
         except pd.errors.UndefinedVariableError:
-            probe_row = newscale_coords.query(f"electrode_group_name == '{probe_name}'")
+            probe_row = newscale_coords.query(
+                f"electrode_group_name == '{probe_name}'"
+            )
         if probe_row.empty:
             return (
                 aind_data_schema.models.coordinates.Coordinates3d(
@@ -170,12 +175,12 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
                 probe_row["y"].item(),
                 probe_row["z"].item(),
             )
-        return aind_data_schema.components.coordinates.Coordinates3d(
-                x=x,
-                y=y,
-                z=z,
-                unit="micrometer"
-            ), ""
+        return (
+            aind_data_schema.components.coordinates.Coordinates3d(
+                x=x, y=y, z=z, unit="micrometer"
+            ),
+            "",
+        )
 
     def ephys_modules(self) -> list:
         """

@@ -10,7 +10,7 @@ from xml.dom import minidom
 
 from aind_data_schema.core.session import Session
 
-from aind_metadata_mapper.ephys.camstim_session import CamstimSession
+from aind_metadata_mapper.ephys.camstim_session import CamstimEphysSession
 from aind_metadata_mapper.ephys.session import EphysEtl
 
 RESOURCES_DIR = (
@@ -266,7 +266,9 @@ class TestCamstimEphysSession(unittest.TestCase):
             "iacuc_protocol": "2117",
             "session_type": "",
         }
-        camstim_session_mapper = CamstimEphysSession("1315994569", json_settings)
+        camstim_session_mapper = CamstimEphysSession(
+            "1315994569", json_settings
+        )
         output_session_json = camstim_session_mapper.generate_session_json()
         cls.assertEqual(cls.expected_json, output_session_json)
 

@@ -2,17 +2,13 @@
 File containing Camstim class
 """
 
-import argparse
 import datetime
 import io
-import json
-from pathlib import Path
 
 import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
 import npc_sync
-import numpy as np
 import pandas as pd
 from utils import pickle_functions as pkl_utils
 
@@ -57,7 +53,6 @@ class Camstim:
 
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
-
 
     def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
         """
