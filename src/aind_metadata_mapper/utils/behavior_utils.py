@@ -4,9 +4,9 @@ import warnings
 import numpy as np
 import pandas as pd
 
-import utils.pickle_functions as pkl 
-import utils.stimulus_functions as stim
-import utils.sync_functions as sync
+import utils.pickle_utils as pkl 
+import utils.stimulus_utils as stim
+import utils.sync_utils as sync
 
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union

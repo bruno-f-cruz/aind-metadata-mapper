@@ -4,8 +4,8 @@ import functools
 
 import numpy as np
 import pandas as pd
-import utils.sync_functions as sync
-import utils.pickle_functions as pkl
+import utils.sync_utils as sync
+import utils.pickle_utils as pkl
 
 from pathlib import Path
 from typing import List
