@@ -79,11 +79,6 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
 
         print("session start : session end\n", self.session_start, ":", self.session_end)
 
-        from time import sleep
-        while(True):
-            print('~')
-            sleep(10)
-
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
 
