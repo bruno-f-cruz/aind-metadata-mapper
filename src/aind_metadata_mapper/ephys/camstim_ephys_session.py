@@ -15,11 +15,11 @@ import aind_data_schema_models.modalities
 import np_session
 import npc_ephys
 import npc_mvr
-import npc_session
 import npc_sessions
 import npc_sync
 import numpy as np
 import pandas as pd
+import re
 from utils import pickle_functions as pkl_utils
 
 import aind_metadata_mapper.stimulus.camstim
@@ -164,7 +164,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
             )
         if probe_row.empty:
             return (
-                aind_data_schema.models.coordinates.Coordinates3d(
+                aind_data_schema.components.coordinates.Coordinates3d(
                     x="0.0", y="0.0", z="0.0", unit="micrometer"
                 ),
                 "Coordinate info not available",
@@ -219,13 +219,20 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         """
         modality = aind_data_schema_models.modalities.Modality
 
+        probe_exp = r"(?<=[pP{1}]robe)[-_\s]*(?P<letter>[A-F]{1})(?![a-zA-Z])"
+        def extract_probe_letter(s):
+            match = re.search(probe_exp, s)
+            if match:
+                return match.group("letter")
+
         times = npc_ephys.get_ephys_timing_on_sync(
             sync=self.sync_path, recording_dirs=[self.recording_dir]
         )
+
         ephys_timing_data = tuple(
             timing
             for timing in times
-            if (p := npc_session.extract_probe_letter(timing.device.name))
+            if (p := extract_probe_letter(timing.device.name))
             is None
             or p in self.available_probes
         )
