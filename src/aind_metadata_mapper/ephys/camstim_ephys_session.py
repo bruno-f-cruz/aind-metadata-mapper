@@ -16,13 +16,12 @@ import np_session
 import npc_ephys
 import npc_mvr
 import npc_sessions
-import npc_sync
 import numpy as np
 import pandas as pd
 import re
-from utils import pickle_functions as pkl_utils
 
 import aind_metadata_mapper.stimulus.camstim
+import aind_metadata_mapper.utils.sync_utils as sync
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -74,14 +73,16 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         self.platform_json = json.loads(platform_path.read_text())
         self.project_name = self.platform_json["project"]
 
-        sync_data = npc_sync.SyncDataset(
-            io.BytesIO(self.sync_path.read_bytes())
-        )
-        self.session_start, self.session_end = (
-            sync_data.start_time,
-            sync_data.stop_time,
-        )
-        print("session start:end", self.session_start, ":", self.session_end)
+        sync_data = sync.load_sync(self.sync_path)
+        self.session_start = sync.get_start_time(sync_data)
+        self.session_end = sync.get_stop_time(sync_data)
+
+        print("session start : session end\n", self.session_start, ":", self.session_end)
+
+        from time import sleep
+        while(True):
+            print('~')
+            sleep(10)
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
