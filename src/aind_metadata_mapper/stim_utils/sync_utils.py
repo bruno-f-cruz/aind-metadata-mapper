@@ -1,12 +1,12 @@
 import h5py
+import datetime
 
 import numpy as np
 import scipy.spatial.distance as distance
 import utils.pickle_functions as pkl
 
-from typing import Union, Sequence, Optional
+from typing import TYPE_CHECKING, Any, Union, Sequence, Optional, Union
 from pathlib import Path
-
 
 
 
@@ -51,6 +51,27 @@ def get_times(sync_file):
     """ 
     times = process_times(sync_file)
     return times
+
+
+def get_meta_data(sync_file) -> dict[str, Any]:
+    return eval(sync_file["meta"][()])
+
+
+def get_start_time(sync_file) -> datetime.datetime:
+    meta_data = get_meta_data(sync_file)
+    return datetime.datetime.fromisoformat(meta_data["start_time"])
+
+
+def get_total_seconds(sync_file) -> float:
+    meta_data = get_meta_data(sync_file)
+    return meta_data["total_samples"] / get_sample_freq(meta_data)
+
+
+def get_stop_time(sync_file) -> datetime.datetime:
+    meta_data = get_meta_data(sync_file)
+    start_time = get_start_time(sync_file)
+    total_seconds = get_total_seconds(sync_file)
+    return start_time + datetime.timedelta(seconds=total_seconds)
 
 
 def extract_led_times(  sync_file,
