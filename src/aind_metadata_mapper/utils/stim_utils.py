@@ -1,15 +1,13 @@
-import re
 import ast
 import functools
-
-import numpy as np
-import pandas as pd
-import utils.sync_utils as sync
-import utils.pickle_utils as pkl
-
+import re
 from pathlib import Path
 from typing import List
 
+import numpy as np
+import pandas as pd
+import utils.pickle_utils as pkl
+import utils.sync_utils as sync
 
 DROP_PARAMS = (  # psychopy boilerplate, more or less
     "autoLog",
@@ -194,7 +192,7 @@ def parse_stim_repr(
     array_re=ARRAY_RE,
     raise_on_unrecognized=False,
 ):
-    """ Read the string representation of a psychopy stimulus and extract
+    """Read the string representation of a psychopy stimulus and extract
     stimulus parameters.
 
     Parameters
@@ -233,7 +231,7 @@ def create_stim_table(
     block_key="stim_block",
     index_key="stim_index",
 ):
-    """ Build a full stimulus table
+    """Build a full stimulus table
 
     Parameters
     ----------
@@ -289,7 +287,7 @@ def make_spontaneous_activity_tables(
     end_key="stop_time",
     duration_threshold=0.0,
 ):
-    """ Fills in frame gaps in a set of stimulus tables. Suitable for use as
+    """Fills in frame gaps in a set of stimulus tables. Suitable for use as
     the spontaneous_activity_tabler in create_stim_table.
 
     Parameters
@@ -423,7 +421,7 @@ def convert_frames_to_seconds(
     extra_frame_time=False,
     map_columns=("start_time", "stop_time"),
 ):
-    """ Converts sweep times from frames to seconds.
+    """Converts sweep times from frames to seconds.
 
     Parameters
     ----------
@@ -477,7 +475,7 @@ def apply_display_sequence(
     diff_key="dif",
     block_key="stim_block",
 ):
-    """ Adjust raw sweep frames for a stimulus based on the display sequence
+    """Adjust raw sweep frames for a stimulus based on the display sequence
     for that stimulus.
 
     Parameters
@@ -613,7 +611,7 @@ def build_stimuluswise_table(
     extract_const_params_from_repr=False,
     drop_const_params=DROP_PARAMS,
 ):
-    """ Construct a table of sweeps, including their times on the
+    """Construct a table of sweeps, including their times on the
     experiment-global clock and the values of each relevant parameter.
 
     Parameters
@@ -731,7 +729,7 @@ def build_stimuluswise_table(
 
 
 def split_column(table, column, new_columns, drop_old=True):
-    """ Divides a dataframe column into multiple columns.
+    """Divides a dataframe column into multiple columns.
 
     Parameters
     ----------
@@ -774,7 +772,7 @@ def assign_sweep_values(
     drop=True,
     tmp_suffix="_stimtable_todrop",
 ):
-    """ Left joins a stimulus table to a sweep table in order to associate
+    """Left joins a stimulus table to a sweep table in order to associate
         epochs in time with stimulus characteristics.
 
     Parameters

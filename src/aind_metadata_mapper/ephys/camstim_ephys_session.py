@@ -4,8 +4,8 @@ File containing CamstimEphysSession class
 
 import argparse
 import datetime
-import io
 import json
+import re
 from pathlib import Path
 
 import aind_data_schema
@@ -18,11 +18,10 @@ import npc_mvr
 import npc_sessions
 import numpy as np
 import pandas as pd
-import re
 
 import aind_metadata_mapper.stimulus.camstim
-import aind_metadata_mapper.utils.sync_utils as sync
 import aind_metadata_mapper.utils.naming_utils as names
+import aind_metadata_mapper.utils.sync_utils as sync
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -35,15 +34,26 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
     npexp_path: Path
     recording_dir: Path
 
-    def __init__(self, session_id: str, json_settings: dict, opto_conditions_map=None) -> None:
+    def __init__(
+        self,
+        session_id: str,
+        json_settings: dict
+    ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
-        start and end times from sync file, and extract epochs from stim
-        tables.
+        start and end times from sync file, write stim tables and extract
+        epochs from stim tables. Also get available probes. If 
+        'overwrite_tables' is not given as True in the json settings, and
+        existing stim table exists, a new one won't be written.
+        'opto_conditions_map' may be given in the json settings to specify the
+        different laser states for this experiment. Otherwise, the default is
+        used from naming_utils.
         """
-        if opto_conditions_map == None:
-            opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
-        self.opto_conditions_map = opto_conditions_map
+        if json_settings.get('opto_conditions_map', None) is None:
+            self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+        else:
+            self.opto_conditions_map = json_settings['opto_conditions_map']
+        overwrite_tables = json_settings.get('overwrite_tables', False)
 
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
@@ -64,9 +74,13 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
             self.npexp_path / f"{self.folder}.motor-locs.csv"
         )
         self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
-        self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
-        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv' 
-        self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv'
+        self.opto_pkl_path = self.npexp_path / f"{self.folder}.opto.pkl"
+        self.opto_table_path = (
+            self.npexp_path / f"{self.folder}_opto_epochs.csv"
+        )
+        self.stim_table_path = (
+            self.npexp_path / f"{self.folder}_stim_epochs.csv"
+        )
         self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
         platform_path = next(
@@ -78,20 +92,29 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-        print("session start : session end\n", self.session_start, ":", self.session_end)
+        print(
+            "session start : session end\n",
+            self.session_start,
+            ":",
+            self.session_end,
+        )
 
-        if not self.stim_table_path.exists():
-            print('building stim table')
+        if not self.stim_table_path.exists() or overwrite_tables:
+            print("building stim table")
             self.build_stimulus_table()
-        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
-            print('building opto table')
+        if (
+            self.opto_pkl_path.exists()
+            and not self.opto_table_path.exists()
+            or overwrite_tables
+        ):
+            print("building opto table")
             self.build_optogenetics_table()
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
-        
+
         self.available_probes = self.get_available_probes()
 
     def generate_session_json(self) -> session_schema.Session:
@@ -223,6 +246,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         modality = aind_data_schema_models.modalities.Modality
 
         probe_exp = r"(?<=[pP{1}]robe)[-_\s]*(?P<letter>[A-F]{1})(?![a-zA-Z])"
+
         def extract_probe_letter(s):
             match = re.search(probe_exp, s)
             if match:
@@ -235,8 +259,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         ephys_timing_data = tuple(
             timing
             for timing in times
-            if (p := extract_probe_letter(timing.device.name))
-            is None
+            if (p := extract_probe_letter(timing.device.name)) is None
             or p in self.available_probes
         )
 

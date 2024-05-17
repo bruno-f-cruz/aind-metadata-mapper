@@ -3,16 +3,17 @@ File containing Camstim class
 """
 
 import datetime
+import functools
 
 import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
-import aind_metadata_mapper.utils.pkl_utils as pkl
-import aind_metadata_mapper.utils.sync_utils as sync
-import aind_metadata_mapper.utils.stim_utils as stim
+
 import aind_metadata_mapper.utils.naming_utils as names
-import functools
+import aind_metadata_mapper.utils.pkl_utils as pkl
+import aind_metadata_mapper.utils.stim_utils as stim
+import aind_metadata_mapper.utils.sync_utils as sync
 
 
 class Camstim:
@@ -20,15 +21,25 @@ class Camstim:
     Methods used to extract stimulus epochs
     """
 
-    def __init__(self, session_id: str, json_settings: dict, opto_conditions_map=None) -> None:
+    def __init__(
+        self,
+        session_id: str,
+        json_settings: dict,
+    ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
-        start and end times from sync file, and extract epochs from stim
-        tables.
+        start and end times from sync file, write stim tables and extract
+        epochs from stim tables. If 'overwrite_tables' is not given as True,
+        in the json settings and an existing stim table exists, a new one
+        won't be written. opto_conditions_map may be given in the json
+        settings to specify the different laser states for this experiment.
+        Otherwise, the default is used from naming_utils.
         """
-        if opto_conditions_map == None:
-            opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
-        self.opto_conditions_map = opto_conditions_map
+        if json_settings.get('opto_conditions_map', None) is None:
+            self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+        else:
+            self.opto_conditions_map = json_settings['opto_conditions_map']
+        overwrite_tables = json_settings.get('overwrite_tables', False)
 
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
@@ -37,21 +48,34 @@ class Camstim:
         self.folder = session_inst.folder
 
         self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
-        self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
-        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv'
-        self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv'
-        self.sync_path = self.npexp_path / f'{self.folder}.sync'
+        self.opto_pkl_path = self.npexp_path / f"{self.folder}.opto.pkl"
+        self.opto_table_path = (
+            self.npexp_path / f"{self.folder}_opto_epochs.csv"
+        )
+        self.stim_table_path = (
+            self.npexp_path / f"{self.folder}_stim_epochs.csv"
+        )
+        self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-        print("session start : session end\n", self.session_start, ":", self.session_end)
+        print(
+            "session start : session end\n",
+            self.session_start,
+            ":",
+            self.session_end,
+        )
 
-        if not self.stim_table_path.exists():
-            print('building stim table')
+        if not self.stim_table_path.exists() or overwrite_tables:
+            print("building stim table")
             self.build_stimulus_table()
-        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
-            print('building opto table')
+        if (
+            self.opto_pkl_path.exists()
+            and not self.opto_table_path.exists()
+            or overwrite_tables
+        ):
+            print("building opto table")
             self.build_optogenetics_table()
 
         print("getting stim epochs")
@@ -60,12 +84,12 @@ class Camstim:
             self.stim_epochs.append(self.epoch_from_opto_table())
 
     def build_stimulus_table(
-            self,
-            minimum_spontaneous_activity_duration=0.0,
-            extract_const_params_from_repr=False,
-            drop_const_params=stim.DROP_PARAMS,
-            stimulus_name_map=names.default_stimulus_renames,
-            column_name_map=names.default_column_renames,
+        self,
+        minimum_spontaneous_activity_duration=0.0,
+        extract_const_params_from_repr=False,
+        drop_const_params=stim.DROP_PARAMS,
+        stimulus_name_map=names.default_stimulus_renames,
+        column_name_map=names.default_column_renames,
     ):
         """
         Builds a stimulus table from the stimulus pickle file, sync file, and
@@ -92,11 +116,9 @@ class Camstim:
         stim_file = pkl.load_pkl(self.pkl_path)
         sync_file = sync.load_sync(self.sync_path)
 
-        frame_times = stim.extract_frame_times_from_photodiode(
-            sync_file
-            )
+        frame_times = stim.extract_frame_times_from_photodiode(sync_file)
         minimum_spontaneous_activity_duration = (
-                minimum_spontaneous_activity_duration / pkl.get_fps(stim_file)
+            minimum_spontaneous_activity_duration / pkl.get_fps(stim_file)
         )
 
         stimulus_tabler = functools.partial(
@@ -115,31 +137,31 @@ class Camstim:
             stim_file, pkl.get_stimuli(stim_file), stimulus_tabler, spon_tabler
         )
 
-        stim_table_seconds= stim.convert_frames_to_seconds(
+        stim_table_seconds = stim.convert_frames_to_seconds(
             stim_table_sweeps, frame_times, pkl.get_fps(stim_file), True
         )
 
         stim_table_seconds = names.collapse_columns(stim_table_seconds)
         stim_table_seconds = names.drop_empty_columns(stim_table_seconds)
         stim_table_seconds = names.standardize_movie_numbers(
-            stim_table_seconds)
+            stim_table_seconds
+        )
         stim_table_seconds = names.add_number_to_shuffled_movie(
-            stim_table_seconds)
+            stim_table_seconds
+        )
         stim_table_seconds = names.map_stimulus_names(
             stim_table_seconds, stimulus_name_map
         )
 
-        stim_table_final = names.map_column_names(stim_table_seconds,
-                                                            column_name_map,
-                                                            ignore_case=False)
+        stim_table_final = names.map_column_names(
+            stim_table_seconds, column_name_map, ignore_case=False
+        )
 
         stim_table_final.to_csv(self.stim_table_path, index=False)
 
     def build_optogenetics_table(
-            self,
-            output_opto_table_path,
-            keys=stim.OPTOGENETIC_STIMULATION_KEYS
-        ):
+        self, output_opto_table_path, keys=stim.OPTOGENETIC_STIMULATION_KEYS
+    ):
         """
         Builds an optogenetics table from the opto pickle file and sync file.
         Writes the table to a csv file.
@@ -159,23 +181,26 @@ class Camstim:
         opto_file = pkl.load_pkl(self.opto_pkl_path)
         sync_file = sync.load_sync(self.sync_path)
 
-        start_times = sync.extract_led_times(sync_file,
-                                            keys
-                                            )
+        start_times = sync.extract_led_times(sync_file, keys)
 
-        conditions = [str(item) for item in opto_file['opto_conditions']]
-        levels = opto_file['opto_levels']
+        conditions = [str(item) for item in opto_file["opto_conditions"]]
+        levels = opto_file["opto_levels"]
         assert len(conditions) == len(levels)
         if len(start_times) > len(conditions):
             raise ValueError(
                 f"there are {len(start_times) - len(conditions)} extra "
-                f"optotagging sync times!")
-        optotagging_table = pd.DataFrame({
-            'start_time': start_times,
-            'condition': conditions,
-            'level': levels
-        })
-        optotagging_table = optotagging_table.sort_values(by='start_time', axis=0)
+                f"optotagging sync times!"
+            )
+        optotagging_table = pd.DataFrame(
+            {
+                "start_time": start_times,
+                "condition": conditions,
+                "level": levels,
+            }
+        )
+        optotagging_table = optotagging_table.sort_values(
+            by="start_time", axis=0
+        )
 
         stop_times = []
         names = []
@@ -189,11 +214,12 @@ class Camstim:
         optotagging_table["stop_time"] = stop_times
         optotagging_table["stimulus_name"] = names
         optotagging_table["condition"] = conditions
-        optotagging_table["duration"] = \
+        optotagging_table["duration"] = (
             optotagging_table["stop_time"] - optotagging_table["start_time"]
+        )
 
         optotagging_table.to_csv(output_opto_table_path, index=False)
-        return {'output_opto_table_path': output_opto_table_path}
+        return {"output_opto_table_path": output_opto_table_path}
 
     def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
         """
@@ -312,9 +338,9 @@ class Camstim:
 
         software_obj = aind_data_schema.components.devices.Software(
             name="camstim",
-            version=pkl.load_pkl(self.pkl_path)["platform"][
-                "camstim"
-            ].split("+")[0],
+            version=pkl.load_pkl(self.pkl_path)["platform"]["camstim"].split(
+                "+"
+            )[0],
             url="https://eng-gitlab.corp.alleninstitute.org/braintv/camstim",
         )
 
