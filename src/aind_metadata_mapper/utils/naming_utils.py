@@ -860,7 +860,6 @@ def produce_stimulus_block_names(
     if project_code not in PROJECT_CODES:
         return stim_df
 
-    vbo_map = VBO_PASSIVE_MAP if "passive" in session_type else VBO_ACTIVE_MAP
 
     for stim_block in stim_df.stimulus_block.unique():
         # If we have a single block then this is a training session and we
@@ -870,8 +869,8 @@ def produce_stimulus_block_names(
         if len(stim_df.stimulus_block.unique()) == 1:
             block_id += 1
         stim_df.loc[
-            stim_df["stimulus_block"] == stim_block, "stimulus_block_name"
-        ] = vbo_map[block_id]
+            stim_df["stimulus_block"] == stim_block
+        ] 
 
     return stim_df
 
