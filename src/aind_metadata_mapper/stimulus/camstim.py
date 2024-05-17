@@ -42,7 +42,7 @@ class Camstim:
 
         self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
         self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
-        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv' 
+        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv'
         self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv'
         self.sync_path = self.npexp_path / f'{self.folder}.sync'
 
@@ -71,6 +71,28 @@ class Camstim:
             stimulus_name_map=names.default_stimulus_renames,
             column_name_map=names.default_column_renames,
     ):
+        """
+        Builds a stimulus table from the stimulus pickle file, sync file, and
+        the given parameters. Writes the table to a csv file.
+
+        Parameters
+        ----------
+        minimum_spontaneous_activity_duration : float, optional
+            Minimum duration of spontaneous activity to be considered a
+            separate epoch, by default 0.0
+        extract_const_params_from_repr : bool, optional
+            Whether to extract constant parameters from the stimulus
+            representation, by default False
+        drop_const_params : list[str], optional
+            List of constant parameters to drop, by default stim.DROP_PARAMS
+        stimulus_name_map : dict[str, str], optional
+            Map of stimulus names to rename, by default
+            names.default_stimulus_renames
+        column_name_map : dict[str, str], optional
+            Map of column names to rename, by default
+            names.default_column_renames
+
+        """
         stim_file = pkl.load_pkl(self.pkl_path)
         sync_file = sync.load_sync(self.sync_path)
 
@@ -121,7 +143,23 @@ class Camstim:
             self,
             output_opto_table_path,
             keys=stim.OPTOGENETIC_STIMULATION_KEYS
-        ): 
+        ):
+        """
+        Builds an optogenetics table from the opto pickle file and sync file.
+        Writes the table to a csv file.
+
+        Parameters
+        ----------
+        output_opto_table_path : str
+            Path to write the optogenetics table to.
+        keys : list[str], optional
+            List of laser keys
+
+        returns
+        -------
+        dict
+            Dictionary containing the path to the output opto table
+        """
         opto_file = pkl.load_pkl(self.opto_pkl_path)
         sync_file = sync.load_sync(self.sync_path)
 
