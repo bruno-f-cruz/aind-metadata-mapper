@@ -160,7 +160,7 @@ class Camstim:
         stim_table_final.to_csv(self.stim_table_path, index=False)
 
     def build_optogenetics_table(
-        self, output_opto_table_path, keys=stim.OPTOGENETIC_STIMULATION_KEYS
+        self, keys=stim.OPTOGENETIC_STIMULATION_KEYS
     ):
         """
         Builds an optogenetics table from the opto pickle file and sync file.
@@ -218,8 +218,7 @@ class Camstim:
             optotagging_table["stop_time"] - optotagging_table["start_time"]
         )
 
-        optotagging_table.to_csv(output_opto_table_path, index=False)
-        return {"output_opto_table_path": output_opto_table_path}
+        optotagging_table.to_csv(self.opto_table_path, index=False)
 
     def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
         """
