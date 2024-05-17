@@ -112,6 +112,21 @@ def enforce_df_column_order(
     return input_df[pruned_order]
 
 def seconds_to_frames(seconds, pkl_file):
+    """
+    Convert seconds to frames using the pkl file.
+
+    Parameters
+    ----------
+    seconds : list of float
+        Seconds to convert to frames.
+    pkl_file : str
+        Path to the pkl file.
+    
+    Returns
+    -------
+    frames : list of int
+        Frames corresponding to the input seconds.
+    """
     return (np.array(seconds) + pkl.get_pre_blank_sec(pkl_file)) * pkl.get_fps(pkl_file)
 
 
@@ -318,6 +333,29 @@ def extract_frame_times_from_photodiode(
     frame_keys=FRAME_KEYS,
     photodiode_keys=PHOTODIODE_KEYS,
     trim_discontiguous_frame_times=True):
+    """
+    Extracts frame times from a photodiode signal.
+
+    Parameters
+    ----------
+    sync_file : h5py.File
+        File containing sync data.
+    photodiode_cycle : numeric, optional
+        The number of frames between photodiode pulses. Defaults to 60.
+    frame_keys : tuple of str, optional
+        Keys to extract frame times from. Defaults to FRAME_KEYS.
+    photodiode_keys : tuple of str, optional
+        Keys to extract photodiode times from. Defaults to PHOTODIODE_KEYS.
+    trim_discontiguous_frame_times : bool, optional
+        If True, remove discontiguous frame times. Defaults to True.
+    
+    Returns
+    -------
+    frame_start_times : np.ndarray
+        The start times of each frame.
+
+    """
+    
 
     photodiode_times = sync.get_edges(sync_file, 'all', photodiode_keys)
     vsync_times = sync.get_edges(sync_file, 'falling', frame_keys)
@@ -520,6 +558,19 @@ def read_stimulus_name_from_path(stimulus):
 
 
 def get_stimulus_type(stimulus):
+    """
+    Obtains the stimulus type from the stimulus dictionary.
+
+    Parameters
+    ----------
+    stimulus : dict
+        A dictionary describing a stimulus.
+    
+    Returns
+    -------
+    str :
+        The stimulus type.
+    """
     input_string = stimulus['stim']
     
     # Regex for single quotes
