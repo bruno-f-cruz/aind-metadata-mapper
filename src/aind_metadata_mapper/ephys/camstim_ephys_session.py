@@ -35,11 +35,15 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
     npexp_path: Path
     recording_dir: Path
 
-    def __init__(self, session_id: str, json_settings: dict, opto_conditions_map=None) -> None:
+    def __init__(self, session_id: str, json_settings: dict, overwrite_tables: bool=False, opto_conditions_map=None) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
-        start and end times from sync file, and extract epochs from stim
-        tables.
+        start and end times from sync file, write stim tables and extract
+        epochs from stim tables. Also get available probes. If
+        overwrite_tables is not given as True, and existing stim table exists,
+        a new one won't be written. opto_conditions_map may be given to
+        specify the different laser states for this experiment. Otherwise, the
+        default is used from naming_utils.
         """
         if opto_conditions_map == None:
             opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
@@ -80,10 +84,10 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         self.session_end = sync.get_stop_time(sync_data)
         print("session start : session end\n", self.session_start, ":", self.session_end)
 
-        if not self.stim_table_path.exists():
+        if not self.stim_table_path.exists() or overwrite_tables:
             print('building stim table')
             self.build_stimulus_table()
-        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
+        if self.opto_pkl_path.exists() and not self.opto_table_path.exists() or overwrite_tables:
             print('building opto table')
             self.build_optogenetics_table()
 
