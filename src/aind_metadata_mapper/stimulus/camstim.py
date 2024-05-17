@@ -35,11 +35,11 @@ class Camstim:
         settings to specify the different laser states for this experiment.
         Otherwise, the default is used from naming_utils.
         """
-        if json_settings.get('opto_conditions_map', None) is None:
+        if json_settings.get("opto_conditions_map", None) is None:
             self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
         else:
-            self.opto_conditions_map = json_settings['opto_conditions_map']
-        overwrite_tables = json_settings.get('overwrite_tables', False)
+            self.opto_conditions_map = json_settings["opto_conditions_map"]
+        overwrite_tables = json_settings.get("overwrite_tables", False)
 
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)

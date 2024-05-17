@@ -6,7 +6,6 @@ import re
 import warnings
 
 
-
 INT_NULL = -99
 
 # defaults
@@ -71,7 +70,6 @@ DEFAULT_OPTO_CONDITIONS = {
 
 default_stimulus_renames = {
     "": "spontaneous",
-
     "natural_movie_1": "natural_movie_one",
     "natural_movie_3": "natural_movie_three",
     "Natural Images": "natural_scenes",
@@ -79,18 +77,14 @@ default_stimulus_renames = {
     "gabor_20_deg_250ms": "gabors",
     "drifting_gratings": "drifting_gratings",
     "static_gratings": "static_gratings",
-
     "contrast_response": "drifting_gratings_contrast",
-
     "Natural_Images_Shuffled": "natural_scenes_shuffled",
     "Natural_Images_Sequential": "natural_scenes_sequential",
     "natural_movie_1_more_repeats": "natural_movie_one",
     "natural_movie_shuffled": "natural_movie_one_shuffled",
     "motion_stimulus": "dot_motion",
     "drifting_gratings_more_repeats": "drifting_gratings_75_repeats",
-
     "signal_noise_test_0_200_repeats": "test_movie_one",
-
     "signal_noise_test_0": "test_movie_one",
     "signal_noise_test_1": "test_movie_two",
     "signal_noise_session_1": "dense_movie_one",
@@ -104,16 +98,15 @@ default_stimulus_renames = {
 
 default_column_renames = {
     "Contrast": "contrast",
-    "Ori":	"orientation",
+    "Ori": "orientation",
     "SF": "spatial_frequency",
     "TF": "temporal_frequency",
     "Phase": "phase",
     "Color": "color",
     "Image": "frame",
     "Pos_x": "x_position",
-    "Pos_y": "y_position"
+    "Pos_y": "y_position",
 }
-
 
 
 GABOR_DIAMETER_RE = re.compile(
@@ -318,10 +311,11 @@ def map_column_names(table, name_map=None, ignore_case=True):
 
     """
 
-
     if ignore_case and name_map is not None:
         name_map = {key.lower(): value for key, value in name_map.items()}
-        mapper = lambda name: name if name.lower() not in name_map else name_map[name.lower()]
+        mapper = lambda name: (
+            name if name.lower() not in name_map else name_map[name.lower()]
+        )
     else:
         mapper = name_map
 

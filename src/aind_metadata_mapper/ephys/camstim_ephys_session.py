@@ -34,26 +34,22 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
     npexp_path: Path
     recording_dir: Path
 
-    def __init__(
-        self,
-        session_id: str,
-        json_settings: dict
-    ) -> None:
+    def __init__(self, session_id: str, json_settings: dict) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
         start and end times from sync file, write stim tables and extract
-        epochs from stim tables. Also get available probes. If 
+        epochs from stim tables. Also get available probes. If
         'overwrite_tables' is not given as True in the json settings, and
         existing stim table exists, a new one won't be written.
         'opto_conditions_map' may be given in the json settings to specify the
         different laser states for this experiment. Otherwise, the default is
         used from naming_utils.
         """
-        if json_settings.get('opto_conditions_map', None) is None:
+        if json_settings.get("opto_conditions_map", None) is None:
             self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
         else:
-            self.opto_conditions_map = json_settings['opto_conditions_map']
-        overwrite_tables = json_settings.get('overwrite_tables', False)
+            self.opto_conditions_map = json_settings["opto_conditions_map"]
+        overwrite_tables = json_settings.get("overwrite_tables", False)
 
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
