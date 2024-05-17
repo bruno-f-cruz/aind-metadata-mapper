@@ -1,77 +1,71 @@
-import numpy as np
-import pandas as pd
-
-import utils.pickle_utils as pkl
-import utils.stimulus_utils as stim
-
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
 
+import numpy as np
+import pandas as pd
+import utils.pickle_utils as pkl
+import utils.stimulus_utils as stim
 
 INT_NULL = -99
 
 # defaults
 DEFAULT_OPTO_CONDITIONS = {
-    '0': {
-        'duration': .01,
-        'name': '1Hz_10ms',
-        'condition': '10 ms pulse at 1 Hz'
+    "0": {
+        "duration": 0.01,
+        "name": "1Hz_10ms",
+        "condition": "10 ms pulse at 1 Hz",
     },
-    '1': {
-        'duration': .002,
-        'name': '1Hz_2ms',
-        'condition': '2 ms pulse at 1 Hz'
+    "1": {
+        "duration": 0.002,
+        "name": "1Hz_2ms",
+        "condition": "2 ms pulse at 1 Hz",
     },
-    '2': {
-        'duration': 1.0,
-        'name': '5Hz_2ms',
-        'condition': '2 ms pulses at 5 Hz'
+    "2": {
+        "duration": 1.0,
+        "name": "5Hz_2ms",
+        "condition": "2 ms pulses at 5 Hz",
     },
-    '3': {
-        'duration': 1.0,
-        'name': '10Hz_2ms',
-        'condition': '2 ms pulses at 10 Hz'
+    "3": {
+        "duration": 1.0,
+        "name": "10Hz_2ms",
+        "condition": "2 ms pulses at 10 Hz",
     },
-    '4': {
-        'duration': 1.0,
-        'name': '20Hz_2ms',
-        'condition': '2 ms pulses at 20 Hz'
+    "4": {
+        "duration": 1.0,
+        "name": "20Hz_2ms",
+        "condition": "2 ms pulses at 20 Hz",
     },
-    '5': {
-        'duration': 1.0,
-        'name': '30Hz_2ms',
-        'condition': '2 ms pulses at 30 Hz'
+    "5": {
+        "duration": 1.0,
+        "name": "30Hz_2ms",
+        "condition": "2 ms pulses at 30 Hz",
     },
-    '6': {
-        'duration': 1.0,
-        'name': '40Hz_2ms',
-        'condition': '2 ms pulses at 40 Hz'
+    "6": {
+        "duration": 1.0,
+        "name": "40Hz_2ms",
+        "condition": "2 ms pulses at 40 Hz",
     },
-    '7': {
-        'duration': 1.0,
-        'name': '50Hz_2ms',
-        'condition': '2 ms pulses at 50 Hz'
+    "7": {
+        "duration": 1.0,
+        "name": "50Hz_2ms",
+        "condition": "2 ms pulses at 50 Hz",
     },
-    '8': {
-        'duration': 1.0,
-        'name': '60Hz_2ms',
-        'condition': '2 ms pulses at 60 Hz'
+    "8": {
+        "duration": 1.0,
+        "name": "60Hz_2ms",
+        "condition": "2 ms pulses at 60 Hz",
     },
-    '9': {
-        'duration': 1.0,
-        'name': '80Hz_2ms',
-        'condition': '2 ms pulses at 80 Hz'
+    "9": {
+        "duration": 1.0,
+        "name": "80Hz_2ms",
+        "condition": "2 ms pulses at 80 Hz",
     },
-    '10': {
-        'duration': 1.0,
-        'name': 'square_1s',
-        'condition': '1 second square pulse: continuously on for 1s'
+    "10": {
+        "duration": 1.0,
+        "name": "square_1s",
+        "condition": "1 second square pulse: continuously on for 1s",
     },
-    '11': {
-        'duration': 1.0,
-        'name': 'cosine_1s',
-        'condition': 'cosine pulse'
-    },
+    "11": {"duration": 1.0, "name": "cosine_1s", "condition": "cosine pulse"},
 }
 
 
@@ -169,7 +163,9 @@ def get_images_dict(pkl_dict) -> Dict:
             ii += 1
 
     images_dict = dict(
-        metadata=metadata, images=images, image_attributes=images_meta,
+        metadata=metadata,
+        images=images,
+        image_attributes=images_meta,
     )
 
     return images_dict
@@ -491,7 +487,10 @@ def get_draw_epochs(
 
         if epoch_length:
             draw_epochs.append(
-                (current_frame - epoch_length - 1, current_frame - 1,)
+                (
+                    current_frame - epoch_length - 1,
+                    current_frame - 1,
+                )
             )
 
     return draw_epochs
@@ -500,7 +499,10 @@ def get_draw_epochs(
 def unpack_change_log(change):
     (
         (from_category, from_name),
-        (to_category, to_name,),
+        (
+            to_category,
+            to_name,
+        ),
         time,
         frame,
     ) = change
@@ -544,7 +546,10 @@ def get_visual_stimuli_df(data, time) -> pd.DataFrame:
             image_name = attr_value if attr_name.lower() == "image" else np.nan
 
             stimulus_epoch = get_stimulus_epoch(
-                stim_dict["set_log"], idx, frame, n_frames,
+                stim_dict["set_log"],
+                idx,
+                frame,
+                n_frames,
             )
             draw_epochs = get_draw_epochs(
                 stim_dict["draw_log"], *stimulus_epoch
@@ -859,9 +864,9 @@ def fix_omitted_end_frame(stim_pres_table: pd.DataFrame) -> pd.DataFrame:
         stim_pres_table[stim_pres_table["omitted"]]["start_frame"]
         + median_stim_frame_duration
     )
-    stim_pres_table.loc[
-        stim_pres_table["omitted"], "end_frame"
-    ] = omitted_end_frames
+    stim_pres_table.loc[stim_pres_table["omitted"], "end_frame"] = (
+        omitted_end_frames
+    )
 
     stim_dtypes = stim_pres_table.dtypes.to_dict()
     stim_dtypes["start_frame"] = int
@@ -967,9 +972,9 @@ def compute_is_sham_change(
                 if np.array_equal(
                     active_images, stim_image_names[passive_block_mask].values
                 ):
-                    stim_df.loc[
-                        passive_block_mask, "is_sham_change"
-                    ] = stim_df[active_block_mask]["is_sham_change"].values
+                    stim_df.loc[passive_block_mask, "is_sham_change"] = (
+                        stim_df[active_block_mask]["is_sham_change"].values
+                    )
 
     return stim_df.sort_index()
 
@@ -1151,7 +1156,10 @@ def from_stimulus_file(
         "int"
     )
     stim_pres_df = raw_stim_pres_df.merge(
-        stimulus_index_df, left_on="start_time", right_index=True, how="left",
+        stimulus_index_df,
+        left_on="start_time",
+        right_index=True,
+        how="left",
     )
     if len(raw_stim_pres_df) != len(stim_pres_df):
         raise ValueError(
@@ -1210,7 +1218,8 @@ def from_stimulus_file(
 
 
 def get_is_image_novel(
-    image_names: List[str], behavior_session_id: int,
+    image_names: List[str],
+    behavior_session_id: int,
 ) -> Dict[str, bool]:
     """
     Returns whether each image in `image_names` is novel for the mouse
@@ -1307,7 +1316,9 @@ def postprocess(
     return df
 
 
-def check_for_errant_omitted_stimulus(input_df: pd.DataFrame,) -> pd.DataFrame:
+def check_for_errant_omitted_stimulus(
+    input_df: pd.DataFrame,
+) -> pd.DataFrame:
     """Check if the first entry in the DataFrame is an omitted stimulus.
 
     This shouldn't happen and likely reflects some sort of camstim error
@@ -1466,7 +1477,9 @@ def get_spontaneous_stimulus(
 
 
 def add_fingerprint_stimulus(
-    stimulus_presentations: pd.DataFrame, stimulus_file, stimulus_timestamps,
+    stimulus_presentations: pd.DataFrame,
+    stimulus_file,
+    stimulus_timestamps,
 ) -> pd.DataFrame:
     """Adds the fingerprint stimulus and the preceding gray screen to
     the stimulus presentations table

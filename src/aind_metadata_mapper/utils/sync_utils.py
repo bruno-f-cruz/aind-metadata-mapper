@@ -1,11 +1,11 @@
-import h5py
 import datetime
+from typing import Optional, Sequence, Union
 
+import h5py
 import numpy as np
 import scipy.spatial.distance as distance
-import aind_metadata_mapper.utils.pkl_utils as pkl
 
-from typing import Union, Sequence, Optional
+import aind_metadata_mapper.utils.pkl_utils as pkl
 
 
 def load_sync(path):
@@ -469,7 +469,7 @@ def get_bit(uint_array, bit):
         The bit to extract.
 
     """
-    return np.bitwise_and(uint_array, 2 ** bit).astype(bool).astype(np.uint8)
+    return np.bitwise_and(uint_array, 2**bit).astype(bool).astype(np.uint8)
 
 
 def get_sample_freq(meta_data):
@@ -628,7 +628,7 @@ def allocate_by_vsync(
     ends : np.ndarray
         End times of the frames.
     """
-    current_vs_diff = vs_diff[index * cycle: (index + 1) * cycle]
+    current_vs_diff = vs_diff[index * cycle : (index + 1) * cycle]
     sign = np.sign(irregularity)
 
     if sign > 0:
@@ -637,7 +637,7 @@ def allocate_by_vsync(
         vs_ind = np.argmin(current_vs_diff)
 
     ends[vs_ind:] += sign * frame_duration
-    starts[vs_ind + 1:] += sign * frame_duration
+    starts[vs_ind + 1 :] += sign * frame_duration
 
     return starts, ends
 
@@ -722,7 +722,19 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
     if len(breaks) > 0:
         chunk_sizes = np.diff(
             np.concatenate(
-                (np.array([0, ]), breaks, np.array([len(vs_times), ]))
+                (
+                    np.array(
+                        [
+                            0,
+                        ]
+                    ),
+                    breaks,
+                    np.array(
+                        [
+                            len(vs_times),
+                        ]
+                    ),
+                )
             )
         )
         largest_chunk = np.argmax(chunk_sizes)
@@ -730,9 +742,9 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
         if largest_chunk == 0:
             return vs_times[: np.min(breaks + 1)]
         elif largest_chunk == len(breaks):
-            return vs_times[np.max(breaks + 1):]
+            return vs_times[np.max(breaks + 1) :]
         else:
-            return vs_times[breaks[largest_chunk - 1]: breaks[largest_chunk]]
+            return vs_times[breaks[largest_chunk - 1] : breaks[largest_chunk]]
     else:
         return vs_times
 
@@ -1011,7 +1023,7 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
 
     output_edges = []
     for low, high in zip(bad_blocks[:-1], bad_blocks[1:]):
-        current_bad_edge_indices = bad_edges[low: high - 1]
+        current_bad_edge_indices = bad_edges[low : high - 1]
         current_bad_edges = pd_times[current_bad_edge_indices]
         low_bound = pd_times[current_bad_edge_indices[0]]
         high_bound = pd_times[current_bad_edge_indices[-1] + 1]
