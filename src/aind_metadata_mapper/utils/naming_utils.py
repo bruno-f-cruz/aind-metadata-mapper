@@ -13,8 +13,6 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 
 
-
-
 from project_constants import (
     PROJECT_CODES,
     VBO_ACTIVE_MAP,
@@ -33,7 +31,9 @@ def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
     :param data: stimulus file associated with experiment id
     :param stimulus_timestamps: timestamps indicating when stimuli switched
                                 during experiment
-    :return: stimulus_table: dataframe containing the stimuli metadata as well
+    returns: 
+    --------
+    stimulus_table: dataframe containing the stimuli metadata as well
                              as what stimuli was presented
     """
     stimulus_table = get_visual_stimuli_df(data, stimulus_timestamps)
