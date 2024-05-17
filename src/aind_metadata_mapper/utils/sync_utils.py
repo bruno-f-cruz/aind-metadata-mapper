@@ -5,9 +5,7 @@ import numpy as np
 import scipy.spatial.distance as distance
 import aind_metadata_mapper.utils.pkl_utils as pkl
 
-from typing import TYPE_CHECKING, Any, Union, Sequence, Optional, Union
-from pathlib import Path
-
+from typing import Union, Sequence, Optional
 
 
 def load_sync(path):
@@ -24,8 +22,7 @@ def load_sync(path):
     dfile : h5py.File
         Loaded hdf5 file.
     """
-    dfile = h5py.File(
-        path, 'r')
+    dfile = h5py.File(path, "r")
     return dfile
 
 
@@ -43,7 +40,7 @@ def get_meta_data(sync_file):
     meta_data : dict
         Meta data from the sync file.
     """
-    meta_data = eval(sync_file['meta'][()])
+    meta_data = eval(sync_file["meta"][()])
     return meta_data
 
 
@@ -62,7 +59,7 @@ def get_line_labels(sync_file):
         Line labels from the sync file.
     """
     meta_data = get_meta_data(sync_file)
-    line_labels = meta_data['line_labels']
+    line_labels = meta_data["line_labels"]
     return line_labels
 
 
@@ -128,21 +125,18 @@ def get_stop_time(sync_file) -> datetime.datetime:
     ----------
     sync_file : h5py.File
         Loaded hdf5 file.
-    
+
     Returns
     -------
     data: datetime.datetime
         Stop time.
     """
-    meta_data = get_meta_data(sync_file)
     start_time = get_start_time(sync_file)
     total_seconds = get_total_seconds(sync_file)
     return start_time + datetime.timedelta(seconds=total_seconds)
 
 
-def extract_led_times(  sync_file,
-                        keys='',
-                        fallback_line=18):
+def extract_led_times(sync_file, keys="", fallback_line=18):
     """
     Extracts the LED times from the sync file.
     Rising or Falling
@@ -151,27 +145,22 @@ def extract_led_times(  sync_file,
     ----------
     sync_file : h5py.File
         Loaded hdf5 file.
-    
+
     Returns
     -------
     led_times : np.ndarray
         LED times.
     """
 
-
     try:
         led_times = get_edges(
-            sync_file=sync_file,
-            kind="rising",
-            keys=keys,
-            units="seconds"
+            sync_file=sync_file, kind="rising", keys=keys, units="seconds"
         )
     except KeyError:
-        led_times = get_rising_edges(sync_file, 
-                                    fallback_line,
-                                    units="seconds")
+        led_times = get_rising_edges(sync_file, fallback_line, units="seconds")
 
     return led_times
+
 
 def process_times(sync_file):
     """
@@ -182,14 +171,14 @@ def process_times(sync_file):
     ----------
     sync_file : h5py.File
         Loaded hdf5 file.
-    
+
     Returns
     -------
     times : np.ndarray
         Times from the sync file.
 
     """
-    times = sync_file['data'][()][:, 0:1].astype(np.int64)
+    times = sync_file["data"][()][:, 0:1].astype(np.int64)
 
     intervals = np.ediff1d(times, to_begin=0)
     rollovers = np.where(intervals < 0)[0]
@@ -198,6 +187,7 @@ def process_times(sync_file):
         times[i:] += 4294967296
 
     return times
+
 
 def get_ophys_stimulus_timestamps(sync, pkl):
     """Obtain visual behavior stimuli timing information from a sync *.h5 file.
@@ -217,7 +207,6 @@ def get_ophys_stimulus_timestamps(sync, pkl):
     """
     stimulus_timestamps, _ = get_clipped_stim_timestamps(sync, pkl)
     return stimulus_timestamps
-
 
 
 def get_stim_data_length(filename: str) -> int:
@@ -255,22 +244,23 @@ def get_behavior_stim_timestamps(sync):
     ----------
     sync : h5py.File
         Sync file.
-    
+
     Returns
     -------
     times : np.ndarray
         Timestamps.
     """
     try:
-        stim_key =  "vsync_stim"
-        times =  get_falling_edges(sync, stim_key, units="seconds")
+        stim_key = "vsync_stim"
+        times = get_falling_edges(sync, stim_key, units="seconds")
         return times
     except ValueError:
-        stim_key =  "stim_vsync"
-        times =  get_falling_edges(sync, stim_key, units="seconds")
+        stim_key = "stim_vsync"
+        times = get_falling_edges(sync, stim_key, units="seconds")
         return times
-    except Exception:  
+    except Exception:
         raise ValueError("No stimulus stream found in sync file")
+
 
 def get_clipped_stim_timestamps(sync, pkl_path):
     """
@@ -284,7 +274,7 @@ def get_clipped_stim_timestamps(sync, pkl_path):
         Sync file.
     pkl_path : str
         Path to pkl file
-    
+
     Returns
     -------
     timestamps : np.ndarray
@@ -298,32 +288,33 @@ def get_clipped_stim_timestamps(sync, pkl_path):
 
     delta = 0
     print(sync)
-    if stim_data_length is not None and \
-        stim_data_length < len(timestamps):
+    if stim_data_length is not None and stim_data_length < len(timestamps):
         try:
-            stim_key =  "vsync_stim"
+            stim_key = "vsync_stim"
             rising = get_rising_edges(sync, stim_key, units="seconds")
         except ValueError:
-            stim_key =  "stim_vsync"
+            stim_key = "stim_vsync"
             rising = get_rising_edges(sync, stim_key, units="seconds")
-        except Exception:  
+        except Exception:
             raise ValueError("No stimulus stream found in sync file")
 
         # Some versions of camstim caused a spike when the DAQ is first
         # initialized. Remove it.
         if rising[1] - rising[0] > 0.2:
-            print("Initial DAQ spike detected from stimulus, "
-                            "removing it")
+            print("Initial DAQ spike detected from stimulus, " "removing it")
             timestamps = timestamps[1:]
 
         delta = len(timestamps) - stim_data_length
         if delta != 0:
-            print("Stim data of length %s has timestamps of "
-                            "length %s",
-                            stim_data_length, len(timestamps))
+            print(
+                "Stim data of length %s has timestamps of " "length %s",
+                stim_data_length,
+                len(timestamps),
+            )
     elif stim_data_length is None:
         print("No data length provided for stim stream")
     return timestamps, delta
+
 
 def line_to_bit(sync_file, line):
     """
@@ -356,9 +347,9 @@ def get_edges(
     kind: str,
     keys: Union[str, Sequence[str]],
     units: str = "seconds",
-    permissive: bool = False
+    permissive: bool = False,
 ) -> Optional[np.ndarray]:
-    """ 
+    """
     Utility function for extracting edge times from a line
 
     Parameters
@@ -387,26 +378,31 @@ def get_edges(
 
     if isinstance(keys, str):
         keys = [keys]
-    
+
     print(keys)
 
-    for line in keys:        
+    for line in keys:
         try:
-            if kind == 'falling':
+            if kind == "falling":
                 return get_falling_edges(sync_file, line, units)
-            elif kind == 'rising':
-                return  get_rising_edges(sync_file, line, units)
-            elif kind == 'all':
-                return np.sort(np.concatenate([
-                    get_edges(sync_file,'rising', keys, units),
-                    get_edges(sync_file, 'falling', keys, units)
-                ]))
+            elif kind == "rising":
+                return get_rising_edges(sync_file, line, units)
+            elif kind == "all":
+                return np.sort(
+                    np.concatenate(
+                        [
+                            get_edges(sync_file, "rising", keys, units),
+                            get_edges(sync_file, "falling", keys, units),
+                        ]
+                    )
+                )
         except ValueError:
             continue
 
     if not permissive:
         raise KeyError(
-            f"none of {keys} were found in this dataset's line labels")
+            f"none of {keys} were found in this dataset's line labels"
+        )
 
 
 def get_bit_changes(sync_file, bit):
@@ -432,13 +428,13 @@ def get_all_bits(sync_file):
     ----------
     sync_file : h5py.File
         Loaded hdf5 file.
-    
+
     Returns
     -------
     data: np.ndarray
         All counter values.
     """
-    return sync_file['data'][()][:, -1]
+    return sync_file["data"][()][:, -1]
 
 
 def get_sync_file_bit(sync_file, bit):
@@ -451,7 +447,7 @@ def get_sync_file_bit(sync_file, bit):
         Bit to extract.
     Sync_file : h5py.File
         Loaded hdf5 file.
-    
+
     Returns
     -------
     data: np.ndarray
@@ -459,6 +455,7 @@ def get_sync_file_bit(sync_file, bit):
     """
 
     return get_bit(get_all_bits(sync_file), bit)
+
 
 def get_bit(uint_array, bit):
     """
@@ -483,7 +480,7 @@ def get_sample_freq(meta_data):
     ----------
     meta_data : dict
         Meta data from the sync file.
-    
+
     Returns
     -------
     data: float
@@ -491,12 +488,12 @@ def get_sample_freq(meta_data):
     """
 
     try:
-        return float(meta_data['ni_daq']['sample_freq'])
+        return float(meta_data["ni_daq"]["sample_freq"])
     except KeyError:
-        return float(meta_data['ni_daq']['counter_output_freq'])
+        return float(meta_data["ni_daq"]["counter_output_freq"])
 
 
-def get_all_times(sync_file, meta_data, units='samples'):
+def get_all_times(sync_file, meta_data, units="samples"):
     """
     Returns all counter values.
 
@@ -506,21 +503,21 @@ def get_all_times(sync_file, meta_data, units='samples'):
         Return times in 'samples' or 'seconds'
 
     """
-    if meta_data['ni_daq']['counter_bits'] == 32:
-        times = sync_file['data'][()][:, 0]
+    if meta_data["ni_daq"]["counter_bits"] == 32:
+        times = sync_file["data"][()][:, 0]
     else:
         times = times
     units = units.lower()
-    if units == 'samples':
+    if units == "samples":
         return times
-    elif units in ['seconds', 'sec', 'secs']:
+    elif units in ["seconds", "sec", "secs"]:
         freq = get_sample_freq(meta_data)
         return times / freq
     else:
         raise ValueError("Only 'samples' or 'seconds' are valid units.")
 
 
-def get_falling_edges(sync_file, line, units='samples'):
+def get_falling_edges(sync_file, line, units="samples"):
     """
     Returns the counter values for the falling edges for a specific bit
         or line.
@@ -531,13 +528,13 @@ def get_falling_edges(sync_file, line, units='samples'):
         Line for which to return edges.
 
     """
-    meta_data  = get_meta_data(sync_file)
+    meta_data = get_meta_data(sync_file)
     bit = line_to_bit(sync_file, line)
     changes = get_bit_changes(sync_file, bit)
     return get_all_times(sync_file, meta_data, units)[np.where(changes == 255)]
 
 
-def get_rising_edges(sync_file, line, units='samples'):
+def get_rising_edges(sync_file, line, units="samples"):
     """
     Returns the counter values for the rizing edges for a specific bit or
         line.
@@ -548,7 +545,7 @@ def get_rising_edges(sync_file, line, units='samples'):
         Line for which to return edges.
 
     """
-    meta_data  = get_meta_data(sync_file)
+    meta_data = get_meta_data(sync_file)
     bit = line_to_bit(sync_file, line)
     changes = get_bit_changes(sync_file, bit)
     return get_all_times(sync_file, meta_data, units)[np.where(changes == 1)]
@@ -558,14 +555,14 @@ def trimmed_stats(data, pctiles=(10, 90)):
     """
     Returns the mean and standard deviation of the data after trimming the
         data at the specified percentiles.
-    
+
     Parameters
     ----------
     data : np.ndarray
         Data to trim.
     pctiles : tuple
         Percentiles at which to trim the data.
-    
+
     Returns
     -------
     mean : float
@@ -576,10 +573,7 @@ def trimmed_stats(data, pctiles=(10, 90)):
     low = np.percentile(data, pctiles[0])
     high = np.percentile(data, pctiles[1])
 
-    trimmed = data[np.logical_and(
-        data <= high,
-        data >= low
-    )]
+    trimmed = data[np.logical_and(data <= high, data >= low)]
 
     return np.mean(trimmed), np.std(trimmed)
 
@@ -595,7 +589,7 @@ def estimate_frame_duration(pd_times, cycle=60):
         Photodiode times.
     cycle : int
         Number of frames per cycle.
-    
+
     Returns
     -------
     frame_duration : float
@@ -604,13 +598,9 @@ def estimate_frame_duration(pd_times, cycle=60):
     return trimmed_stats(np.diff(pd_times))[0] / cycle
 
 
-def allocate_by_vsync(vs_diff,
-                      index,
-                      starts,
-                      ends,
-                      frame_duration,
-                      irregularity,
-                      cycle):
+def allocate_by_vsync(
+    vs_diff, index, starts, ends, frame_duration, irregularity, cycle
+):
     """
     Allocates frame times based on the vsync signal.
 
@@ -630,7 +620,7 @@ def allocate_by_vsync(vs_diff,
         Irregularity in the frame times.
     cycle : int
         Number of frames per cycle.
-    
+
     Returns
     -------
     starts : np.ndarray
@@ -652,9 +642,9 @@ def allocate_by_vsync(vs_diff,
     return starts, ends
 
 
-
-
-def trim_border_pulses(pd_times, vs_times, frame_interval=1/60, num_frames=5):
+def trim_border_pulses(
+    pd_times, vs_times, frame_interval=1 / 60, num_frames=5
+):
     """
     Trims pulses near borders of the photodiode signal.
 
@@ -668,27 +658,29 @@ def trim_border_pulses(pd_times, vs_times, frame_interval=1/60, num_frames=5):
         Interval between frames.
     num_frames : int
         Number of frames.
-    
+
     Returns
     -------
     pd_times : np.ndarray
         Trimmed photodiode times.
     """
     pd_times = np.array(pd_times)
-    return pd_times[np.logical_and(
-        pd_times >= vs_times[0],
-        pd_times <= vs_times[-1] + num_frames * frame_interval
-    )]
+    return pd_times[
+        np.logical_and(
+            pd_times >= vs_times[0],
+            pd_times <= vs_times[-1] + num_frames * frame_interval,
+        )
+    ]
 
 
 def correct_on_off_effects(pd_times):
-    '''
+    """
 
     Notes
     -----
     This cannot (without additional info) determine whether an assymmetric
     offset is odd-long or even-long.
-    '''
+    """
 
     pd_diff = np.diff(pd_times)
     odd_diff_mean, odd_diff_std = trimmed_stats(pd_diff[1::2])
@@ -707,8 +699,6 @@ def correct_on_off_effects(pd_times):
     return pd_times
 
 
-
-
 def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
     """
     Trims discontiguous vsyncs from the photodiode signal.
@@ -719,7 +709,7 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
         Vsync times.
     photodiode_cycle : int
         Number of frames per cycle.
-    
+
     Returns
     -------
     vs_times : np.ndarray
@@ -727,20 +717,22 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
     """
     vs_times = np.array(vs_times)
 
-    breaks = np.where(np.diff(vs_times) > (1/photodiode_cycle)*100)[0]
+    breaks = np.where(np.diff(vs_times) > (1 / photodiode_cycle) * 100)[0]
 
     if len(breaks) > 0:
-        chunk_sizes = np.diff(np.concatenate((np.array([0, ]),
-                                                breaks,
-                                                np.array([len(vs_times), ]))))
+        chunk_sizes = np.diff(
+            np.concatenate(
+                (np.array([0, ]), breaks, np.array([len(vs_times), ]))
+            )
+        )
         largest_chunk = np.argmax(chunk_sizes)
 
         if largest_chunk == 0:
-            return vs_times[:np.min(breaks+1)]
+            return vs_times[: np.min(breaks + 1)]
         elif largest_chunk == len(breaks):
-            return vs_times[np.max(breaks+1):]
+            return vs_times[np.max(breaks + 1):]
         else:
-            return vs_times[breaks[largest_chunk-1]:breaks[largest_chunk]]
+            return vs_times[breaks[largest_chunk - 1]: breaks[largest_chunk]]
     else:
         return vs_times
 
@@ -759,7 +751,7 @@ def assign_to_last(starts, ends, frame_duration, irregularity):
         Duration of the frame.
     irregularity : int
         Irregularity in the frame times.
-    
+
     Returns
     -------
     starts : np.ndarray
@@ -779,7 +771,7 @@ def remove_zero_frames(frame_times):
     ----------
     frame_times : np.ndarray
         Frame times.
-    
+
     Returns
     -------
     t : np.ndarray
@@ -792,7 +784,9 @@ def remove_zero_frames(frame_times):
 
     def find_match(big_deltas, value):
         try:
-            return big_deltas[np.max(np.where((big_deltas < value))[0])] - value
+            return (
+                big_deltas[np.max(np.where((big_deltas < value))[0])] - value
+            )
         except ValueError:
             return None
 
@@ -803,21 +797,23 @@ def remove_zero_frames(frame_times):
     for idx, d in enumerate(small_deltas):
         if paired_deltas[idx] is not None:
             if paired_deltas[idx] > -100:
-                ft[d+paired_deltas[idx]] = np.median(deltas)
+                ft[d + paired_deltas[idx]] = np.median(deltas)
                 ft[d] = np.median(deltas)
 
-    t = np.concatenate(([np.min(frame_times)],
-                        np.cumsum(ft) + np.min(frame_times)))
+    t = np.concatenate(
+        ([np.min(frame_times)], np.cumsum(ft) + np.min(frame_times))
+    )
 
     return t
 
 
-
-def compute_frame_times(photodiode_times,
-                        frame_duration,
-                        num_frames,
-                        cycle,
-                        irregular_interval_policy=assign_to_last):
+def compute_frame_times(
+    photodiode_times,
+    frame_duration,
+    num_frames,
+    cycle,
+    irregular_interval_policy=assign_to_last,
+):
     """
     Computes the frame times from the photodiode times.
 
@@ -833,7 +829,7 @@ def compute_frame_times(photodiode_times,
         Number of frames per cycle.
     irregular_interval_policy : function
         Policy for handling irregular intervals.
-    
+
     Returns
     -------
     indices : np.ndarray
@@ -848,17 +844,20 @@ def compute_frame_times(photodiode_times,
     ends = np.zeros(num_frames, dtype=float)
 
     num_intervals = len(photodiode_times) - 1
-    for start_index, (start_time, end_time) in \
-            enumerate(zip(photodiode_times[:-1], photodiode_times[1:])):
+    for start_index, (start_time, end_time) in enumerate(
+        zip(photodiode_times[:-1], photodiode_times[1:])
+    ):
 
         interval_duration = end_time - start_time
-        irregularity = \
+        irregularity = (
             int(np.around((interval_duration) / frame_duration)) - cycle
+        )
 
         local_frame_duration = interval_duration / (cycle + irregularity)
-        durations = \
-            np.zeros(cycle +
-                     (start_index == num_intervals - 1)) + local_frame_duration
+        durations = (
+            np.zeros(cycle + (start_index == num_intervals - 1))
+            + local_frame_duration
+        )
 
         current_ends = np.cumsum(durations) + start_time
         current_starts = current_ends - durations
@@ -869,24 +868,26 @@ def compute_frame_times(photodiode_times,
                 current_starts,
                 current_ends,
                 local_frame_duration,
-                irregularity, cycle
+                irregularity,
+                cycle,
             )
             irregularity += -1 * np.sign(irregularity)
 
         early_frame = start_index * cycle
-        late_frame = \
-            (start_index + 1) * cycle + (start_index == num_intervals - 1)
+        late_frame = (start_index + 1) * cycle + (
+            start_index == num_intervals - 1
+        )
 
-        remaining = starts[early_frame: late_frame].size
-        starts[early_frame: late_frame] = current_starts[:remaining]
-        ends[early_frame: late_frame] = current_ends[:remaining]
+        remaining = starts[early_frame:late_frame].size
+        starts[early_frame:late_frame] = current_starts[:remaining]
+        ends[early_frame:late_frame] = current_ends[:remaining]
 
     return indices, starts, ends
 
 
-def separate_vsyncs_and_photodiode_times(vs_times,
-                                         pd_times,
-                                         photodiode_cycle=60):
+def separate_vsyncs_and_photodiode_times(
+    vs_times, pd_times, photodiode_cycle=60
+):
     """
     Separates the vsyncs and photodiode times.
 
@@ -896,18 +897,18 @@ def separate_vsyncs_and_photodiode_times(vs_times,
         Vsync times.
     pd_times : np.ndarray
         Photodiode times.
-    
+
     Returns
     -------
     vs_times_out : np.ndarray
         Vsync times.
     pd_times_out : np.ndarray
         Photodiode times.
-    """ 
+    """
     vs_times = np.array(vs_times)
     pd_times = np.array(pd_times)
 
-    breaks = np.where(np.diff(vs_times) > (1/photodiode_cycle)*100)[0]
+    breaks = np.where(np.diff(vs_times) > (1 / photodiode_cycle) * 100)[0]
 
     shift = 2.0
     break_times = [-shift]
@@ -919,10 +920,14 @@ def separate_vsyncs_and_photodiode_times(vs_times,
 
     for indx, b in enumerate(break_times[:-1]):
 
-        pd_in_range = np.where((pd_times > break_times[indx] + shift) *
-                               (pd_times <= break_times[indx+1] + shift))[0]
-        vs_in_range = np.where((vs_times > break_times[indx]) *
-                               (vs_times <= break_times[indx+1]))[0]
+        pd_in_range = np.where(
+            (pd_times > break_times[indx] + shift)
+            * (pd_times <= break_times[indx + 1] + shift)
+        )[0]
+        vs_in_range = np.where(
+            (vs_times > break_times[indx])
+            * (vs_times <= break_times[indx + 1])
+        )[0]
 
         vs_times_out.append(vs_times[vs_in_range])
         pd_times_out.append(pd_times[pd_in_range])
@@ -940,7 +945,7 @@ def flag_unexpected_edges(pd_times, ndevs=10):
         Photodiode times.
     ndevs : int
         Number of standard deviations.
-    
+
     Returns
     -------
     expected_duration_mask : np.ndarray
@@ -950,14 +955,18 @@ def flag_unexpected_edges(pd_times, ndevs=10):
     diff_mean, diff_std = trimmed_stats(pd_diff)
 
     expected_duration_mask = np.ones(pd_diff.size)
-    expected_duration_mask[np.logical_or(
-        pd_diff < diff_mean - ndevs * diff_std,
-        pd_diff > diff_mean + ndevs * diff_std
-    )] = 0
-    expected_duration_mask[1:] = np.logical_and(expected_duration_mask[:-1],
-                                                expected_duration_mask[1:])
-    expected_duration_mask = np.concatenate([expected_duration_mask,
-                                            [expected_duration_mask[-1]]])
+    expected_duration_mask[
+        np.logical_or(
+            pd_diff < diff_mean - ndevs * diff_std,
+            pd_diff > diff_mean + ndevs * diff_std,
+        )
+    ] = 0
+    expected_duration_mask[1:] = np.logical_and(
+        expected_duration_mask[:-1], expected_duration_mask[1:]
+    )
+    expected_duration_mask = np.concatenate(
+        [expected_duration_mask, [expected_duration_mask[-1]]]
+    )
 
     return expected_duration_mask
 
@@ -976,7 +985,7 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
         Number of frames per cycle.
     max_frame_offset : int
         Maximum frame offset.
-    
+
     Returns
     -------
     output_edges : np.ndarray
@@ -988,15 +997,21 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
     frame_interval = diff_mean / cycle
 
     bad_edges = np.where(expected_duration_mask == 0)[0]
-    bad_blocks = np.sort(np.unique(np.concatenate([
-        [0],
-        np.where(np.diff(bad_edges) > 1)[0] + 1,
-        [len(bad_edges)]
-    ])))
+    bad_blocks = np.sort(
+        np.unique(
+            np.concatenate(
+                [
+                    [0],
+                    np.where(np.diff(bad_edges) > 1)[0] + 1,
+                    [len(bad_edges)],
+                ]
+            )
+        )
+    )
 
     output_edges = []
     for low, high in zip(bad_blocks[:-1], bad_blocks[1:]):
-        current_bad_edge_indices = bad_edges[low: high-1]
+        current_bad_edge_indices = bad_edges[low: high - 1]
         current_bad_edges = pd_times[current_bad_edge_indices]
         low_bound = pd_times[current_bad_edge_indices[0]]
         high_bound = pd_times[current_bad_edge_indices[-1] + 1]
@@ -1004,18 +1019,23 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
         edges_missing = int(np.around((high_bound - low_bound) / diff_mean))
         expected = np.linspace(low_bound, high_bound, edges_missing + 1)
 
-        distances = distance.cdist(current_bad_edges[:, None],
-                                   expected[:, None])
+        distances = distance.cdist(
+            current_bad_edges[:, None], expected[:, None]
+        )
         distances = np.around(distances / frame_interval).astype(int)
 
         min_offsets = np.amin(distances, axis=0)
         min_offset_indices = np.argmin(distances, axis=0)
-        output_edges = np.concatenate([
-            output_edges,
-            expected[min_offsets > max_frame_offset],
-            current_bad_edges[min_offset_indices[min_offsets <=
-                              max_frame_offset]]
-        ])
+        output_edges = np.concatenate(
+            [
+                output_edges,
+                expected[min_offsets > max_frame_offset],
+                current_bad_edges[
+                    min_offset_indices[min_offsets <= max_frame_offset]
+                ],
+            ]
+        )
 
-    return np.sort(np.concatenate([output_edges,
-                                   pd_times[expected_duration_mask > 0]]))
+    return np.sort(
+        np.concatenate([output_edges, pd_times[expected_duration_mask > 0]])
+    )

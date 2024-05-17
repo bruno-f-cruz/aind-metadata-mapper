@@ -21,32 +21,37 @@ REPR_PARAMS_RE = re.compile(r"([a-z0-9]+=[^=]+)[,\)]", re.IGNORECASE)
 REPR_CLASS_RE = re.compile(r"^(?P<class_name>[a-z0-9]+)\(.*\)$", re.IGNORECASE)
 ARRAY_RE = re.compile(r"array\((?P<contents>\[.*\])\)")
 
-FRAME_KEYS = ('frames', 'stim_vsync', 'vsync_stim')
-PHOTODIODE_KEYS = ('photodiode', 'stim_photodiode')
+FRAME_KEYS = ("frames", "stim_vsync", "vsync_stim")
+PHOTODIODE_KEYS = ("photodiode", "stim_photodiode")
 OPTOGENETIC_STIMULATION_KEYS = ("LED_sync", "opto_trial")
-EYE_TRACKING_KEYS = ("eye_frame_received",  # Expected eye tracking
-                                        # line label after 3/27/2020
-                # clocks eye tracking frame pulses (port 0, line 9)
-                "cam2_exposure",
-                # previous line label for eye tracking
-                # (prior to ~ Oct. 2018)
-                "eyetracking",
-                "eye_cam_exposing",
-                "eye_tracking")  # An undocumented, but possible eye tracking line label  # NOQA E114
-BEHAVIOR_TRACKING_KEYS = ("beh_frame_received",  # Expected behavior line label after 3/27/2020  # NOQA E127
-                                            # clocks behavior tracking frame # NOQA E127
-                                            # pulses (port 0, line 8)
-                    "cam1_exposure",
-                    "behavior_monitoring")
+EYE_TRACKING_KEYS = (
+    "eye_frame_received",  # Expected eye tracking
+    # line label after 3/27/2020
+    # clocks eye tracking frame pulses (port 0, line 9)
+    "cam2_exposure",
+    # previous line label for eye tracking
+    # (prior to ~ Oct. 2018)
+    "eyetracking",
+    "eye_cam_exposing",
+    "eye_tracking",
+)  # An undocumented, but possible eye tracking line label  # NOQA E114
+BEHAVIOR_TRACKING_KEYS = (
+    "beh_frame_received",  # Expected behavior line label after 3/27/2020  # NOQA E127
+    # clocks behavior tracking frame # NOQA E127
+    # pulses (port 0, line 8)
+    "cam1_exposure",
+    "behavior_monitoring",
+)
 
 
 def convert_filepath_caseinsensitive(filename_in):
-    return filename_in.replace('TRAINING', 'training')
+    return filename_in.replace("TRAINING", "training")
+
 
 def enforce_df_int_typing(
-        input_df: pd.DataFrame,
-        int_columns: List[str],
-        use_pandas_type: object = False
+    input_df: pd.DataFrame,
+    int_columns: List[str],
+    use_pandas_type: object = False,
 ) -> pd.DataFrame:
     """Enforce integer typing for columns that may have lost int typing when
     combined into the final DataFrame.
@@ -80,8 +85,7 @@ def enforce_df_int_typing(
 
 
 def enforce_df_column_order(
-        input_df: pd.DataFrame,
-        column_order: List[str]
+    input_df: pd.DataFrame, column_order: List[str]
 ) -> pd.DataFrame:
     """Return the data frame but with columns ordered.
 
@@ -111,6 +115,7 @@ def enforce_df_column_order(
     )
     return input_df[pruned_order]
 
+
 def seconds_to_frames(seconds, pkl_file):
     """
     Convert seconds to frames using the pkl file.
@@ -121,13 +126,15 @@ def seconds_to_frames(seconds, pkl_file):
         Seconds to convert to frames.
     pkl_file : str
         Path to the pkl file.
-    
+
     Returns
     -------
     frames : list of int
         Frames corresponding to the input seconds.
     """
-    return (np.array(seconds) + pkl.get_pre_blank_sec(pkl_file)) * pkl.get_fps(pkl_file)
+    return (np.array(seconds) + pkl.get_pre_blank_sec(pkl_file)) * pkl.get_fps(
+        pkl_file
+    )
 
 
 def extract_const_params_from_stim_repr(
@@ -178,7 +185,6 @@ def extract_const_params_from_stim_repr(
             raise KeyError(f"duplicate key: {k}")
 
     return repr_params
-
 
 
 def parse_stim_repr(
@@ -262,8 +268,9 @@ def create_stim_table(
 
         stimulus_tables.extend(current_tables)
 
-    stimulus_tables = sorted(stimulus_tables,
-                             key=lambda df: min(df[sort_key].values))
+    stimulus_tables = sorted(
+        stimulus_tables, key=lambda df: min(df[sort_key].values)
+    )
     for ii, stim_table in enumerate(stimulus_tables):
         stim_table[block_key] = ii
 
@@ -277,7 +284,10 @@ def create_stim_table(
 
 
 def make_spontaneous_activity_tables(
-    stimulus_tables, start_key="start_time", end_key="stop_time", duration_threshold=0.0
+    stimulus_tables,
+    start_key="start_time",
+    end_key="stop_time",
+    duration_threshold=0.0,
 ):
     """ Fills in frame gaps in a set of stimulus tables. Suitable for use as
     the spontaneous_activity_tabler in create_stim_table.
@@ -318,8 +328,7 @@ def make_spontaneous_activity_tables(
 
     if duration_threshold is not None:
         spon_sweeps = spon_sweeps[
-            np.fabs(spon_sweeps[start_key]
-                    - spon_sweeps[end_key])
+            np.fabs(spon_sweeps[start_key] - spon_sweeps[end_key])
             > duration_threshold
         ]
         spon_sweeps.reset_index(drop=True, inplace=True)
@@ -332,7 +341,8 @@ def extract_frame_times_from_photodiode(
     photodiode_cycle=60,
     frame_keys=FRAME_KEYS,
     photodiode_keys=PHOTODIODE_KEYS,
-    trim_discontiguous_frame_times=True):
+    trim_discontiguous_frame_times=True,
+):
     """
     Extracts frame times from a photodiode signal.
 
@@ -348,57 +358,58 @@ def extract_frame_times_from_photodiode(
         Keys to extract photodiode times from. Defaults to PHOTODIODE_KEYS.
     trim_discontiguous_frame_times : bool, optional
         If True, remove discontiguous frame times. Defaults to True.
-    
+
     Returns
     -------
     frame_start_times : np.ndarray
         The start times of each frame.
 
     """
-    
 
-    photodiode_times = sync.get_edges(sync_file, 'all', photodiode_keys)
-    vsync_times = sync.get_edges(sync_file, 'falling', frame_keys)
+    photodiode_times = sync.get_edges(sync_file, "all", photodiode_keys)
+    vsync_times = sync.get_edges(sync_file, "falling", frame_keys)
 
     if trim_discontiguous_frame_times:
         vsync_times = sync.trim_discontiguous_vsyncs(vsync_times)
 
-    vsync_times_chunked, pd_times_chunked = \
-        sync.separate_vsyncs_and_photodiode_times(
-            vsync_times,
-            photodiode_times,
-            photodiode_cycle)
+    (
+        vsync_times_chunked,
+        pd_times_chunked,
+    ) = sync.separate_vsyncs_and_photodiode_times(
+        vsync_times, photodiode_times, photodiode_cycle
+    )
 
     frame_start_times = np.zeros((0,))
 
     for i in range(len(vsync_times_chunked)):
 
         photodiode_times = sync.trim_border_pulses(
-            pd_times_chunked[i],
-            vsync_times_chunked[i])
-        photodiode_times = sync.correct_on_off_effects(
-            photodiode_times)
+            pd_times_chunked[i], vsync_times_chunked[i]
+        )
+        photodiode_times = sync.correct_on_off_effects(photodiode_times)
         photodiode_times = sync.fix_unexpected_edges(
-            photodiode_times,
-            cycle=photodiode_cycle)
+            photodiode_times, cycle=photodiode_cycle
+        )
 
         frame_duration = sync.estimate_frame_duration(
-            photodiode_times,
-            cycle=photodiode_cycle)
+            photodiode_times, cycle=photodiode_cycle
+        )
         irregular_interval_policy = functools.partial(
-            sync.allocate_by_vsync,
-            np.diff(vsync_times_chunked[i]))
-        frame_indices, frame_starts, frame_end_times = \
-            sync.compute_frame_times(
-                photodiode_times,
-                frame_duration,
-                len(vsync_times_chunked[i]),
-                cycle=photodiode_cycle,
-                irregular_interval_policy=irregular_interval_policy
-                )
+            sync.allocate_by_vsync, np.diff(vsync_times_chunked[i])
+        )
+        (
+            frame_indices,
+            frame_starts,
+            frame_end_times,
+        ) = sync.compute_frame_times(
+            photodiode_times,
+            frame_duration,
+            len(vsync_times_chunked[i]),
+            cycle=photodiode_cycle,
+            irregular_interval_policy=irregular_interval_policy,
+        )
 
-        frame_start_times = np.concatenate((frame_start_times,
-                                            frame_starts))
+        frame_start_times = np.concatenate((frame_start_times, frame_starts))
 
     frame_start_times = sync.remove_zero_frames(frame_start_times)
 
@@ -431,7 +442,8 @@ def convert_frames_to_seconds(
         frame ended. If False, no extra time will be
         appended. If None (default), the increment will be 1.0/fps.
     map_columns : tuple of str, optional
-        Which columns to replace with times. Defaults to 'start_time' and 'stop_time'
+        Which columns to replace with times. Defaults to 'start_time'
+        and 'stop_time'
 
     Returns
     -------
@@ -445,8 +457,9 @@ def convert_frames_to_seconds(
     if extra_frame_time is True and frames_per_second is not None:
         extra_frame_time = 1.0 / frames_per_second
     if extra_frame_time is not False:
-        frame_times = np.append(frame_times, frame_times[-1]
-                                + extra_frame_time)
+        frame_times = np.append(
+            frame_times, frame_times[-1] + extra_frame_time
+        )
 
     for column in map_columns:
         stimulus_table[column] = frame_times[
@@ -504,8 +517,9 @@ def apply_display_sequence(
 
     sweep_frames_table[start_key] += frame_display_sequence[0, 0]
     for seg in range(len(frame_display_sequence) - 1):
-        match_inds = sweep_frames_table[start_key] \
-                     >= frame_display_sequence[seg, 1]
+        match_inds = (
+            sweep_frames_table[start_key] >= frame_display_sequence[seg, 1]
+        )
 
         sweep_frames_table.loc[match_inds, start_key] += (
             frame_display_sequence[seg + 1, 0] - frame_display_sequence[seg, 1]
@@ -565,14 +579,14 @@ def get_stimulus_type(stimulus):
     ----------
     stimulus : dict
         A dictionary describing a stimulus.
-    
+
     Returns
     -------
     str :
         The stimulus type.
     """
-    input_string = stimulus['stim']
-    
+    input_string = stimulus["stim"]
+
     # Regex for single quotes
     pattern = r"name='([^']+)'"
 
@@ -580,14 +594,14 @@ def get_stimulus_type(stimulus):
 
     if match:
         stim_type = match.group(1)
-        stim_type = stim_type.replace("unnamed ","")
-        return(stim_type)
+        stim_type = stim_type.replace("unnamed ", "")
+        return stim_type
     else:
-        return None  
+        return None
 
 
 def build_stimuluswise_table(
-    pickle_file, 
+    pickle_file,
     stimulus,
     seconds_to_frames,
     start_key="start_time",
@@ -648,15 +662,17 @@ def build_stimuluswise_table(
 
     if get_stimulus_name is None:
         get_stimulus_name = read_stimulus_name_from_path
-    
 
-    frame_display_sequence = seconds_to_frames(stimulus["display_sequence"], pickle_file)
+    frame_display_sequence = seconds_to_frames(
+        stimulus["display_sequence"], pickle_file
+    )
 
     sweep_frames_table = pd.DataFrame(
         stimulus["sweep_frames"], columns=(start_key, end_key)
     )
-    sweep_frames_table[block_key] = np.zeros([sweep_frames_table.shape[0]],
-                                             dtype=int)
+    sweep_frames_table[block_key] = np.zeros(
+        [sweep_frames_table.shape[0]], dtype=int
+    )
     sweep_frames_table = apply_display_sequence(
         sweep_frames_table, frame_display_sequence, block_key=block_key
     )
@@ -700,14 +716,16 @@ def build_stimuluswise_table(
             existing = const_param_key in existing_columns
 
             if not (existing_cap or existing_upper or existing):
-                stim_table[const_param_key] = [const_param_value] * \
-                                              stim_table.shape[0]
+                stim_table[const_param_key] = [
+                    const_param_value
+                ] * stim_table.shape[0]
             else:
-                raise KeyError(f"column {const_param_key} already exists")      
+                raise KeyError(f"column {const_param_key} already exists")
 
     unique_indices = np.unique(stim_table[block_key].values)
-    output = [stim_table.loc[stim_table[block_key] == ii, :]
-              for ii in unique_indices]
+    output = [
+        stim_table.loc[stim_table[block_key] == ii, :] for ii in unique_indices
+    ]
 
     return output
 

@@ -45,8 +45,8 @@ def get_stimuli(pkl):
         pkl file.
 
     """
-    
-    return pkl['stimuli']
+
+    return pkl["stimuli"]
 
 
 def get_fps(pkl):
@@ -64,7 +64,7 @@ def get_fps(pkl):
         fps.
 
     """
-    return pkl['fps']
+    return pkl["fps"]
 
 
 def get_pre_blank_sec(pkl):
@@ -76,14 +76,14 @@ def get_pre_blank_sec(pkl):
 
     pkl : dict
         pkl file.
-    
+
     Returns
     -------
     data: int
         pre_blank_sec.
-    
+
     """
-    return pkl['pre_blank_sec']
+    return pkl["pre_blank_sec"]
 
 
 def angular_wheel_velocity(pkl):
@@ -94,12 +94,12 @@ def angular_wheel_velocity(pkl):
     ----------
     pkl : dict
         pkl file.
-    
+
     Returns
     -------
     data: int
         fps * wheel rotation speed
-    
+
     """
     return get_fps(pkl) * get_angular_wheel_rotation(pkl)
 
@@ -112,12 +112,12 @@ def get_angular_wheel_rotation(pkl):
     ----------
     pkl : dict
         pkl file.
-    
+
     Returns
     -------
     data: int
         wheel rotation speed
-    
+
     """
     return get_running_array(pkl, "dx")
 
@@ -130,12 +130,12 @@ def vsig(pkl):
     ----------
     pkl : dict
         pkl file.
-    
+
     Returns
     -------
     data: int
         vsig
-    
+
     """
     return get_running_array(pkl, "vsig")
 
@@ -149,12 +149,12 @@ def vin(pkl):
 
     pkl : dict
         pkl file.
-    
+
     Returns
     -------
     data: vin
         voltage in
-    
+
     """
     return get_running_array(pkl, "vin")
 
@@ -169,19 +169,21 @@ def get_running_array(pkl, key):
         pkl file.
     key : str
         key to extract from pkl file.
-    
+
     Returns
     -------
     data: array
         running array
-    
+
     """
     try:
-        result = pkl['items']['foraging']['encoders'][0][key]
+        result = pkl["items"]["foraging"]["encoders"][0][key]
     except (KeyError, IndexError):
         try:
             result = pkl[key]
         except KeyError:
-            raise KeyError(f'unable to extract {key} from this stimulus pickle')
-            
+            raise KeyError(
+                f"unable to extract {key} from this stimulus pickle"
+            )
+
     return np.array(result)
