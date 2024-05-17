@@ -3,14 +3,13 @@ File containing Camstim class
 """
 
 import datetime
-import io
 
 import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
-import npc_sync
 import pandas as pd
-from utils import pickle_functions as pkl_utils
+import aind_metadata_mapper.utils.pkl_utils as pkl
+import aind_metadata_mapper.utils.sync_utils as sync
 
 
 class Camstim:
@@ -39,14 +38,12 @@ class Camstim:
         )
         self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
-        sync_data = npc_sync.SyncDataset(
-            io.BytesIO(self.sync_path.read_bytes())
-        )
-        self.session_start, self.session_end = (
-            sync_data.start_time,
-            sync_data.stop_time,
-        )
-        print("session start:end", self.session_start, ":", self.session_end)
+        sync_data = sync.load_sync(self.sync_path)
+        self.session_start = sync.get_start_time(sync_data)
+        self.session_end = sync.get_stop_time(sync_data)
+
+        print("session start : session end\n", self.session_start, ":", self.session_end)
+
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
@@ -171,7 +168,7 @@ class Camstim:
 
         software_obj = aind_data_schema.components.devices.Software(
             name="camstim",
-            version=pkl_utils.load_pkl(self.pkl_path)["platform"][
+            version=pkl.load_pkl(self.pkl_path)["platform"][
                 "camstim"
             ].split("+")[0],
             url="https://eng-gitlab.corp.alleninstitute.org/braintv/camstim",
