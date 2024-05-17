@@ -22,6 +22,7 @@ import re
 
 import aind_metadata_mapper.stimulus.camstim
 import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.utils.naming_utils as names
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -34,12 +35,16 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
     npexp_path: Path
     recording_dir: Path
 
-    def __init__(self, session_id: str, json_settings: dict) -> None:
+    def __init__(self, session_id: str, json_settings: dict, opto_conditions_map=None) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
         start and end times from sync file, and extract epochs from stim
         tables.
         """
+        if opto_conditions_map == None:
+            opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+        self.opto_conditions_map = opto_conditions_map
+
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
         self.mtrain = session_inst.mtrain
@@ -59,12 +64,9 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
             self.npexp_path / f"{self.folder}.motor-locs.csv"
         )
         self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
-        self.opto_table_path = (
-            self.npexp_path / f"{self.folder}_opto_epochs.csv"
-        )
-        self.stim_table_path = (
-            self.npexp_path / f"{self.folder}_stim_epochs.csv"
-        )
+        self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
+        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv' 
+        self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv'
         self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
         platform_path = next(
@@ -76,15 +78,20 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-
         print("session start : session end\n", self.session_start, ":", self.session_end)
+
+        if not self.stim_table_path.exists():
+            print('building stim table')
+            self.build_stimulus_table()
+        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
+            print('building opto table')
+            self.build_optogenetics_table()
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
-
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
-
+        
         self.available_probes = self.get_available_probes()
 
     def generate_session_json(self) -> session_schema.Session:

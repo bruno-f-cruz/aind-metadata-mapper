@@ -10,6 +10,9 @@ import np_session
 import pandas as pd
 import aind_metadata_mapper.utils.pkl_utils as pkl
 import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.utils.stim_utils as stim
+import aind_metadata_mapper.utils.naming_utils as names
+import functools
 
 
 class Camstim:
@@ -17,12 +20,16 @@ class Camstim:
     Methods used to extract stimulus epochs
     """
 
-    def __init__(self, session_id: str, json_settings: dict) -> None:
+    def __init__(self, session_id: str, json_settings: dict, opto_conditions_map=None) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
         start and end times from sync file, and extract epochs from stim
         tables.
         """
+        if opto_conditions_map == None:
+            opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+        self.opto_conditions_map = opto_conditions_map
+
         self.json_settings = json_settings
         session_inst = np_session.Session(session_id)
         self.mtrain = session_inst.mtrain
@@ -30,26 +37,125 @@ class Camstim:
         self.folder = session_inst.folder
 
         self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
-        self.opto_table_path = (
-            self.npexp_path / f"{self.folder}_opto_epochs.csv"
-        )
-        self.stim_table_path = (
-            self.npexp_path / f"{self.folder}_stim_epochs.csv"
-        )
-        self.sync_path = self.npexp_path / f"{self.folder}.sync"
+        self.opto_pkl_path = self.npexp_path / f'{self.folder}.opto.pkl'
+        self.opto_table_path = self.npexp_path / f'{self.folder}_opto_epochs.csv' 
+        self.stim_table_path = self.npexp_path / f'{self.folder}_stim_epochs.csv'
+        self.sync_path = self.npexp_path / f'{self.folder}.sync'
 
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-
         print("session start : session end\n", self.session_start, ":", self.session_end)
 
+        if not self.stim_table_path.exists():
+            print('building stim table')
+            self.build_stimulus_table()
+        if self.opto_pkl_path.exists() and not self.opto_table_path.exists():
+            print('building opto table')
+            self.build_optogenetics_table()
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
-
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
+
+    def build_stimulus_table(
+            self,
+            minimum_spontaneous_activity_duration=0.0,
+            extract_const_params_from_repr=False,
+            drop_const_params=stim.DROP_PARAMS,
+            stimulus_name_map=names.default_stimulus_renames,
+            column_name_map=names.default_column_renames,
+    ):
+        stim_file = pkl.load_pkl(self.pkl_path)
+        sync_file = sync.load_sync(self.sync_path)
+
+        frame_times = stim.extract_frame_times_from_photodiode(
+            sync_file
+            )
+        minimum_spontaneous_activity_duration = (
+                minimum_spontaneous_activity_duration / pkl.get_fps(stim_file)
+        )
+
+        stimulus_tabler = functools.partial(
+            stim.build_stimuluswise_table,
+            seconds_to_frames=stim.seconds_to_frames,
+            extract_const_params_from_repr=extract_const_params_from_repr,
+            drop_const_params=drop_const_params,
+        )
+
+        spon_tabler = functools.partial(
+            stim.make_spontaneous_activity_tables,
+            duration_threshold=minimum_spontaneous_activity_duration,
+        )
+
+        stim_table_sweeps = stim.create_stim_table(
+            stim_file, pkl.get_stimuli(stim_file), stimulus_tabler, spon_tabler
+        )
+
+        stim_table_seconds= stim.convert_frames_to_seconds(
+            stim_table_sweeps, frame_times, pkl.get_fps(stim_file), True
+        )
+
+        stim_table_seconds = names.collapse_columns(stim_table_seconds)
+        stim_table_seconds = names.drop_empty_columns(stim_table_seconds)
+        stim_table_seconds = names.standardize_movie_numbers(
+            stim_table_seconds)
+        stim_table_seconds = names.add_number_to_shuffled_movie(
+            stim_table_seconds)
+        stim_table_seconds = names.map_stimulus_names(
+            stim_table_seconds, stimulus_name_map
+        )
+
+        stim_table_final = names.map_column_names(stim_table_seconds,
+                                                            column_name_map,
+                                                            ignore_case=False)
+
+        stim_table_final.to_csv(self.stim_table_path, index=False)
+
+    def build_optogenetics_table(
+            self,
+            output_opto_table_path,
+            keys=stim.OPTOGENETIC_STIMULATION_KEYS
+        ): 
+        opto_file = pkl.load_pkl(self.opto_pkl_path)
+        sync_file = sync.load_sync(self.sync_path)
+
+        start_times = sync.extract_led_times(sync_file,
+                                            keys
+                                            )
+
+        conditions = [str(item) for item in opto_file['opto_conditions']]
+        levels = opto_file['opto_levels']
+        assert len(conditions) == len(levels)
+        if len(start_times) > len(conditions):
+            raise ValueError(
+                f"there are {len(start_times) - len(conditions)} extra "
+                f"optotagging sync times!")
+        optotagging_table = pd.DataFrame({
+            'start_time': start_times,
+            'condition': conditions,
+            'level': levels
+        })
+        optotagging_table = optotagging_table.sort_values(by='start_time', axis=0)
+
+        stop_times = []
+        names = []
+        conditions = []
+        for _, row in optotagging_table.iterrows():
+            condition = self.opto_conditions_map[row["condition"]]
+            stop_times.append(row["start_time"] + condition["duration"])
+            names.append(condition["name"])
+            conditions.append(condition["condition"])
+
+        optotagging_table["stop_time"] = stop_times
+        optotagging_table["stimulus_name"] = names
+        optotagging_table["condition"] = conditions
+        optotagging_table["duration"] = \
+            optotagging_table["stop_time"] - optotagging_table["start_time"]
+
+        optotagging_table.to_csv(output_opto_table_path, index=False)
+        return {'output_opto_table_path': output_opto_table_path}
 
     def epoch_from_opto_table(self) -> session_schema.StimulusEpoch:
         """
