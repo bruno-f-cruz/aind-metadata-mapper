@@ -595,7 +595,7 @@ def get_stimulus_type(stimulus):
         stim_type = stim_type.replace("unnamed ", "")
         return stim_type
     else:
-        return None
+        return "None or Blank"
 
 
 def build_stimuluswise_table(
