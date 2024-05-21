@@ -358,5 +358,204 @@ class TestGetMetaData(unittest.TestCase):
         with self.assertRaises(TypeError):
             sync.line_to_bit(mock_sync_file, ["line1", "line2"])
 
+
+    def test_get_bit_changes(self):
+        # Mock get_sync_file_bit function to return bit array
+        def mock_get_sync_file_bit(sync_file, bit):
+            return np.array([0, 1, 0, 1, 1, 0, 0, 1, 0])  # Example bit array
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_sync_file_bit function with the mock
+        with unittest.mock.patch("sync.get_sync_file_bit", side_effect=mock_get_sync_file_bit):
+            # Call the function to get the first derivative of the specified bit
+            bit_changes = sync.get_bit_changes(mock_sync_file, 2)
+
+            # Check if the returned bit changes match the expected values
+            expected_bit_changes = np.array([0, 1, -1, 1, 0, -1, 1, -1, 0])
+            np.testing.assert_array_equal(bit_changes, expected_bit_changes)
+
+    def test_get_all_bits(self):
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+        mock_sync_file.__getitem__.return_value = np.array([[0, 1, 0], [1, 0, 1]])  # Example sync file data
+
+        # Call the function to get all counter values
+        all_bits = sync.get_all_bits(mock_sync_file)
+
+        # Check if the returned all bits match the expected values
+        expected_all_bits = np.array([0, 1])
+        np.testing.assert_array_equal(all_bits, expected_all_bits)
+
+    def test_get_sync_file_bit(self):
+        # Mock get_all_bits function to return all bits
+        def mock_get_all_bits(sync_file):
+            return np.array([0, 1, 0, 1])  # Example all bits
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_all_bits function with the mock
+        with unittest.mock.patch("sync.get_all_bits", side_effect=mock_get_all_bits):
+            # Call the function to get a specific bit from the sync file
+            bit_values = sync.get_sync_file_bit(mock_sync_file, 2)
+
+            # Check if the returned bit values match the expected values
+            expected_bit_values = np.array([0, 0, 0, 1])
+            np.testing.assert_array_equal(bit_values, expected_bit_values)
+
+    def test_get_bit_single_bit(self):
+        # Create a uint array
+        uint_array = np.array([3, 5, 6])  # Binary: 011, 101, 110
+
+        # Call the function to extract a single bit
+        bit_values = sync.get_bit(uint_array, 1)
+
+        # Check if the returned bit values match the expected values
+        expected_bit_values = np.array([1, 0, 1])
+        np.testing.assert_array_equal(bit_values, expected_bit_values)
+
+    def test_get_bit_multiple_bits(self):
+        # Create a uint array
+        uint_array = np.array([3, 5, 6])  # Binary: 011, 101, 110
+
+        # Call the function to extract multiple bits
+        bit_values = sync.get_bit(uint_array, 0)
+
+        # Check if the returned bit values match the expected values
+        expected_bit_values = np.array([1, 1, 0])
+        np.testing.assert_array_equal(bit_values, expected_bit_values)
+
+    def test_get_bit_out_of_range(self):
+        # Create a uint array
+        uint_array = np.array([3, 5, 6])  # Binary: 011, 101, 110
+
+        # Call the function to extract a bit that is out of range
+        bit_values = sync.get_bit(uint_array, 3)
+
+        # Check if the returned bit values are all zeros
+        expected_bit_values = np.array([0, 0, 0])
+        np.testing.assert_array_equal(bit_values, expected_bit_values)
+
+
+    def test_get_sample_freq_with_sample_freq_key(self):
+        # Create meta data with sample_freq key
+        meta_data = {"ni_daq": {"sample_freq": 1000}}
+
+        # Call the function to get the sample frequency
+        sample_freq = sync.get_sample_freq(meta_data)
+
+        # Check if the returned sample frequency matches the expected value
+        expected_sample_freq = 1000.0
+        self.assertEqual(sample_freq, expected_sample_freq)
+
+    def test_get_sample_freq_with_counter_output_freq_key(self):
+        # Create meta data with counter_output_freq key
+        meta_data = {"ni_daq": {"counter_output_freq": 500}}
+
+        # Call the function to get the sample frequency
+        sample_freq = sync.get_sample_freq(meta_data)
+
+        # Check if the returned sample frequency matches the expected value
+        expected_sample_freq = 500.0
+        self.assertEqual(sample_freq, expected_sample_freq)
+
+    def test_get_sample_freq_with_missing_keys(self):
+        # Create meta data without sample_freq and counter_output_freq keys
+        meta_data = {"ni_daq": {}}
+
+        # Call the function to get the sample frequency
+        sample_freq = sync.get_sample_freq(meta_data)
+
+        # Check if the returned sample frequency is 0.0 (default value for missing keys)
+        expected_sample_freq = 0.0
+        self.assertEqual(sample_freq, expected_sample_freq)
+
+
+    def test_get_all_times_with_32_bit_counter(self):
+        # Create a mock sync file with data and meta data
+        mock_sync_file = {"data": np.array([[0, 100], [1, 200], [2, 300]])}
+        mock_meta_data = {"ni_daq": {"counter_bits": 32}}
+
+        # Call the function to get all times in samples
+        all_times_samples = sync.get_all_times(mock_sync_file, mock_meta_data, units="samples")
+
+        # Check if the returned times match the expected values
+        expected_all_times_samples = np.array([0, 1, 2])
+        np.testing.assert_array_equal(all_times_samples, expected_all_times_samples)
+
+    def test_get_all_times_with_non_32_bit_counter(self):
+        # Create a mock sync file with data and meta data
+        mock_sync_file = {"data": np.array([[0, 100], [1, 200], [2, 300]])}
+        mock_meta_data = {"ni_daq": {"counter_bits": 16}}
+
+        # Call the function to get all times in seconds
+        all_times_seconds = sync.get_all_times(mock_sync_file, mock_meta_data, units="seconds")
+
+        # Check if the returned times match the expected values
+        expected_all_times_seconds = np.array([0, 0.1, 0.2])
+        np.testing.assert_array_equal(all_times_seconds, expected_all_times_seconds)
+
+    def test_get_all_times_with_invalid_units(self):
+        # Create a mock sync file with data and meta data
+        mock_sync_file = {"data": np.array([[0, 100], [1, 200], [2, 300]])}
+        mock_meta_data = {"ni_daq": {"counter_bits": 32}}
+
+        # Call the function with an invalid units parameter and assert that it raises a ValueError
+        with self.assertRaises(ValueError):
+            sync.get_all_times(mock_sync_file, mock_meta_data, units="invalid_units")
+
+    def test_get_falling_edges(self):
+        # Mock the required functions to return expected values
+        with unittest.mock.patch("sync.get_meta_data", return_value=self.mock_meta_data):
+            with unittest.mock.patch("sync.line_to_bit", return_value=3):  # Assuming bit value for the line
+                with unittest.mock.patch("sync.get_bit_changes", return_value=np.array([0, 255, 0, 255])):  # Mock changes
+                    with unittest.mock.patch("sync.get_all_times", return_value=np.array([0, 1, 2, 3])):  # Mock times
+                        # Call the function to get falling edges
+                        falling_edges = sync.get_falling_edges(self.mock_sync_file, "line")
+
+        # Check if the returned falling edges match the expected values
+        expected_falling_edges = np.array([1, 3])  # Expected indices of falling edges
+        np.testing.assert_array_equal(falling_edges, expected_falling_edges)
+
+    def test_get_rising_edges(self):
+        # Mock the required functions to return expected values
+        with unittest.mock.patch("sync.get_meta_data", return_value=self.mock_meta_data):
+            with unittest.mock.patch("sync.line_to_bit", return_value=3):  # Assuming bit value for the line
+                with unittest.mock.patch("sync.get_bit_changes", return_value=np.array([0, 1, 0, 1])):  # Mock changes
+                    with unittest.mock.patch("sync.get_all_times", return_value=np.array([0, 1, 2, 3])):  # Mock times
+                        # Call the function to get rising edges
+                        rising_edges = sync.get_rising_edges(self.mock_sync_file, "line")
+
+        # Check if the returned rising edges match the expected values
+        expected_rising_edges = np.array([1, 3])  # Expected indices of rising edges
+        np.testing.assert_array_equal(rising_edges, expected_rising_edges)
+
+    def test_trimmed_stats(self):
+        # Create mock data with outliers
+        mock_data = np.array([1, 2, 3, 4, 5, 1000])
+
+        # Call the function to calculate trimmed stats
+        mean, std = sync.trimmed_stats(mock_data)
+
+        # Check if the returned mean and standard deviation match the expected values
+        expected_mean = np.mean([1, 2, 3, 4, 5])
+        expected_std = np.std([1, 2, 3, 4, 5])
+        self.assertAlmostEqual(mean, expected_mean)
+        self.assertAlmostEqual(std, expected_std)
+
+    def test_trimmed_stats_custom_percentiles(self):
+        # Create mock data with outliers
+        mock_data = np.array([1, 2, 3, 4, 5, 1000])
+
+        # Call the function with custom percentiles to calculate trimmed stats
+        mean, std = sync.trimmed_stats(mock_data, pctiles=(20, 80))
+
+        # Check if the returned mean and standard deviation match the expected values
+        expected_mean = np.mean([2, 3, 4])
+        expected_std = np.std([2, 3, 4])
+        self.assertAlmostEqual(mean, expected_mean)
+        self.assertAlmostEqual(std, expected_std)
 if __name__ == "__main__":
     unittest.main()
