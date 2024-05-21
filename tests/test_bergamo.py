@@ -106,7 +106,6 @@ class TestBergamoEtl(unittest.TestCase):
     )
     def test_run_job(self, mock_extract: MagicMock, mock_get_files: MagicMock):
         """Tests run_job method"""
-
         mock_extract.return_value = self.example_metadata
         etl = BergamoEtl(job_settings=self.example_job_settings)
         response = etl.run_job()

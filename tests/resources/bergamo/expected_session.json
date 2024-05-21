@@ -162,7 +162,10 @@
          "daq_names": [
             ""
          ],
-         "camera_names": [],
+         "camera_names": [
+            "Side Face Camera",
+            "Bottom Face Camera"
+         ],
          "light_sources": [
             {
                "device_type": "Laser",
@@ -218,31 +221,7 @@
             {
                "name": "Behavior",
                "abbreviation": "behavior"
-            }
-         ],
-         "software": [],
-         "notes": null
-      },
-      {
-         "stream_start_time": "2022-06-10T12:59:39.924999-07:00",
-         "stream_end_time": "2022-06-10T13:01:06.135279-07:00",
-         "daq_names": [],
-         "camera_names": [
-            "Side Face Camera",
-            "Bottom Face Camera"
-         ],
-         "light_sources": [],
-         "ephys_modules": [],
-         "stick_microscopes": [],
-         "manipulator_modules": [],
-         "detectors": [],
-         "fiber_connections": [],
-         "fiber_modules": [],
-         "ophys_fovs": [],
-         "slap_fovs": null,
-         "stack_parameters": null,
-         "mri_scans": [],
-         "stream_modalities": [
+            },
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"
@@ -257,7 +236,10 @@
          "daq_names": [
             ""
          ],
-         "camera_names": [],
+         "camera_names": [
+            "Side Face Camera",
+            "Bottom Face Camera"
+         ],
          "light_sources": [
             {
                "device_type": "Laser",
@@ -313,31 +295,7 @@
             {
                "name": "Behavior",
                "abbreviation": "behavior"
-            }
-         ],
-         "software": [],
-         "notes": null
-      },
-      {
-         "stream_start_time": "2022-06-10T13:26:43.909999-07:00",
-         "stream_end_time": "2022-06-10T13:34:11.561261-07:00",
-         "daq_names": [],
-         "camera_names": [
-            "Side Face Camera",
-            "Bottom Face Camera"
-         ],
-         "light_sources": [],
-         "ephys_modules": [],
-         "stick_microscopes": [],
-         "manipulator_modules": [],
-         "detectors": [],
-         "fiber_connections": [],
-         "fiber_modules": [],
-         "ophys_fovs": [],
-         "slap_fovs": null,
-         "stack_parameters": null,
-         "mri_scans": [],
-         "stream_modalities": [
+            },
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"
@@ -352,7 +310,10 @@
          "daq_names": [
             ""
          ],
-         "camera_names": [],
+         "camera_names": [
+            "Side Face Camera",
+            "Bottom Face Camera"
+         ],
          "light_sources": [
             {
                "device_type": "Laser",
@@ -408,31 +369,7 @@
             {
                "name": "Behavior",
                "abbreviation": "behavior"
-            }
-         ],
-         "software": [],
-         "notes": null
-      },
-      {
-         "stream_start_time": "2022-06-10T13:01:18.429999-07:00",
-         "stream_end_time": "2022-06-10T13:26:34.344828-07:00",
-         "daq_names": [],
-         "camera_names": [
-            "Side Face Camera",
-            "Bottom Face Camera"
-         ],
-         "light_sources": [],
-         "ephys_modules": [],
-         "stick_microscopes": [],
-         "manipulator_modules": [],
-         "detectors": [],
-         "fiber_connections": [],
-         "fiber_modules": [],
-         "ophys_fovs": [],
-         "slap_fovs": null,
-         "stack_parameters": null,
-         "mri_scans": [],
-         "stream_modalities": [
+            },
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"

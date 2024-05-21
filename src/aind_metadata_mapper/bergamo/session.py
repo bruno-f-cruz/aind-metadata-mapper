@@ -70,7 +70,7 @@ class JobSettings(BaseSettings):
     imaging_laser_wavelength: int  # user defined
     fov_imaging_depth: int
     fov_targeted_structure: str
-    notes: str
+    notes: Optional[str]
 
     # fields with default values
     mouse_platform_name: str = "tube"  # should match rig json
@@ -793,6 +793,14 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 frame_rate=float(tiff_header["hRoiManager"]["scanFrameRate"]),
                 targeted_structure=self.job_settings.fov_targeted_structure,
             )
+
+            stream_modalities = [Modality.POPHYS, Modality.BEHAVIOR]
+            if len(self.job_settings.behavior_camera_names) > 0:
+                camera_names = self.job_settings.behavior_camera_names
+                stream_modalities.append(Modality.BEHAVIOR_VIDEOS)
+            else:
+                camera_names = []
+
             stream_2p = Stream(
                 stream_start_time=stream_start_time,
                 # calculate - specify timezone # each basename is a separate
@@ -817,19 +825,10 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 ],
                 ophys_fovs=[fov_2p],
                 # multiple planes come here
-                stream_modalities=[Modality.POPHYS, Modality.BEHAVIOR],
+                stream_modalities=stream_modalities,
+                camera_names=camera_names
             )
             streams.append(stream_2p)
-            if len(self.job_settings.behavior_camera_names) > 0:
-                stream_facecameras = Stream(
-                    stream_start_time=stream_start_time,
-                    # calculate - specify timezone
-                    stream_end_time=stream_end_time,  # calculate
-                    camera_names=self.job_settings.behavior_camera_names,
-                    # from rig json
-                    stream_modalities=[Modality.BEHAVIOR_VIDEOS],
-                )
-                streams.append(stream_facecameras)
 
             stim_epoch_behavior = StimulusEpoch(
                 stimulus_start_time=stream_start_time,
