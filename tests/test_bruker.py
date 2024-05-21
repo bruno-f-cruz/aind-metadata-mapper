@@ -4,6 +4,7 @@ import json
 import os
 import unittest
 from datetime import datetime
+import pickle
 
 from unittest.mock import MagicMock, patch
 
