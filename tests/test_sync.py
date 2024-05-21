@@ -2,7 +2,9 @@ import unittest
 
 import numpy as np
 
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock
+
 from aind_metadata_mapper.utils import sync_utils as sync
 
 class TestGetMetaData(unittest.TestCase):
@@ -115,7 +117,72 @@ class TestGetMetaData(unittest.TestCase):
             self.assertEqual(total_seconds, expected_total_seconds)
 
 
+    def test_get_stop_time(self):
+        # Mock start time
+        mock_start_time = datetime(2022, 5, 18, 15, 30, 0)
 
+        # Mock total seconds
+        mock_total_seconds = 3600  # For example
+
+        # Mock get_start_time function
+        def mock_get_start_time(sync_file):
+            return mock_start_time
+
+        # Mock get_total_seconds function
+        def mock_get_total_seconds(sync_file):
+            return mock_total_seconds
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_start_time and get_total_seconds functions with the mocks
+        with unittest.mock.patch("sync.get_start_time", side_effect=mock_get_start_time), \
+             unittest.mock.patch("sync.get_total_seconds", side_effect=mock_get_total_seconds):
+            # Call the function to get stop time
+            stop_time = sync.get_stop_time(mock_sync_file)
+
+            # Check if the returned stop time matches the expected value
+            expected_stop_time = mock_start_time + timedelta(seconds=mock_total_seconds)
+            self.assertEqual(stop_time, expected_stop_time)
+
+    def test_extract_led_times_rising_edges_found(self):
+        # Mock get_edges function to return rising edges
+        def mock_get_edges(sync_file, kind, keys, units, permissive):
+            return np.array([1, 2, 3])  # Example rising edges
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_edges function with the mock
+        with unittest.mock.patch("sync.get_edges", side_effect=mock_get_edges):
+            # Call the function to extract LED times
+            led_times = sync.extract_led_times(mock_sync_file)
+
+            # Check if the returned LED times match the expected rising edges
+            expected_led_times = np.array([1, 2, 3])
+            np.testing.assert_array_equal(led_times, expected_led_times)
+
+    def test_extract_led_times_rising_edges_not_found(self):
+        # Mock get_edges function to raise a KeyError
+        def mock_get_edges(sync_file, kind, keys, units, permissive):
+            raise KeyError("Rising edges not found")
+
+        # Mock get_rising_edges function to return rising edges
+        def mock_get_rising_edges(sync_file, line, units):
+            return np.array([4, 5, 6])  # Example rising edges
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_edges and get_rising_edges functions with the mocks
+        with unittest.mock.patch("sync.get_edges", side_effect=mock_get_edges), \
+            unittest.mock.patch("sync.get_rising_edges", side_effect=mock_get_rising_edges):
+            # Call the function to extract LED times
+            led_times = sync.extract_led_times(mock_sync_file)
+
+            # Check if the returned LED times match the expected rising edges from the fallback line
+            expected_led_times = np.array([4, 5, 6])
+            np.testing.assert_array_equal(led_times, expected_led_times)
 
 if __name__ == "__main__":
     unittest.main()
