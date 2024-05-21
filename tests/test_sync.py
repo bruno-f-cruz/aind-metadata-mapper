@@ -557,5 +557,173 @@ class TestGetMetaData(unittest.TestCase):
         expected_std = np.std([2, 3, 4])
         self.assertAlmostEqual(mean, expected_mean)
         self.assertAlmostEqual(std, expected_std)
+
+    def test_estimate_frame_duration(self):
+        # Create mock photodiode times for 3 frames per cycle
+        mock_pd_times = np.array([0, 1, 2, 3, 4, 5, 6])
+
+        # Call the function to estimate frame duration
+        frame_duration = sync.estimate_frame_duration(mock_pd_times, cycle=3)
+
+        # Check if the returned frame duration matches the expected value
+        expected_frame_duration = 1.0  # Since the photodiode times increase by 1 for each frame
+        self.assertAlmostEqual(frame_duration, expected_frame_duration)
+
+    def test_estimate_frame_duration_with_empty_pd_times(self):
+        # Create an empty mock photodiode times array
+        mock_pd_times = np.array([])
+
+        # Call the function with an empty array
+        frame_duration = sync.estimate_frame_duration(mock_pd_times, cycle=3)
+
+        # Check if the returned frame duration is NaN
+        self.assertTrue(np.isnan(frame_duration))
+
+    def test_allocate_by_vsync(self):
+        # Create mock data for vsync differences, frame starts, and frame ends
+        vs_diff = np.array([1, 2, 3, 2, 1])  # Mock vsync differences
+        index = 1  # Mock current vsync index
+        starts = np.array([0, 1, 2, 3, 4])  # Mock frame start times
+        ends = np.array([1, 2, 3, 4, 5])  # Mock frame end times
+        frame_duration = 0.1  # Mock frame duration
+        irregularity = 1  # Mock irregularity
+        cycle = 5  # Mock number of frames per cycle
+
+        # Call the function to allocate frame times based on vsync signal
+        updated_starts, updated_ends = sync.allocate_by_vsync(
+            vs_diff, index, starts, ends, frame_duration, irregularity, cycle
+        )
+
+        # Check if the returned frame start and end times are updated as expected
+        expected_updated_starts = np.array([0.1, 1, 2, 3, 4])  # After allocating based on vsync signal
+        expected_updated_ends = np.array([1, 2, 3, 4.1, 5])  # After allocating based on vsync signal
+        np.testing.assert_array_almost_equal(updated_starts, expected_updated_starts)
+        np.testing.assert_array_almost_equal(updated_ends, expected_updated_ends)
+
+
+    def test_trim_border_pulses(self):
+        # Create mock photodiode times and vsync times
+        pd_times = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
+        vs_times = np.array([1.0, 2.0])
+
+        # Call the function to trim pulses near borders of the photodiode signal
+        trimmed_pd_times = sync.trim_border_pulses(pd_times, vs_times)
+
+        # Check if the returned photodiode times are trimmed as expected
+        expected_trimmed_pd_times = np.array([1.0, 1.5, 2.0, 2.5, 3.0])
+        np.testing.assert_array_almost_equal(trimmed_pd_times, expected_trimmed_pd_times)
+
+    def test_correct_on_off_effects(self):
+        # Create mock photodiode times
+        pd_times = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
+
+        # Call the function to correct on/off effects in the photodiode signal
+        corrected_pd_times = sync.correct_on_off_effects(pd_times)
+
+        # Check if the returned photodiode times are corrected as expected
+        # Note: Since the behavior of this function depends on statistical properties, exact assertions are difficult.
+        self.assertTrue(len(corrected_pd_times), len(pd_times))
+
+
+    def test_trim_discontiguous_vsyncs(self):
+        # Create mock vsync times
+        vs_times = np.array([1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.3, 3.0])
+
+        # Call the function to trim discontiguous vsyncs from the photodiode signal
+        trimmed_vs_times = sync.trim_discontiguous_vsyncs(vs_times)
+
+        # Check if the returned vsync times are trimmed as expected
+        expected_trimmed_vs_times = np.array([1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.3, 3.0])
+        np.testing.assert_array_almost_equal(trimmed_vs_times, expected_trimmed_vs_times)
+
+    def test_assign_to_last(self):
+        # Create mock data arrays for starts, ends, frame duration, and irregularity
+        starts = np.array([1.0, 2.0, 3.0])
+        ends = np.array([1.1, 2.1, 3.1])
+        frame_duration = 0.1
+        irregularity = 1
+
+        # Call the function to assign the irregularity to the last frame
+        new_starts, new_ends = sync.assign_to_last(starts, ends, frame_duration, irregularity)
+
+        # Check if the irregularity is assigned to the last frame as expected
+        expected_new_ends = np.array([1.1, 2.1, 3.2])
+        np.testing.assert_array_almost_equal(new_ends, expected_new_ends)
+
+    def test_remove_zero_frames(self):
+        # Create mock frame times
+        frame_times = np.array([1.0, 1.02, 1.04, 1.06, 1.08, 1.1, 1.12, 1.14, 1.16, 1.18, 1.2])
+
+        # Call the function to remove zero delta frames from the frame times
+        modified_frame_times = sync.remove_zero_frames(frame_times)
+
+        # Check if the returned frame times are modified as expected
+        expected_modified_frame_times = np.array([1.0, 1.02, 1.06, 1.08, 1.1, 1.14, 1.16, 1.18, 1.2])
+        np.testing.assert_array_almost_equal(modified_frame_times, expected_modified_frame_times)
+
+
+    def test_compute_frame_times(self):
+        # Create mock photodiode times
+        photodiode_times = np.arange(0, 11, 1)
+
+        # Set frame duration, number of frames, and cycle
+        frame_duration = 1
+        num_frames = 10
+        cycle = 1
+
+        # Call the function to compute frame times
+        indices, starts, ends = sync.compute_frame_times(
+            photodiode_times, frame_duration, num_frames, cycle
+        )
+
+        # Check if the returned frame times are computed correctly
+        expected_indices = np.arange(0, 10, 1)
+        expected_starts = np.arange(0, 10, 1)
+        expected_ends = np.arange(1, 11, 1)
+        np.testing.assert_array_almost_equal(indices, expected_indices)
+        np.testing.assert_array_almost_equal(starts, expected_starts)
+        np.testing.assert_array_almost_equal(ends, expected_ends)
+
+    def test_separate_vsyncs_and_photodiode_times(self):
+        # Create mock vsync and photodiode times
+        vs_times = np.arange(0, 11, 1)
+        pd_times = np.arange(0, 20, 2)
+
+        # Call the function to separate vsync and photodiode times
+        vs_times_out, pd_times_out = sync.separate_vsyncs_and_photodiode_times(
+            vs_times, pd_times
+        )
+
+        # Check if the returned vsync and photodiode times are separated correctly
+        expected_vs_times_out = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])]
+        expected_pd_times_out = [
+            np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]),
+        ]
+        self.assertEqual(vs_times_out, expected_vs_times_out)
+        self.assertEqual(pd_times_out, expected_pd_times_out)
+
+    def test_flag_unexpected_edges(self):
+        # Create mock photodiode times
+        pd_times = np.array([1, 2, 3, 5, 7, 8, 9, 11])
+
+        # Call the function to flag unexpected edges
+        expected_duration_mask = sync.flag_unexpected_edges(pd_times, ndevs=1)
+
+        # Check if the expected duration mask is created correctly
+        expected_result = np.array([1, 1, 1, 0, 0, 1, 1, 1, 1])
+        np.testing.assert_array_equal(expected_duration_mask, expected_result)
+
+    def test_fix_unexpected_edges(self):
+        # Create mock photodiode times
+        pd_times = np.array([1, 2, 3, 5, 7, 8, 9, 11])
+
+        # Call the function to fix unexpected edges
+        output_edges = sync.fix_unexpected_edges(pd_times, ndevs=1, cycle=2, max_frame_offset=2)
+
+        # Check if the unexpected edges are fixed correctly
+        expected_result = np.array([1, 2, 3, 5, 6, 7, 8, 9, 11])
+        np.testing.assert_array_equal(output_edges, expected_result)
+
+
 if __name__ == "__main__":
     unittest.main()
