@@ -184,5 +184,179 @@ class TestGetMetaData(unittest.TestCase):
             expected_led_times = np.array([4, 5, 6])
             np.testing.assert_array_equal(led_times, expected_led_times)
 
+
+    def test_get_ophys_stimulus_timestamps(self):
+        # Mock get_clipped_stim_timestamps function to return stimulus timestamps
+        def mock_get_clipped_stim_timestamps(sync, pkl):
+            return np.array([1, 2, 3]), None  # Example stimulus timestamps
+
+        # Mock the sync file and pkl
+        mock_sync = MagicMock()
+        mock_pkl = MagicMock()
+
+        # Replace the original get_clipped_stim_timestamps function with the mock
+        with unittest.mock.patch("sync.get_clipped_stim_timestamps", side_effect=mock_get_clipped_stim_timestamps):
+            # Call the function to obtain ophys stimulus timestamps
+            stimulus_timestamps = sync.get_ophys_stimulus_timestamps(mock_sync, mock_pkl)
+
+            # Check if the returned stimulus timestamps match the expected values
+            expected_stimulus_timestamps = np.array([1, 2, 3])
+            np.testing.assert_array_equal(stimulus_timestamps, expected_stimulus_timestamps)
+
+
+    def test_get_behavior_stim_timestamps_vsync_stim(self):
+        # Mock get_falling_edges function to return stimulus timestamps
+        def mock_get_falling_edges(sync, stim_key, units):
+            return np.array([1, 2, 3])  # Example stimulus timestamps
+
+        # Mock the sync file
+        mock_sync = MagicMock()
+
+        # Replace the original get_falling_edges function with the mock
+        with unittest.mock.patch("sync.get_falling_edges", side_effect=mock_get_falling_edges):
+            # Call the function to get behavior stimulus timestamps
+            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(mock_sync)
+
+            # Check if the returned behavior stimulus timestamps match the expected values
+            expected_behavior_stim_timestamps = np.array([1, 2, 3])
+            np.testing.assert_array_equal(behavior_stim_timestamps, expected_behavior_stim_timestamps)
+
+    def test_get_behavior_stim_timestamps_stim_vsync(self):
+        # Mock get_falling_edges function to raise a ValueError
+        def mock_get_falling_edges(sync, stim_key, units):
+            raise ValueError("Stimulus timestamps not found")
+
+        # Mock the sync file
+        mock_sync = MagicMock()
+
+        # Replace the original get_falling_edges function with the mock
+        with unittest.mock.patch("sync.get_falling_edges", side_effect=mock_get_falling_edges):
+            # Call the function to get behavior stimulus timestamps
+            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(mock_sync)
+
+            # Check if the returned behavior stimulus timestamps match the expected values
+            self.assertIsNone(behavior_stim_timestamps)
+
+    def test_get_behavior_stim_timestamps_no_stimulus_stream(self):
+        # Mock get_falling_edges function to raise an Exception
+        def mock_get_falling_edges(sync, stim_key, units):
+            raise Exception("No stimulus stream found in sync file")
+
+        # Mock the sync file
+        mock_sync = MagicMock()
+
+        # Replace the original get_falling_edges function with the mock
+        with unittest.mock.patch("sync.get_falling_edges", side_effect=mock_get_falling_edges):
+            # Call the function and assert that it raises a ValueError
+            with self.assertRaises(ValueError):
+                sync.get_behavior_stim_timestamps(mock_sync)
+
+    def test_get_clipped_stim_timestamps_stim_length_less_than_timestamps(self):
+        # Mock get_behavior_stim_timestamps function to return stimulus timestamps
+        def mock_get_behavior_stim_timestamps(sync):
+            return np.array([1, 2, 3, 4, 5])  # Example stimulus timestamps
+
+        # Mock get_stim_data_length function to return a length less than the timestamps length
+        def mock_get_stim_data_length(pkl_path):
+            return 3
+
+        # Mock get_rising_edges function to return rising edges
+        def mock_get_rising_edges(sync, stim_key, units):
+            return np.array([0, 0.1, 0.2, 0.3, 0.4])  # Example rising edges
+
+        # Mock the sync file and pkl_path
+        mock_sync = MagicMock()
+        mock_pkl_path = "example.pkl"
+
+        # Replace the original functions with the mocks
+        with unittest.mock.patch("sync.get_behavior_stim_timestamps", side_effect=mock_get_behavior_stim_timestamps), \
+             unittest.mock.patch("sync.get_stim_data_length", side_effect=mock_get_stim_data_length), \
+             unittest.mock.patch("sync.get_rising_edges", side_effect=mock_get_rising_edges):
+            # Call the function to get clipped stimulus timestamps
+            timestamps, delta = sync.get_clipped_stim_timestamps(mock_sync, mock_pkl_path)
+
+            # Check if the returned timestamps and delta match the expected values
+            expected_timestamps = np.array([1, 2, 3])
+            expected_delta = 2
+            np.testing.assert_array_equal(timestamps, expected_timestamps)
+            self.assertEqual(delta, expected_delta)
+
+    def test_get_clipped_stim_timestamps_stim_length_greater_than_timestamps(self):
+        # Mock get_behavior_stim_timestamps function to return stimulus timestamps
+        def mock_get_behavior_stim_timestamps(sync):
+            return np.array([1, 2, 3])  # Example stimulus timestamps
+
+        # Mock get_stim_data_length function to return a length greater than the timestamps length
+        def mock_get_stim_data_length(pkl_path):
+            return 5
+
+        # Mock the sync file and pkl_path
+        mock_sync = MagicMock()
+        mock_pkl_path = "example.pkl"
+
+        # Replace the original functions with the mocks
+        with unittest.mock.patch("sync.get_behavior_stim_timestamps", side_effect=mock_get_behavior_stim_timestamps), \
+             unittest.mock.patch("sync.get_stim_data_length", side_effect=mock_get_stim_data_length):
+            # Call the function to get clipped stimulus timestamps
+            timestamps, delta = sync.get_clipped_stim_timestamps(mock_sync, mock_pkl_path)
+
+            # Check if the returned timestamps and delta match the expected values
+            expected_timestamps = np.array([1, 2, 3])
+            expected_delta = 2
+            np.testing.assert_array_equal(timestamps, expected_timestamps)
+            self.assertEqual(delta, expected_delta)
+
+    def test_get_clipped_stim_timestamps_no_stimulus_stream(self):
+        # Mock get_behavior_stim_timestamps function to return None
+        def mock_get_behavior_stim_timestamps(sync):
+            return None
+
+        # Mock the sync file and pkl_path
+        mock_sync = MagicMock()
+        mock_pkl_path = "example.pkl"
+
+        # Replace the original get_behavior_stim_timestamps function with the mock
+        with unittest.mock.patch("sync.get_behavior_stim_timestamps", side_effect=mock_get_behavior_stim_timestamps):
+            # Call the function and assert that it raises a ValueError
+            with self.assertRaises(ValueError):
+                sync.get_clipped_stim_timestamps(mock_sync, mock_pkl_path)
+
+
+    def test_line_to_bit_with_line_name(self):
+        # Mock get_line_labels function to return line labels
+        def mock_get_line_labels(sync_file):
+            return ["line1", "line2", "line3"]
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Replace the original get_line_labels function with the mock
+        with unittest.mock.patch("sync.get_line_labels", side_effect=mock_get_line_labels):
+            # Call the function to get the bit for the specified line name
+            bit = sync.line_to_bit(mock_sync_file, "line2")
+
+            # Check if the returned bit matches the expected value
+            expected_bit = 1
+            self.assertEqual(bit, expected_bit)
+
+    def test_line_to_bit_with_line_number(self):
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Call the function to get the bit for the specified line number
+        bit = sync.line_to_bit(mock_sync_file, 2)
+
+        # Check if the returned bit matches the expected value
+        expected_bit = 2
+        self.assertEqual(bit, expected_bit)
+
+    def test_line_to_bit_with_incorrect_line_type(self):
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        # Call the function with an incorrect line type and assert that it raises a TypeError
+        with self.assertRaises(TypeError):
+            sync.line_to_bit(mock_sync_file, ["line1", "line2"])
+
 if __name__ == "__main__":
     unittest.main()
