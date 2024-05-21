@@ -15,6 +15,10 @@ from typing import Dict, List, Optional, Tuple, Union
 from zoneinfo import ZoneInfo
 
 import numpy as np
+from aind_data_schema.components.stimulus import (
+    PhotoStimulation,
+    PhotoStimulationGroup,
+)
 from aind_data_schema.core.session import (
     FieldOfView,
     LaserConfig,
@@ -42,7 +46,7 @@ from aind_data_schema.models.stimulus import (
     PhotoStimulation,
     PhotoStimulationGroup,
 )
-from aind_data_schema.models.units import PowerUnit
+from aind_data_schema.models.units import PowerUnit, SizeUnit
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from ScanImageTiffReader import ScanImageTiffReader
