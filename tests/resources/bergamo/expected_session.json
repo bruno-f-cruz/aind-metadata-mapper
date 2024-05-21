@@ -83,12 +83,14 @@
             "frame_rate_unit": "hertz",
             "targeted_structure": "Primary Motor Cortex"
          },
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
                "abbreviation": "ophys"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -135,6 +137,7 @@
                "coupled_fov_index": null,
                "power": null,
                "power_unit": "percent",
+               "power_ratio": null,
                "scanfield_z": null,
                "scanfield_z_unit": "micrometer",
                "scanimage_roi_index": null,
@@ -143,12 +146,14 @@
          ],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
                "abbreviation": "ophys"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -195,6 +200,7 @@
                "coupled_fov_index": null,
                "power": null,
                "power_unit": "percent",
+               "power_ratio": null,
                "scanfield_z": null,
                "scanfield_z_unit": "micrometer",
                "scanimage_roi_index": null,
@@ -203,6 +209,7 @@
          ],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
@@ -213,6 +220,7 @@
                "abbreviation": "behavior"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -233,12 +241,14 @@
          "ophys_fovs": [],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -285,6 +295,7 @@
                "coupled_fov_index": null,
                "power": null,
                "power_unit": "percent",
+               "power_ratio": null,
                "scanfield_z": null,
                "scanfield_z_unit": "micrometer",
                "scanimage_roi_index": null,
@@ -293,6 +304,7 @@
          ],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
@@ -303,6 +315,7 @@
                "abbreviation": "behavior"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -323,12 +336,14 @@
          "ophys_fovs": [],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -375,6 +390,7 @@
                "coupled_fov_index": null,
                "power": null,
                "power_unit": "percent",
+               "power_ratio": null,
                "scanfield_z": null,
                "scanfield_z_unit": "micrometer",
                "scanimage_roi_index": null,
@@ -383,6 +399,7 @@
          ],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
@@ -393,6 +410,7 @@
                "abbreviation": "behavior"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -413,12 +431,14 @@
          "ophys_fovs": [],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Behavior videos",
                "abbreviation": "behavior-videos"
             }
          ],
+         "software": [],
          "notes": null
       },
       {
@@ -465,6 +485,7 @@
                "coupled_fov_index": null,
                "power": null,
                "power_unit": "percent",
+               "power_ratio": null,
                "scanfield_z": null,
                "scanfield_z_unit": "micrometer",
                "scanimage_roi_index": null,
@@ -473,12 +494,14 @@
          ],
          "slap_fovs": null,
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Planar optical physiology",
                "abbreviation": "ophys"
             }
          ],
+         "software": [],
          "notes": null
       }
    ],
