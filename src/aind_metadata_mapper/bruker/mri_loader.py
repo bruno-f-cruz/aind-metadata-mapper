@@ -3,17 +3,18 @@
 from bruker2nifti._metadata import BrukerMetadata
 
 from pathlib import Path
-from aind_data_schema.models.coordinates import Rotation3dTransform, Scale3dTransform, Translation3dTransform
-from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
+from aind_data_schema.components.coordinates import Rotation3dTransform, Scale3dTransform, Translation3dTransform
+from aind_data_schema.core.session import MRIScan, Session, MriScanSequence, ScanType, SubjectPosition, Stream
 from decimal import Decimal
-from aind_data_schema.models.units import MassUnit, TimeUnit
-from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
+from aind_data_schema_models.units import MassUnit, TimeUnit
+from aind_data_schema.components.devices import Scanner, ScannerLocation, MagneticStrength
 from datetime import datetime
 from pydantic_settings import BaseSettings
 from aind_metadata_mapper.core import GenericEtl, JobResponse
 from dataclasses import dataclass
 from aind_data_schema.base import AindCoreModel
 from typing import Any, Generic, Optional, TypeVar, Union
+from aind_data_schema_models.modalities import Modality
 
 import traceback
 import logging
@@ -33,12 +34,15 @@ class JobSettings(BaseSettings):
             " contents will be returned in the Response message."
         ),
     )
-
     experimenter_full_name: List[str]
     primary_scan_number: int
     setup_scan_number: int
+    scanner_name: str
     scan_location: ScannerLocation
-    MagneticStrength: MagneticStrength
+    magnetic_strength: MagneticStrength
+    subject_id: str
+    protocol_id: str
+    iacuc_protocol: str
     notes: str
 
 
@@ -107,7 +111,7 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         return job_response
 
-    def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str, scan_location: ScannerLocation, magnet_strength: MagneticStrength) -> MRIScan:
+    def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str) -> Session:
         """Load the MRI session data into the AIND data schema."""
 
         scans = []
@@ -128,20 +132,22 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         logging.info(f'loaded scans: {scans}')
 
-        return MriSession(
-            subject_id="",
-            session_start_time=datetime.now(), 
-            session_end_time=datetime.now(),
+        stream = Stream(
+            stream_start_time=,
+            stream_end_time=,
+            mri_scans=scans,
+            stream_modalities=[Modality.MRI]
+        )
+
+        return Session(
+            subject_id=self.job_settings.subject_id,
+            session_start_time=,
+            session_end_time=,
             experimenter_full_name=experimenter, 
-            protocol_id="",
-            iacuc_protocol="",
-            mri_scanner=Scanner(
-                name="test_scanner",
-                scanner_location=scan_location,
-                magnetic_strength=magnet_strength, 
-                magnetic_strength_unit="T", 
-            ),
-            scans=scans,
+            protocol_id=[self.job_settings.protocol_id],
+            iacuc_protocol=self.job_settings.iacuc_protocol,
+            data_streams=[stream],
+            mouse_platform_name="NA",
             notes="none"
         )
     
@@ -203,6 +209,12 @@ class MRIEtl(GenericEtl[JobSettings]):
                 scan_index=scan_index,
                 scan_type=ScanType(scan_type), # set by scientists
                 primary_scan=primary_scan, # set by scientists
+                mri_scanner=Scanner(
+                    name=self.job_settings.scanner_name,
+                    scanner_location=self.job_settings.scan_location,
+                    magnetic_strength=self.job_settings.magnet_strength, 
+                    magnetic_strength_unit="T", 
+                ),
                 scan_sequence_type=scan_sequence, # method ##$Method=RARE,
                 rare_factor=rare_factor, # method ##$PVM_RareFactor=8,
                 echo_time=self.cur_method['EchoTime'], # method ##$PVM_EchoTime=0.01,

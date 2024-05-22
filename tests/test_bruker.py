@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 
 
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
-from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
-from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
+from aind_data_schema.components.devices import Scanner, ScannerLocation, MagneticStrength
+from aind_data_schema.core.session import MRIScan, Session, MriScanSequence, ScanType, SubjectPosition
 from bruker2nifti._metadata import BrukerMetadata
 
 
@@ -31,7 +31,7 @@ class TestMRIWriter(unittest.TestCase):
         """Load record object and user settings before running tests."""
 
         with open(EXPECTED_MRI_SESSION, "r") as f:
-            expected_session_contents = MriSession(**json.load(f))
+            expected_session_contents = Session(**json.load(f))
 
         cls.example_job_settings = JobSettings(
             data_path=EXAMPLE_MRI_INPUT,
