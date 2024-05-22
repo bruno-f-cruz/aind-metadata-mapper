@@ -64,10 +64,10 @@ class TestMRIWriter(unittest.TestCase):
                 self.subject_data = subject_data
 
         with open(TEST_INPUT_SCAN_DATA, "r") as f:
-            scan_data = json.load(f)
+            scan_data = pickle.load(f)
 
         with open(TEST_INPUT_SUBJECT_DATA, "r") as f:
-            subject_data = json.load(f)
+            subject_data = pickle.load(f)
 
         print(scan_data)
         print(subject_data)
