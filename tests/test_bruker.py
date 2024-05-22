@@ -30,21 +30,20 @@ class TestMRIWriter(unittest.TestCase):
     def setUpClass(cls):
         """Load record object and user settings before running tests."""
 
-        with open(EXPECTED_MRI_SESSION, "r") as f:
-            expected_session_contents = Session(**json.load(f))
-
         cls.example_job_settings = JobSettings(
             data_path=EXAMPLE_MRI_INPUT,
             output_directory=Path("src/aind_metadata_mapper/bruker/MRI_ingest/output"),
             experimenter_full_name=["fake mae"],
             primary_scan_number=7,
             setup_scan_number=1,
+            scanner_name="fake scanner",
             scan_location=ScannerLocation.FRED_HUTCH,
-            MagneticStrength=MagneticStrength.MRI_7T,
+            magnetic_strength=MagneticStrength.MRI_7T,
+            subject_id="fake subject",
+            protocol_id="fake protocol",
+            iacuc_protocol="fake iacuc",
             notes="test",
         )
-
-        cls.expected_session = expected_session_contents
 
     
     def test_constructor_from_string(self) -> None:

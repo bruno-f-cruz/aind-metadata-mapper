@@ -93,9 +93,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         return self.load_mri_session(
             experimenter=self.job_settings.experimenter_full_name,
             primary_scan_number=self.job_settings.primary_scan_number,
-            setup_scan_number=self.job_settings.setup_scan_number,
-            scan_location=self.job_settings.scan_location,
-            magnet_strength=self.job_settings.MagneticStrength
+            setup_scan_number=self.job_settings.setup_scan_number
         )
 
     def run_job(self) -> JobResponse:
@@ -133,21 +131,24 @@ class MRIEtl(GenericEtl[JobSettings]):
         logging.info(f'loaded scans: {scans}')
 
         stream = Stream(
-            stream_start_time=,
-            stream_end_time=,
+            stream_start_time=datetime.now(),
+            stream_end_time=datetime.now(),
             mri_scans=scans,
             stream_modalities=[Modality.MRI]
         )
 
         return Session(
             subject_id=self.job_settings.subject_id,
-            session_start_time=,
-            session_end_time=,
+            session_start_time=datetime.now(),
+            session_end_time=datetime.now(),
+            session_type="3D MRI Volume",
             experimenter_full_name=experimenter, 
             protocol_id=[self.job_settings.protocol_id],
             iacuc_protocol=self.job_settings.iacuc_protocol,
             data_streams=[stream],
+            rig_id="NA",
             mouse_platform_name="NA",
+            active_mouse_platform=False,
             notes="none"
         )
     
@@ -212,7 +213,7 @@ class MRIEtl(GenericEtl[JobSettings]):
                 mri_scanner=Scanner(
                     name=self.job_settings.scanner_name,
                     scanner_location=self.job_settings.scan_location,
-                    magnetic_strength=self.job_settings.magnet_strength, 
+                    magnetic_strength=self.job_settings.magnetic_strength, 
                     magnetic_strength_unit="T", 
                 ),
                 scan_sequence_type=scan_sequence, # method ##$Method=RARE,
