@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
 from aind_data_schema.models.devices import Scanner, ScannerLocation, MagneticStrength
 from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
-from aind_metadata_mapper.bruker.MRI_ingest.bruker2nifti._metadata import BrukerMetadata
+from bruker2nifti._metadata import BrukerMetadata
 
 
 EXAMPLE_MRI_INPUT = "src/aind_metadata_mapper/bruker/MRI_ingest/MRI_files/RawData-2023_07_21/RAW/DL_AI2.kX2"
@@ -20,6 +20,7 @@ EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 
 TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
 TEST_INPUT_SUBJECT_DATA = "tests/resources/bruker/test_output_subject"
+TEST_INPUT_METADATA = "tests/resources/bruker/test_output_metadata"
 
 
 class TestMRIWriter(unittest.TestCase):
@@ -35,7 +36,7 @@ class TestMRIWriter(unittest.TestCase):
         cls.example_job_settings = JobSettings(
             data_path=EXAMPLE_MRI_INPUT,
             output_directory=Path("src/aind_metadata_mapper/bruker/MRI_ingest/output"),
-            experimenter_full_name=["Mae"],
+            experimenter_full_name=["fake mae"],
             primary_scan_number=7,
             setup_scan_number=1,
             scan_location=ScannerLocation.FRED_HUTCH,
@@ -55,27 +56,42 @@ class TestMRIWriter(unittest.TestCase):
 
         self.assertEqual(etl1.job_settings, etl0.job_settings)
 
-    def test_etl(self) -> None:
-        """Tests that the extract method returns the correct data."""
+    @patch("aind_metadata_mapper.bruker.mri_loader.MRIEtl._extract")
+    def test_etl(self, mock_extract) -> None:
+        """Tests that the transform and load methods returns the correct data."""
 
         class dummy_input:
             def __init__(self, scan_data, subject_data):
                 self.scan_data = scan_data
                 self.subject_data = subject_data
 
-        with open(TEST_INPUT_SCAN_DATA, "r") as f:
-            scan_data = pickle.load(f)
+        # with open(TEST_INPUT_SCAN_DATA, "rb") as f:
+        #     scan_data = pickle.load(f)
 
-        with open(TEST_INPUT_SUBJECT_DATA, "r") as f:
-            subject_data = pickle.load(f)
+        # with open(TEST_INPUT_SUBJECT_DATA, "rb") as f:
+        #     subject_data = pickle.load(f)
 
-        print(scan_data)
-        print(subject_data)
+        with open(TEST_INPUT_METADATA, "rb") as f:
+            metadata = pickle.load(f)
+
+        # print(scan_data)
+        # print(subject_data)
 
         etl = MRIEtl(self.example_job_settings)
 
-        expected_data = BrukerMetadata(EXAMPLE_MRI_INPUT)
+        mock_extract.return_value = metadata
+        job_response = etl.run_job()
 
-        # self.assertEqual(extracted_data, expected_data)
+        # transformed = etl._transform(metadata)
+        # job_response = etl._load(transformed, self.example_job_settings.output_directory)
+
+        print("JOB RESPONSE: ", job_response)
+
+        expected_response = "status_code=200 message='Write model to src\\"
+        "aind_metadata_mapper\\bruker\\MRI_ingest\\output\nNo validation errors detected.' "
+        "data=None"
+
+
+        self.assertEqual(job_response.status_code, 200)
 
         # self.assertEqual(extracted_data.metadata.)

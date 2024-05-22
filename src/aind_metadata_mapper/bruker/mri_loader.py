@@ -1,4 +1,7 @@
-from aind_metadata_mapper.bruker.MRI_ingest.bruker2nifti._metadata import BrukerMetadata
+"""Sets up the MRI ingest ETL"""
+
+from bruker2nifti._metadata import BrukerMetadata
+
 from pathlib import Path
 from aind_data_schema.models.coordinates import Rotation3dTransform, Scale3dTransform, Translation3dTransform
 from aind_data_schema.core.mri_session import MRIScan, MriSession, MriScanSequence, ScanType, SubjectPosition
@@ -48,6 +51,8 @@ class JobSettings(BaseSettings):
 
 
 class MRIEtl(GenericEtl[JobSettings]):
+    """Class for MRI ETL process."""
+
     def __init__(self, job_settings: JobSettings):
         """
         Class constructor for Base etl class.
@@ -56,6 +61,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         job_settings: Union[JobSettings, str]
           Variables for a particular session
         """
+
         if isinstance(job_settings, str):
             job_settings_model = JobSettings.model_validate_json(job_settings)
         else:
@@ -66,6 +72,7 @@ class MRIEtl(GenericEtl[JobSettings]):
 
     def _extract(self) -> BrukerMetadata:
         """Extract the data from the bruker files."""
+
         metadata = BrukerMetadata(self.job_settings.data_path)
         metadata.parse_scans()
         metadata.parse_subject()
@@ -74,6 +81,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         return metadata
 
     def _transform(self, input_metadata) -> AindCoreModel:
+        """Transform the data into the AIND data schema."""
 
         self.scan_data = input_metadata.scan_data
         self.subject_data = input_metadata.subject_data
@@ -87,6 +95,8 @@ class MRIEtl(GenericEtl[JobSettings]):
         )
 
     def run_job(self) -> JobResponse:
+        """Run the job and return the response."""
+
         extracted = self._extract()
         transformed = self._transform(extracted)
 
@@ -98,9 +108,11 @@ class MRIEtl(GenericEtl[JobSettings]):
         return job_response
 
     def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str, scan_location: ScannerLocation, magnet_strength: MagneticStrength) -> MRIScan:
+        """Load the MRI session data into the AIND data schema."""
 
         scans = []
-        for scan in self.n_scans:
+        for scan in self.scan_data.keys():
+            print("SCAN: ", scan)
             scan_type = "3D Scan"
             if scan == setup_scan_number:
                 scan_type = "Set Up"
@@ -135,6 +147,8 @@ class MRIEtl(GenericEtl[JobSettings]):
     
 
     def make_model_from_scan(self, scan_index: str, scan_type, primary_scan: bool) -> MRIScan:
+        """load scan data into the AIND data schema."""
+        
         logging.info(f'loading scan {scan_index}')   
 
         self.cur_visu_pars = self.scan_data[scan_index]['recons']['1']['visu_pars']
@@ -175,9 +189,12 @@ class MRIEtl(GenericEtl[JobSettings]):
         else:
             translation = None
 
-        scale=self.cur_method['SpatResol'].tolist()
-        # while len(scale) < 3:
-        #     scale.append(0)
+        print("spatreso: ", self.cur_method['SpatResol'])
+        scale=self.cur_method['SpatResol']
+        if not isinstance(scale, list):
+            scale = scale.tolist()
+        while len(scale) < 3: # TODO: THIS IS NOT THE IDEAL SOLUTION, talk to scientists about what to do for too few items in spatreso list
+            scale.append(0)
         
         scale = Scale3dTransform(scale=scale)
 
