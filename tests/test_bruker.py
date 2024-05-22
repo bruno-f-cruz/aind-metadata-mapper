@@ -59,38 +59,14 @@ class TestMRIWriter(unittest.TestCase):
     def test_etl(self, mock_extract) -> None:
         """Tests that the transform and load methods returns the correct data."""
 
-        class dummy_input:
-            def __init__(self, scan_data, subject_data):
-                self.scan_data = scan_data
-                self.subject_data = subject_data
-
-        # with open(TEST_INPUT_SCAN_DATA, "rb") as f:
-        #     scan_data = pickle.load(f)
-
-        # with open(TEST_INPUT_SUBJECT_DATA, "rb") as f:
-        #     subject_data = pickle.load(f)
-
         with open(TEST_INPUT_METADATA, "rb") as f:
             metadata = pickle.load(f)
-
-        # print(scan_data)
-        # print(subject_data)
 
         etl = MRIEtl(self.example_job_settings)
 
         mock_extract.return_value = metadata
         job_response = etl.run_job()
 
-        # transformed = etl._transform(metadata)
-        # job_response = etl._load(transformed, self.example_job_settings.output_directory)
-
         print("JOB RESPONSE: ", job_response)
 
-        expected_response = "status_code=200 message='Write model to src\\"
-        "aind_metadata_mapper\\bruker\\MRI_ingest\\output\nNo validation errors detected.' "
-        "data=None"
-
-
         self.assertEqual(job_response.status_code, 200)
-
-        # self.assertEqual(extracted_data.metadata.)
