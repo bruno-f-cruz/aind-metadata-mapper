@@ -37,12 +37,12 @@ class TestMRIWriter(unittest.TestCase):
             primary_scan_number=7,
             setup_scan_number=1,
             scanner_name="fake scanner",
+            session_type="3D MRI Scan",
             scan_location=ScannerLocation.FRED_HUTCH,
             magnetic_strength=MagneticStrength.MRI_7T,
             subject_id="fake subject",
-            protocol_id="fake protocol",
             iacuc_protocol="fake iacuc",
-            notes="test",
+            session_notes="test",
         )
 
     

@@ -2,16 +2,16 @@
    "describedBy": "https://raw.githubusercontent.com/AllenNeuralDynamics/aind-data-schema/main/src/aind_data_schema/core/session.py",
    "schema_version": "0.2.6",
    "protocol_id": [
-      "fake protocol"
+      "placeholder mri protocol id"
    ],
    "experimenter_full_name": [
       "fake mae"
    ],
-   "session_start_time": "2024-05-22T16:48:00.700263-04:00",
-   "session_end_time": "2024-05-22T16:48:00.700263-04:00",
-   "session_type": "3D MRI Volume",
+   "session_start_time": "2024-05-23T19:19:49.207609-04:00",
+   "session_end_time": "2024-05-23T19:19:49.207609-04:00",
+   "session_type": "3D MRI Scan",
    "iacuc_protocol": "fake iacuc",
-   "rig_id": "NA",
+   "rig_id": "fake scanner",
    "calibrations": [],
    "maintenance": [],
    "subject_id": "fake subject",
@@ -21,8 +21,8 @@
    "anaesthesia": null,
    "data_streams": [
       {
-         "stream_start_time": "2024-05-22T16:48:00.700263-04:00",
-         "stream_end_time": "2024-05-22T16:48:00.700263-04:00",
+         "stream_start_time": "2024-05-23T19:19:49.207609-04:00",
+         "stream_end_time": "2024-05-23T19:19:49.207609-04:00",
          "daq_names": [],
          "camera_names": [],
          "light_sources": [],
@@ -413,5 +413,5 @@
    "reward_delivery": null,
    "reward_consumed_total": null,
    "reward_consumed_unit": "microliter",
-   "notes": "none"
+   "notes": "test"
 }
