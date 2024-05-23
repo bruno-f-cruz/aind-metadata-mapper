@@ -71,6 +71,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         super().__init__(job_settings=job_settings_model)
         aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, camstim_session_id, camstim_json_settings)
 
+
     def _read_metadata(self, tiff_path: Path):
         """
         Calls tifffile.read_scanimage_metadata on the specified
@@ -230,6 +231,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
             session_end_time=self.job_settings.session_end_time,
             rig_id=extracted_source["platform"]["rig_id"],
             data_streams=data_streams,
+            stimulus_epochs=self.stim_epochs,
             mouse_platform_name=self.job_settings.mouse_platform_name,
             active_mouse_platform=True,
         )
