@@ -14,7 +14,7 @@ import aind_metadata_mapper.utils.naming_utils as names
 import aind_metadata_mapper.utils.pkl_utils as pkl
 import aind_metadata_mapper.utils.stim_utils as stim
 import aind_metadata_mapper.utils.sync_utils as sync
-
+import aind_metadata_mapper.utils.behavior_utils as behavior
 
 class Camstim:
     """
@@ -82,6 +82,17 @@ class Camstim:
         self.stim_epochs = self.epochs_from_stim_table()
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
+
+    def build_behavior_table(
+            self
+    ):
+        stim_file = self.pkl_path
+        sync_file = sync.load_sync(self.sync_path)
+        timestamps = sync.get_ophys_stimulus_timestamps(sync_file, stim_file)
+        behavior_table = behavior.from_stimulus_file(stim_file, timestamps)
+        behavior_table[0].to_csv(self.stim_table_path, index=False)
+
+
 
     def build_stimulus_table(
         self,
