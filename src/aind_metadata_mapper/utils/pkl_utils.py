@@ -35,6 +35,28 @@ def load_img_pkl(pstream):
     return pickle.load(pstream, encoding="bytes")
 
 
+def check_for_behavior(pkl):
+    """
+    Checks if the pkl file has behavior
+
+    Parameters
+    ----------
+    pkl : dict
+        pkl file.
+
+    Returns
+    -------
+    data : bool
+        True if behavior exists, False otherwise.
+
+    """
+    if "items" in pkl and "behavior" in pkl["items"]:
+        return True
+    else:
+        return False
+
+
+
 def get_stimuli(pkl):
     """
     Returns the stimuli from a pkl file
