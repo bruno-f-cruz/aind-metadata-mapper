@@ -35,23 +35,18 @@ class JobSettings(BaseSettings):
         ),
     )
     experimenter_full_name: List[str]
+    session_type: str
     primary_scan_number: int
     setup_scan_number: int
     scanner_name: str
     scan_location: ScannerLocation
     magnetic_strength: MagneticStrength
     subject_id: str
-    protocol_id: str
     iacuc_protocol: str
-    notes: str
+    session_notes: str
 
 
-# @dataclass(frozen=True)
-# class ExtractedMetadata:
-#     """Raw Bruker data gets parsted here."""
-
-#     metadata: BrukerMetadata
-#     n_scans: List[str]
+PROTOCOL_ID = "placeholder mri protocol id"
 
 
 class MRIEtl(GenericEtl[JobSettings]):
@@ -131,7 +126,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         logging.info(f'loaded scans: {scans}')
 
         stream = Stream(
-            stream_start_time=datetime.now(),
+            stream_start_time=datetime.now(), # This is probably the same as session start/end
             stream_end_time=datetime.now(),
             mri_scans=scans,
             stream_modalities=[Modality.MRI]
@@ -139,17 +134,17 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         return Session(
             subject_id=self.job_settings.subject_id,
-            session_start_time=datetime.now(),
+            session_start_time=datetime.now(), # see where to find this
             session_end_time=datetime.now(),
-            session_type="3D MRI Volume",
+            session_type=self.job_settings.session_type,
             experimenter_full_name=experimenter, 
-            protocol_id=[self.job_settings.protocol_id],
+            protocol_id=[PROTOCOL_ID],
             iacuc_protocol=self.job_settings.iacuc_protocol,
             data_streams=[stream],
-            rig_id="NA",
+            rig_id=self.job_settings.scanner_name,
             mouse_platform_name="NA",
             active_mouse_platform=False,
-            notes="none"
+            notes=self.job_settings.session_notes
         )
     
 
@@ -201,7 +196,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         if not isinstance(scale, list):
             scale = scale.tolist()
         while len(scale) < 3: # TODO: THIS IS NOT THE IDEAL SOLUTION, talk to scientists about what to do for too few items in spatreso list
-            scale.append(0)
+            scale.append(0) # Perhaps if list is not long enough, we just set it to none
         
         scale = Scale3dTransform(scale=scale)
 
@@ -220,16 +215,16 @@ class MRIEtl(GenericEtl[JobSettings]):
                 rare_factor=rare_factor, # method ##$PVM_RareFactor=8,
                 echo_time=self.cur_method['EchoTime'], # method ##$PVM_EchoTime=0.01,
                 effective_echo_time=eff_echo_time, # method ##$EffectiveTE=(1)
-                # echo_time_unit=TimeUnit(), # what do we want here?
+                echo_time_unit=TimeUnit.MS, # what do we want here?
                 repetition_time=self.cur_method['RepetitionTime'], # method ##$PVM_RepetitionTime=500,
-                # repetition_time_unit=TimeUnit(), # ditto
+                repetition_time_unit=TimeUnit.MS, # ditto
                 vc_orientation=rotation,# visu_pars  ##$VisuCoreOrientation=( 1, 9 )
                 vc_position=translation, # visu_pars ##$VisuCorePosition=( 1, 3 )
-                subject_position=SubjectPosition(subj_pos), # subject ##$SUBJECT_position=SUBJ_POS_Supine,
-                voxel_sizes=scale, # method ##$PVM_SpatResol=( 3 )
+                subject_position=SubjectPosition(subj_pos), 
+                voxel_sizes=scale,
                 processing_steps=[],
                 additional_scan_parameters={},
-                notes=notes, # Where should we pull these?
+                notes=notes,
             )      
         except Exception as e:
             logging.error(traceback.format_exc())
