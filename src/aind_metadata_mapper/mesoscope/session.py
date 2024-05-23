@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Union
 
 import tifffile
+import aind_metadata_mapper.stimulus.camstim
 from aind_data_schema.core.session import FieldOfView, Session, Stream
 from aind_data_schema_models.modalities import Modality
 from PIL import Image
@@ -42,7 +43,7 @@ class JobSettings(BaseSettings):
     mouse_platform_name: str = "disc"
 
 
-class MesoscopeEtl(GenericEtl[JobSettings]):
+class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camstim.Camstim):
     """Class to manage transforming mesoscope platform json and metadata into
     a Session model."""
 
@@ -59,6 +60,8 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
     def __init__(
         self,
         job_settings: Union[JobSettings, str],
+        camstim_session_id: str,
+        camstim_json_settings: dict,
     ):
         """Class constructor for Mesoscope etl job"""
         if isinstance(job_settings, str):
@@ -66,6 +69,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         else:
             job_settings_model = job_settings
         super().__init__(job_settings=job_settings_model)
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, camstim_session_id, camstim_json_settings)
 
     def _read_metadata(self, tiff_path: Path):
         """
