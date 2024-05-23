@@ -69,7 +69,10 @@ class Camstim:
 
         if not self.stim_table_path.exists() or overwrite_tables:
             print("building stim table")
-            self.build_stimulus_table()
+            if pkl.check_for_behavior(pkl.load_pkl(self.pkl_path)):
+                self.build_behavior_table()
+            else:
+                self.build_stimulus_table()
         if (
             self.opto_pkl_path.exists()
             and not self.opto_table_path.exists()
