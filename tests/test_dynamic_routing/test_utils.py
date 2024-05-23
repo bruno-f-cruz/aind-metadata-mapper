@@ -1,4 +1,5 @@
 """Utilities for dynamic_routing etl tests."""
+
 import os
 from pathlib import Path
 from typing import Tuple
