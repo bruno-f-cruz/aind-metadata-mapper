@@ -1,6 +1,3 @@
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
-
 import numpy as np
 import re
 import warnings
@@ -310,12 +307,14 @@ def map_column_names(table, name_map=None, ignore_case=True):
         the table with column names mapped
 
     """
-
     if ignore_case and name_map is not None:
         name_map = {key.lower(): value for key, value in name_map.items()}
-        mapper = lambda name: (
-            name if name.lower() not in name_map else name_map[name.lower()]
-        )
+
+        def mapper(name):
+            name_lower = name.lower()
+            if name_lower in name_map:
+                return name_map[name_lower]
+            return name
     else:
         mapper = name_map
 
