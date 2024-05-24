@@ -105,28 +105,24 @@ class TestGetMetaData(unittest.TestCase):
         )
         self.assertEqual(start_time, expected_start_time)
 
-    def test_get_total_seconds(self):
+
+    @patch("aind_metadata_mapper.utils.sync_utils.get_sample_freq")
+    def test_get_total_seconds(self, mock_get_sample_freq):
+        # Set the return value of mock_get_sample_freq to 100
+        mock_get_sample_freq.return_value = 100
+
         # Mock meta data
-        mock_meta_data = {"total_samples": 10000}
+        mock_meta_data = {"meta": { (): '{"total_samples": 10000}'}}
 
         # Mock the sync file
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[
-            key
-        ]
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
 
-        # Mock get_sample_freq function
-        def mock_get_sample_freq(meta_data):
-            return 100  # Sample frequency is 100 Hz
+        # Call the function to get total seconds
+        total_seconds = sync.get_total_seconds(mock_sync_file)
 
-        with unittest.mock.patch(
-            "sync.get_sample_freq", side_effect=mock_get_sample_freq
-        ):
-            # Call the function to get total seconds
-            total_seconds = sync.get_total_seconds(mock_sync_file)
-
-            expected_total_seconds = 10000 / 100
-            self.assertEqual(total_seconds, expected_total_seconds)
+        expected_total_seconds = 10000 / 100
+        self.assertEqual(total_seconds, expected_total_seconds)
 
     def test_get_stop_time(self):
         # Mock start time
