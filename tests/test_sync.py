@@ -143,9 +143,9 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_start_time", side_effect=mock_get_start_time
+            "aind_metadata_mapper.utils.sync_utils.get_start_time", side_effect=mock_get_start_time
         ), unittest.mock.patch(
-            "sync.get_total_seconds", side_effect=mock_get_total_seconds
+            "aind_metadata_mapper.utils.sync_utils.get_total_seconds", side_effect=mock_get_total_seconds
         ):
             # Call the function to get stop time
             stop_time = sync.get_stop_time(mock_sync_file)
