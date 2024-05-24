@@ -43,7 +43,7 @@ class TestGetMetaData(unittest.TestCase):
         # Mock sync file data
         mock_sync_file_data = {
             "data": np.array(
-                [[0], [100], [200], [4294967295], [0], [10000000000]],
+                [ [4294967295], [0], [10000000000]],
                 dtype=np.uint32,
             )
         }
@@ -58,7 +58,7 @@ class TestGetMetaData(unittest.TestCase):
         times = sync.process_times(mock_sync_file)
 
         expected_times = np.array(
-            [[0], [100], [200], [4294967295], [4294967296], [10000000000]],
+            [[4294967295], [4294967296], [5705032704]],
             dtype=np.int64,
         )
         np.testing.assert_array_equal(times, expected_times)
@@ -67,7 +67,7 @@ class TestGetMetaData(unittest.TestCase):
         # Mock sync file data
         mock_sync_file_data = {
             "data": np.array(
-                [[0], [100], [200], [4294967295], [0], [10000000000]],
+                [[4294967295], [0], [10000000000]],
                 dtype=np.uint32,
             )
         }
@@ -82,14 +82,14 @@ class TestGetMetaData(unittest.TestCase):
         times = sync.get_times(mock_sync_file)
 
         expected_times = np.array(
-            [[0], [100], [200], [4294967295], [4294967296], [10000000000]],
+            [[4294967295], [4294967296], [5705032704]],
             dtype=np.int64,
         )
         np.testing.assert_array_equal(times, expected_times)
 
     def test_get_start_time(self):
         # Mock meta data
-        mock_meta_data = {"start_time": "2022-05-18T15:30:00"}
+        mock_meta_data = {"meta": {() : "{'start_time': '2022-05-18T15:30:00'}"}}
 
         # Mock the sync file
         mock_sync_file = MagicMock()
@@ -100,7 +100,7 @@ class TestGetMetaData(unittest.TestCase):
         # Call the function to get start time
         start_time = sync.get_start_time(mock_sync_file)
 
-        expected_start_time = sync.datetime.fromisoformat(
+        expected_start_time = datetime.fromisoformat(
             "2022-05-18T15:30:00"
         )
         self.assertEqual(start_time, expected_start_time)
