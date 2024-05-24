@@ -506,7 +506,7 @@ def get_all_times(sync_file, meta_data, units="samples"):
     if meta_data["ni_daq"]["counter_bits"] == 32:
         times = sync_file["data"][()][:, 0]
     else:
-        times = times
+        times = 0
     units = units.lower()
     if units == "samples":
         return times

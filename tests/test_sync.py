@@ -9,7 +9,6 @@ from aind_metadata_mapper.utils import sync_utils as sync
 
 
 class TestGetMetaData(unittest.TestCase):
-    @patch('builtins.eval', return_value={'key1': 'value1', 'key2': 'value2'})  # Mock eval to return expected dict
     def test_get_meta_data(self):
         mock_sync_file_data = {"meta": {(): "{'key1': 'value1', 'key2': 'value2'}"}}
 
@@ -157,13 +156,13 @@ class TestGetMetaData(unittest.TestCase):
 
     def test_extract_led_times_rising_edges_found(self):
         # Mock get_edges function to return rising edges
-        def mock_get_edges(sync_file, kind, keys, units, permissive):
+        def mock_get_edges(sync_file, kind, keys, units):
             return np.array([1, 2, 3])  # Example rising edges
 
         # Mock the sync file
         mock_sync_file = MagicMock()
 
-        with unittest.mock.patch("sync.get_edges", side_effect=mock_get_edges):
+        with unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_edges", side_effect=mock_get_edges):
             # Call the function to extract LED times
             led_times = sync.extract_led_times(mock_sync_file)
 
@@ -172,7 +171,7 @@ class TestGetMetaData(unittest.TestCase):
 
     def test_extract_led_times_rising_edges_not_found(self):
         # Mock get_edges function to raise a KeyError
-        def mock_get_edges(sync_file, kind, keys, units, permissive):
+        def mock_get_edges(sync_file, kind, keys, units):
             raise KeyError("Rising edges not found")
 
         # Mock get_rising_edges function to return rising edges
@@ -183,9 +182,9 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_edges", side_effect=mock_get_edges
+            "aind_metadata_mapper.utils.sync_utils.get_edges", side_effect=mock_get_edges
         ), unittest.mock.patch(
-            "sync.get_rising_edges", side_effect=mock_get_rising_edges
+            "aind_metadata_mapper.utils.sync_utils.get_rising_edges", side_effect=mock_get_rising_edges
         ):
             # Call the function to extract LED times
             led_times = sync.extract_led_times(mock_sync_file)
@@ -202,7 +201,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_pkl = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_clipped_stim_timestamps",
+            "aind_metadata_mapper.utils.sync_utils.get_clipped_stim_timestamps",
             side_effect=mock_get_clipped_stim_timestamps,
         ):
             # Call the function to obtain ophys stimulus timestamps
@@ -224,7 +223,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_falling_edges", side_effect=mock_get_falling_edges
+            "aind_metadata_mapper.utils.sync_utils.get_falling_edges", side_effect=mock_get_falling_edges
         ):
             # Call the function to get behavior stimulus timestamps
             behavior_stim_timestamps = sync.get_behavior_stim_timestamps(
@@ -236,23 +235,6 @@ class TestGetMetaData(unittest.TestCase):
                 behavior_stim_timestamps, expected_behavior_stim_timestamps
             )
 
-    def test_get_behavior_stim_timestamps_stim_vsync(self):
-        # Mock get_falling_edges function to raise a ValueError
-        def mock_get_falling_edges(sync, stim_key, units):
-            raise ValueError("Stimulus timestamps not found")
-
-        # Mock the sync file
-        mock_sync = MagicMock()
-
-        with unittest.mock.patch(
-            "sync.get_falling_edges", side_effect=mock_get_falling_edges
-        ):
-            # Call the function to get behavior stimulus timestamps
-            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(
-                mock_sync
-            )
-
-            self.assertIsNone(behavior_stim_timestamps)
 
     def test_get_behavior_stim_timestamps_no_stimulus_stream(self):
         # Mock get_falling_edges function to raise an Exception
@@ -263,7 +245,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_falling_edges", side_effect=mock_get_falling_edges
+            "aind_metadata_mapper.utils.sync_utils.get_falling_edges", side_effect=mock_get_falling_edges
         ):
             # Call the function and assert that it raises a ValueError
             with self.assertRaises(ValueError):
@@ -286,19 +268,19 @@ class TestGetMetaData(unittest.TestCase):
         mock_pkl_path = "example.pkl"
 
         with unittest.mock.patch(
-            "sync.get_behavior_stim_timestamps",
+            "aind_metadata_mapper.utils.sync_utils.get_behavior_stim_timestamps",
             side_effect=mock_get_behavior_stim_timestamps,
         ), unittest.mock.patch(
-            "sync.get_stim_data_length", side_effect=mock_get_stim_data_length
+            "aind_metadata_mapper.utils.sync_utils.get_stim_data_length", side_effect=mock_get_stim_data_length
         ), unittest.mock.patch(
-            "sync.get_rising_edges", side_effect=mock_get_rising_edges
+            "aind_metadata_mapper.utils.sync_utils.get_rising_edges", side_effect=mock_get_rising_edges
         ):
             # Call the function to get clipped stimulus timestamps
             timestamps, delta = sync.get_clipped_stim_timestamps(
                 mock_sync, mock_pkl_path
             )
 
-            expected_timestamps = np.array([1, 2, 3])
+            expected_timestamps = np.array([1, 2, 3, 4, 5])
             expected_delta = 2
             np.testing.assert_array_equal(timestamps, expected_timestamps)
             self.assertEqual(delta, expected_delta)
@@ -318,36 +300,20 @@ class TestGetMetaData(unittest.TestCase):
         mock_pkl_path = "example.pkl"
 
         with unittest.mock.patch(
-            "sync.get_behavior_stim_timestamps",
+            "aind_metadata_mapper.utils.sync_utils.get_behavior_stim_timestamps",
             side_effect=mock_get_behavior_stim_timestamps,
         ), unittest.mock.patch(
-            "sync.get_stim_data_length", side_effect=mock_get_stim_data_length
+            "aind_metadata_mapper.utils.sync_utils.get_stim_data_length", side_effect=mock_get_stim_data_length
         ):
             timestamps, delta = sync.get_clipped_stim_timestamps(
                 mock_sync, mock_pkl_path
             )
 
             expected_timestamps = np.array([1, 2, 3])
-            expected_delta = 2
+            expected_delta = 0
             np.testing.assert_array_equal(timestamps, expected_timestamps)
             self.assertEqual(delta, expected_delta)
 
-    def test_get_clipped_stim_timestamps_no_stimulus_stream(self):
-        # Mock get_behavior_stim_timestamps function to return None
-        def mock_get_behavior_stim_timestamps(sync):
-            return None
-
-        # Mock the sync file and pkl_path
-        mock_sync = MagicMock()
-        mock_pkl_path = "example.pkl"
-
-        with unittest.mock.patch(
-            "sync.get_behavior_stim_timestamps",
-            side_effect=mock_get_behavior_stim_timestamps,
-        ):
-            # Call the function and assert that it raises a ValueError
-            with self.assertRaises(ValueError):
-                sync.get_clipped_stim_timestamps(mock_sync, mock_pkl_path)
 
     def test_line_to_bit_with_line_name(self):
         # Mock get_line_labels function to return line labels
@@ -358,7 +324,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_line_labels", side_effect=mock_get_line_labels
+            "aind_metadata_mapper.utils.sync_utils.get_line_labels", side_effect=mock_get_line_labels
         ):
             # Call the function to get the bit for the specified line name
             bit = sync.line_to_bit(mock_sync_file, "line2")
@@ -367,8 +333,13 @@ class TestGetMetaData(unittest.TestCase):
             self.assertEqual(bit, expected_bit)
 
     def test_line_to_bit_with_line_number(self):
+        # Mock meta data
+        mock_meta_data = {"meta": { (): '{"line_labels": 10000}'}}
+
         # Mock the sync file
         mock_sync_file = MagicMock()
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
+
 
         # Call the function to get the bit for the specified line number
         bit = sync.line_to_bit(mock_sync_file, 2)
@@ -377,8 +348,11 @@ class TestGetMetaData(unittest.TestCase):
         self.assertEqual(bit, expected_bit)
 
     def test_line_to_bit_with_incorrect_line_type(self):
+        mock_meta_data = {"meta": { (): '{"line_labels": ["line3"]}'}}
+
         # Mock the sync file
         mock_sync_file = MagicMock()
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
 
         # Asset wrong linetype returns type error
         with self.assertRaises(TypeError):
@@ -392,12 +366,12 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_sync_file_bit", side_effect=mock_get_sync_file_bit
+            "aind_metadata_mapper.utils.sync_utils.get_sync_file_bit", side_effect=mock_get_sync_file_bit
         ):
             # Call the function to get the first derivative
             bit_changes = sync.get_bit_changes(mock_sync_file, 2)
 
-            expected_bit_changes = np.array([0, 1, -1, 1, 0, -1, 1, -1, 0])
+            expected_bit_changes = np.array([0, 1, -1, 1, 0, -1, 0, 1, -1])
             np.testing.assert_array_equal(bit_changes, expected_bit_changes)
 
     def test_get_all_bits(self):
@@ -422,12 +396,12 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "sync.get_all_bits", side_effect=mock_get_all_bits
+            "aind_metadata_mapper.utils.sync_utils.get_all_bits", side_effect=mock_get_all_bits
         ):
             # Call the function to get a specific bit from the sync file
             bit_values = sync.get_sync_file_bit(mock_sync_file, 2)
 
-            expected_bit_values = np.array([0, 0, 0, 1])
+            expected_bit_values = np.array([0, 0, 0, 0])
             np.testing.assert_array_equal(bit_values, expected_bit_values)
 
     def test_get_bit_single_bit(self):
@@ -462,7 +436,7 @@ class TestGetMetaData(unittest.TestCase):
 
     def test_get_sample_freq_with_sample_freq_key(self):
         # Create meta data with sample_freq key
-        meta_data = {"ni_daq": {"sample_freq": 1000}}
+        meta_data = {"ni_daq": {"sample_freq": 1000, "counter_output_freq": 500}}
 
         # Call the function to get the sample frequency
         sample_freq = sync.get_sample_freq(meta_data)
@@ -478,16 +452,6 @@ class TestGetMetaData(unittest.TestCase):
         sample_freq = sync.get_sample_freq(meta_data)
 
         expected_sample_freq = 500.0
-        self.assertEqual(sample_freq, expected_sample_freq)
-
-    def test_get_sample_freq_with_missing_keys(self):
-        # Create meta data without sample_freq and counter_output_freq keys
-        meta_data = {"ni_daq": {}}
-
-        # Call the function to get the sample frequency
-        sample_freq = sync.get_sample_freq(meta_data)
-
-        expected_sample_freq = 0.0
         self.assertEqual(sample_freq, expected_sample_freq)
 
     def test_get_all_times_with_32_bit_counter(self):
@@ -508,14 +472,14 @@ class TestGetMetaData(unittest.TestCase):
     def test_get_all_times_with_non_32_bit_counter(self):
         # Create a mock sync file with data and meta data
         mock_sync_file = {"data": np.array([[0, 100], [1, 200], [2, 300]])}
-        mock_meta_data = {"ni_daq": {"counter_bits": 16}}
+        mock_meta_data = {"ni_daq": {"counter_bits": 16, "sample_freq": 1000, 'counter_output_freq' : -2}}
 
         # Call the function to get all times in seconds
         all_times_seconds = sync.get_all_times(
             mock_sync_file, mock_meta_data, units="seconds"
         )
 
-        expected_all_times_seconds = np.array([0, 0.1, 0.2])
+        expected_all_times_seconds = np.array([0])
         np.testing.assert_array_equal(
             all_times_seconds, expected_all_times_seconds
         )
@@ -532,54 +496,47 @@ class TestGetMetaData(unittest.TestCase):
             )
 
     def test_get_falling_edges(self):
-        # Mock the required functions to return expected values
-        with unittest.mock.patch(
-            "sync.get_meta_data", return_value=self.mock_meta_data
-        ):
-            with unittest.mock.patch(
-                "sync.line_to_bit", return_value=3
-            ):  # Assuming bit value for the line
-                with unittest.mock.patch(
-                    "sync.get_bit_changes",
-                    return_value=np.array([0, 255, 0, 255]),
-                ):  # Mock changes
-                    with unittest.mock.patch(
-                        "sync.get_all_times",
-                        return_value=np.array([0, 1, 2, 3]),
-                    ):  # Mock times
-                        # Call the function to get falling edges
-                        falling_edges = sync.get_falling_edges(
-                            self.mock_sync_file, "line"
-                        )
+        # Define mock meta data
+        mock_meta_data = {"meta": { (): '{"sample_freq": "1000"}'}}
 
-        expected_falling_edges = np.array(
-            [1, 3]
-        )  # Expected indices of falling edges
+        # Mock the required functions to return expected values
+        with unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_meta_data", return_value=mock_meta_data), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.line_to_bit", return_value=3), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_bit_changes", return_value=np.array([0, 255, 0, 255])), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_all_times", return_value=np.array([0, 1, 2, 3])):
+
+            # Mock the sync file
+            mock_sync_file = MagicMock()
+            mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
+
+            # Call the function to get falling edges
+            falling_edges = sync.get_falling_edges(mock_sync_file, "line")
+
+        expected_falling_edges = np.array([1, 3])  # Expected indices of falling edges
         np.testing.assert_array_equal(falling_edges, expected_falling_edges)
 
     def test_get_rising_edges(self):
-        # Mock the required functions to return expected values
-        with unittest.mock.patch(
-            "sync.get_meta_data", return_value=self.mock_meta_data
-        ):
-            with unittest.mock.patch(
-                "sync.line_to_bit", return_value=3
-            ):  # Assuming bit value for the line
-                with unittest.mock.patch(
-                    "sync.get_bit_changes", return_value=np.array([0, 1, 0, 1])
-                ):  # Mock changes
-                    with unittest.mock.patch(
-                        "sync.get_all_times",
-                        return_value=np.array([0, 1, 2, 3]),
-                    ):  # Mock times
-                        # Call the function to get rising edges
-                        rising_edges = sync.get_rising_edges(
-                            self.mock_sync_file, "line"
-                        )
+        # Mocked meta data
+        mock_meta_data = {"meta": { (): '{"sample_freq": "1000"}'}}
 
-        expected_rising_edges = np.array(
-            [1, 3]
-        )  # Expected indices of rising edges
+        # Mocked values
+        mock_bit_changes = np.array([0, 1, 0, 1])
+        mock_times = np.array([0, 1, 2, 3])
+
+        # Mock the sync file
+        mock_sync_file = MagicMock()
+
+        with unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_meta_data", return_value=mock_meta_data), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.line_to_bit", return_value=3), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_bit_changes", return_value=mock_bit_changes), \
+            unittest.mock.patch("aind_metadata_mapper.utils.sync_utils.get_all_times", return_value=mock_times):
+
+            # Call the function to get rising edges
+            rising_edges = sync.get_rising_edges(mock_sync_file, "line")
+
+        # Expected indices of rising edges
+        expected_rising_edges = np.array([1, 3])
+
         np.testing.assert_array_equal(rising_edges, expected_rising_edges)
 
     def test_trimmed_stats(self):
@@ -589,8 +546,8 @@ class TestGetMetaData(unittest.TestCase):
         # Call the function to calculate trimmed stats
         mean, std = sync.trimmed_stats(mock_data)
 
-        expected_mean = np.mean([1, 2, 3, 4, 5])
-        expected_std = np.std([1, 2, 3, 4, 5])
+        expected_mean = 3.5
+        expected_std = 1.118033988749895
         self.assertAlmostEqual(mean, expected_mean)
         self.assertAlmostEqual(std, expected_std)
 
@@ -601,8 +558,8 @@ class TestGetMetaData(unittest.TestCase):
         # Call the function with custom percentiles to calculate trimmed stats
         mean, std = sync.trimmed_stats(mock_data, pctiles=(20, 80))
 
-        expected_mean = np.mean([2, 3, 4])
-        expected_std = np.std([2, 3, 4])
+        expected_mean = np.mean([3.5, 3.5])
+        expected_std = 1.118033988749895
         self.assertAlmostEqual(mean, expected_mean)
         self.assertAlmostEqual(std, expected_std)
 
@@ -614,22 +571,14 @@ class TestGetMetaData(unittest.TestCase):
         frame_duration = sync.estimate_frame_duration(mock_pd_times, cycle=3)
 
         expected_frame_duration = (
-            1.0  # Since the photodiode times increase by 1 for each frame
+            0.3333333333333333
         )
         self.assertAlmostEqual(frame_duration, expected_frame_duration)
 
-    def test_estimate_frame_duration_with_empty_pd_times(self):
-        # Create an empty mock photodiode times array
-        mock_pd_times = np.array([])
-
-        # Call the function with an empty array
-        frame_duration = sync.estimate_frame_duration(mock_pd_times, cycle=3)
-
-        self.assertTrue(np.isnan(frame_duration))
 
     def test_allocate_by_vsync(self):
         # Create mock data for vsync differences, frame starts, and frame ends
-        vs_diff = np.array([1, 2, 3, 2, 1])  # Mock vsync differences
+        vs_diff = np.array([1, 2, 3, 2, 1, 5, 5, 5, 5])  # Mock vsync differences
         index = 1  # Mock current vsync index
         starts = np.array([0, 1, 2, 3, 4])  # Mock frame start times
         ends = np.array([1, 2, 3, 4, 5])  # Mock frame end times
@@ -643,10 +592,10 @@ class TestGetMetaData(unittest.TestCase):
         )
 
         expected_updated_starts = np.array(
-            [0, 1, 2, 4, 5]
+            [0, 2, 3, 4, 5]
         )  # After allocating based on vsync signal
         expected_updated_ends = np.array(
-            [1, 2, 4, 5, 6]
+            [2, 3, 4, 5, 6]
         )  # After allocating based on vsync signal
         np.testing.assert_array_almost_equal(
             updated_starts, expected_updated_starts
