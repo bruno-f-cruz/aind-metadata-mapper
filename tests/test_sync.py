@@ -15,7 +15,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Mock the h5py.File object
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_sync_file_data[key]
+        mock_sync_file.__getitem__.side_effect = (
+            lambda key: mock_sync_file_data[key]
+        )
 
         # Call the function to get meta data
         meta_data = sync.get_meta_data(mock_sync_file)
@@ -30,7 +32,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Mock the sync file
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[
+            key
+        ]
 
         # Call the function to get line labels
         line_labels = sync.get_line_labels(mock_sync_file)
@@ -43,13 +47,16 @@ class TestGetMetaData(unittest.TestCase):
         # Mock sync file data
         mock_sync_file_data = {
             "data": np.array(
-                [[0], [100], [200], [4294967295], [0], [10000000000]], dtype=np.uint32
+                [[0], [100], [200], [4294967295], [0], [10000000000]],
+                dtype=np.uint32,
             )
         }
 
         # Mock the h5py.File object
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_sync_file_data[key]
+        mock_sync_file.__getitem__.side_effect = (
+            lambda key: mock_sync_file_data[key]
+        )
 
         # Call the function to process times
         times = sync.process_times(mock_sync_file)
@@ -65,13 +72,16 @@ class TestGetMetaData(unittest.TestCase):
         # Mock sync file data
         mock_sync_file_data = {
             "data": np.array(
-                [[0], [100], [200], [4294967295], [0], [10000000000]], dtype=np.uint32
+                [[0], [100], [200], [4294967295], [0], [10000000000]],
+                dtype=np.uint32,
             )
         }
 
         # Mock the h5py.File object
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_sync_file_data[key]
+        mock_sync_file.__getitem__.side_effect = (
+            lambda key: mock_sync_file_data[key]
+        )
 
         # Call the function to get times
         times = sync.get_times(mock_sync_file)
@@ -89,13 +99,17 @@ class TestGetMetaData(unittest.TestCase):
 
         # Mock the sync file
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[
+            key
+        ]
 
         # Call the function to get start time
         start_time = sync.get_start_time(mock_sync_file)
 
         # Check if the returned start time matches the expected start time
-        expected_start_time = sync.datetime.fromisoformat("2022-05-18T15:30:00")
+        expected_start_time = sync.datetime.fromisoformat(
+            "2022-05-18T15:30:00"
+        )
         self.assertEqual(start_time, expected_start_time)
 
     def test_get_total_seconds(self):
@@ -104,7 +118,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Mock the sync file
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[key]
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_meta_data[
+            key
+        ]
 
         # Mock get_sample_freq function
         def mock_get_sample_freq(meta_data):
@@ -149,7 +165,9 @@ class TestGetMetaData(unittest.TestCase):
             stop_time = sync.get_stop_time(mock_sync_file)
 
             # Check if the returned stop time matches the expected value
-            expected_stop_time = mock_start_time + timedelta(seconds=mock_total_seconds)
+            expected_stop_time = mock_start_time + timedelta(
+                seconds=mock_total_seconds
+            )
             self.assertEqual(stop_time, expected_stop_time)
 
     def test_extract_led_times_rising_edges_found(self):
@@ -232,7 +250,9 @@ class TestGetMetaData(unittest.TestCase):
             "sync.get_falling_edges", side_effect=mock_get_falling_edges
         ):
             # Call the function to get behavior stimulus timestamps
-            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(mock_sync)
+            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(
+                mock_sync
+            )
 
             # Check if the returned behavior stimulus timestamps match the expected values
             expected_behavior_stim_timestamps = np.array([1, 2, 3])
@@ -253,7 +273,9 @@ class TestGetMetaData(unittest.TestCase):
             "sync.get_falling_edges", side_effect=mock_get_falling_edges
         ):
             # Call the function to get behavior stimulus timestamps
-            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(mock_sync)
+            behavior_stim_timestamps = sync.get_behavior_stim_timestamps(
+                mock_sync
+            )
 
             # Check if the returned behavior stimulus timestamps match the expected values
             self.assertIsNone(behavior_stim_timestamps)
@@ -274,7 +296,9 @@ class TestGetMetaData(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sync.get_behavior_stim_timestamps(mock_sync)
 
-    def test_get_clipped_stim_timestamps_stim_length_less_than_timestamps(self):
+    def test_get_clipped_stim_timestamps_stim_length_less_than_timestamps(
+        self,
+    ):
         # Mock get_behavior_stim_timestamps function to return stimulus timestamps
         def mock_get_behavior_stim_timestamps(sync):
             return np.array([1, 2, 3, 4, 5])  # Example stimulus timestamps
@@ -311,7 +335,9 @@ class TestGetMetaData(unittest.TestCase):
             np.testing.assert_array_equal(timestamps, expected_timestamps)
             self.assertEqual(delta, expected_delta)
 
-    def test_get_clipped_stim_timestamps_stim_length_greater_than_timestamps(self):
+    def test_get_clipped_stim_timestamps_stim_length_greater_than_timestamps(
+        self,
+    ):
         # Mock get_behavior_stim_timestamps function to return stimulus timestamps
         def mock_get_behavior_stim_timestamps(sync):
             return np.array([1, 2, 3])  # Example stimulus timestamps
@@ -440,7 +466,9 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         # Replace the original get_all_bits function with the mock
-        with unittest.mock.patch("sync.get_all_bits", side_effect=mock_get_all_bits):
+        with unittest.mock.patch(
+            "sync.get_all_bits", side_effect=mock_get_all_bits
+        ):
             # Call the function to get a specific bit from the sync file
             bit_values = sync.get_sync_file_bit(mock_sync_file, 2)
 
@@ -526,7 +554,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Check if the returned times match the expected values
         expected_all_times_samples = np.array([0, 1, 2])
-        np.testing.assert_array_equal(all_times_samples, expected_all_times_samples)
+        np.testing.assert_array_equal(
+            all_times_samples, expected_all_times_samples
+        )
 
     def test_get_all_times_with_non_32_bit_counter(self):
         # Create a mock sync file with data and meta data
@@ -540,7 +570,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Check if the returned times match the expected values
         expected_all_times_seconds = np.array([0, 0.1, 0.2])
-        np.testing.assert_array_equal(all_times_seconds, expected_all_times_seconds)
+        np.testing.assert_array_equal(
+            all_times_seconds, expected_all_times_seconds
+        )
 
     def test_get_all_times_with_invalid_units(self):
         # Create a mock sync file with data and meta data
@@ -549,7 +581,9 @@ class TestGetMetaData(unittest.TestCase):
 
         # Call the function with an invalid units parameter and assert that it raises a ValueError
         with self.assertRaises(ValueError):
-            sync.get_all_times(mock_sync_file, mock_meta_data, units="invalid_units")
+            sync.get_all_times(
+                mock_sync_file, mock_meta_data, units="invalid_units"
+            )
 
     def test_get_falling_edges(self):
         # Mock the required functions to return expected values
@@ -560,10 +594,12 @@ class TestGetMetaData(unittest.TestCase):
                 "sync.line_to_bit", return_value=3
             ):  # Assuming bit value for the line
                 with unittest.mock.patch(
-                    "sync.get_bit_changes", return_value=np.array([0, 255, 0, 255])
+                    "sync.get_bit_changes",
+                    return_value=np.array([0, 255, 0, 255]),
                 ):  # Mock changes
                     with unittest.mock.patch(
-                        "sync.get_all_times", return_value=np.array([0, 1, 2, 3])
+                        "sync.get_all_times",
+                        return_value=np.array([0, 1, 2, 3]),
                     ):  # Mock times
                         # Call the function to get falling edges
                         falling_edges = sync.get_falling_edges(
@@ -571,7 +607,9 @@ class TestGetMetaData(unittest.TestCase):
                         )
 
         # Check if the returned falling edges match the expected values
-        expected_falling_edges = np.array([1, 3])  # Expected indices of falling edges
+        expected_falling_edges = np.array(
+            [1, 3]
+        )  # Expected indices of falling edges
         np.testing.assert_array_equal(falling_edges, expected_falling_edges)
 
     def test_get_rising_edges(self):
@@ -586,7 +624,8 @@ class TestGetMetaData(unittest.TestCase):
                     "sync.get_bit_changes", return_value=np.array([0, 1, 0, 1])
                 ):  # Mock changes
                     with unittest.mock.patch(
-                        "sync.get_all_times", return_value=np.array([0, 1, 2, 3])
+                        "sync.get_all_times",
+                        return_value=np.array([0, 1, 2, 3]),
                     ):  # Mock times
                         # Call the function to get rising edges
                         rising_edges = sync.get_rising_edges(
@@ -594,7 +633,9 @@ class TestGetMetaData(unittest.TestCase):
                         )
 
         # Check if the returned rising edges match the expected values
-        expected_rising_edges = np.array([1, 3])  # Expected indices of rising edges
+        expected_rising_edges = np.array(
+            [1, 3]
+        )  # Expected indices of rising edges
         np.testing.assert_array_equal(rising_edges, expected_rising_edges)
 
     def test_trimmed_stats(self):
@@ -661,22 +702,26 @@ class TestGetMetaData(unittest.TestCase):
             vs_diff, index, starts, ends, frame_duration, irregularity, cycle
         )
 
-        # Check if the returned frame start and end times are updated as expected
+        # Check if the frame start and end times are updated as expected
         expected_updated_starts = np.array(
             [0.1, 1, 2, 3, 4]
         )  # After allocating based on vsync signal
         expected_updated_ends = np.array(
             [1, 2, 3, 4.1, 5]
         )  # After allocating based on vsync signal
-        np.testing.assert_array_almost_equal(updated_starts, expected_updated_starts)
-        np.testing.assert_array_almost_equal(updated_ends, expected_updated_ends)
+        np.testing.assert_array_almost_equal(
+            updated_starts, expected_updated_starts
+        )
+        np.testing.assert_array_almost_equal(
+            updated_ends, expected_updated_ends
+        )
 
     def test_trim_border_pulses(self):
         # Create mock photodiode times and vsync times
         pd_times = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
         vs_times = np.array([1.0, 2.0])
 
-        # Call the function to trim pulses near borders of the photodiode signal
+        # Trim pulses near borders of the photodiode signal
         trimmed_pd_times = sync.trim_border_pulses(pd_times, vs_times)
 
         # Check if the returned photodiode times are trimmed as expected
@@ -693,35 +738,40 @@ class TestGetMetaData(unittest.TestCase):
         corrected_pd_times = sync.correct_on_off_effects(pd_times)
 
         # Check if the returned photodiode times are corrected as expected
-        # Note: Since the behavior of this function depends on statistical properties, exact assertions are difficult.
+        # Checking len because function relies on statistical properties
         self.assertTrue(len(corrected_pd_times), len(pd_times))
 
     def test_trim_discontiguous_vsyncs(self):
         # Create mock vsync times
         vs_times = np.array([1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.3, 3.0])
 
-        # Call the function to trim discontiguous vsyncs from the photodiode signal
+        # Trim discontiguous vsyncs from the photodiode signal
         trimmed_vs_times = sync.trim_discontiguous_vsyncs(vs_times)
 
         # Check if the returned vsync times are trimmed as expected
-        expected_trimmed_vs_times = np.array([1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.3, 3.0])
+        expected_trimmed_vs_times = np.array(
+            [1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.3, 3.0]
+        )
         np.testing.assert_array_almost_equal(
             trimmed_vs_times, expected_trimmed_vs_times
         )
 
     def test_assign_to_last(self):
-        # Create mock data arrays for starts, ends, frame duration, and irregularity
+        """ "
+        Tests whether irregularity is assigned as expected
+        """
+        # Mock data arrays for starts, ends, frame duration, irregularity
         starts = np.array([1.0, 2.0, 3.0])
         ends = np.array([1.1, 2.1, 3.1])
         frame_duration = 0.1
         irregularity = 1
 
-        # Call the function to assign the irregularity to the last frame
+        # Assign the irregularity to the last frame
         new_starts, new_ends = sync.assign_to_last(
             starts, ends, frame_duration, irregularity
         )
 
-        # Check if the irregularity is assigned to the last frame as expected
+        # Check if the irregularity is assigned as expected
         expected_new_ends = np.array([1.1, 2.1, 3.2])
         np.testing.assert_array_almost_equal(new_ends, expected_new_ends)
 
@@ -774,7 +824,7 @@ class TestGetMetaData(unittest.TestCase):
             vs_times, pd_times
         )
 
-        # Check if the returned vsync and photodiode times are separated correctly
+        # Check if vsync and photodiode times are separated correctly
         expected_vs_times_out = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])]
         expected_pd_times_out = [
             np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]),

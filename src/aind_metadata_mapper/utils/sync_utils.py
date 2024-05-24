@@ -859,7 +859,6 @@ def compute_frame_times(
     for start_index, (start_time, end_time) in enumerate(
         zip(photodiode_times[:-1], photodiode_times[1:])
     ):
-
         interval_duration = end_time - start_time
         irregularity = (
             int(np.around((interval_duration) / frame_duration)) - cycle
@@ -931,7 +930,6 @@ def separate_vsyncs_and_photodiode_times(
     pd_times_out = []
 
     for indx, b in enumerate(break_times[:-1]):
-
         pd_in_range = np.where(
             (pd_times > break_times[indx] + shift)
             * (pd_times <= break_times[indx + 1] + shift)

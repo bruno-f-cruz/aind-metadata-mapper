@@ -167,7 +167,6 @@ def extract_const_params_from_stim_repr(
         k, v = match.split("=")
 
         if k not in repr_params:
-
             m = array_re.match(v)
             if m is not None:
                 v = m["contents"]
@@ -380,7 +379,6 @@ def extract_frame_times_from_photodiode(
     frame_start_times = np.zeros((0,))
 
     for i in range(len(vsync_times_chunked)):
-
         photodiode_times = sync.trim_border_pulses(
             pd_times_chunked[i], vsync_times_chunked[i]
         )
@@ -708,7 +706,6 @@ def build_stimuluswise_table(
         )
         existing_columns = set(stim_table.columns)
         for const_param_key, const_param_value in const_params.items():
-
             existing_cap = const_param_key.capitalize() in existing_columns
             existing_upper = const_param_key.upper() in existing_columns
             existing = const_param_key in existing_columns

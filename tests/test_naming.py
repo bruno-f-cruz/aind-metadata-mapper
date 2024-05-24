@@ -67,7 +67,11 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_collapse_columns_merge(self):
         # Create a DataFrame with columns that can be merged
-        data = {"A": [1, None, None], "b": [None, 2, None], "C": [None, None, 3]}
+        data = {
+            "A": [1, None, None],
+            "b": [None, 2, None],
+            "C": [None, None, 3],
+        }
         df = pd.DataFrame(data)
 
         # Expected DataFrame after merging columns
@@ -80,7 +84,11 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_collapse_columns_no_merge(self):
         # Create a DataFrame with columns that cannot be merged
-        data = {"A": [1, None, None], "B": [None, 2, None], "C": [None, None, 3]}
+        data = {
+            "A": [1, None, None],
+            "B": [None, 2, None],
+            "C": [None, None, 3],
+        }
         df = pd.DataFrame(data)
 
         # Expected DataFrame (unchanged)
@@ -103,7 +111,11 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
 
         # Expected DataFrame after merging columns with overwritten NaN values
-        expected_data = {"A": [1, 4, None], "B": [5, 2, None], "C": [None, 3, 6]}
+        expected_data = {
+            "A": [1, 4, None],
+            "B": [5, 2, None],
+            "C": [None, 3, 6],
+        }
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function and assert the result
@@ -112,7 +124,13 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_add_number_to_shuffled_movie_no_matching_rows(self):
         # Create a DataFrame with no rows matching the shuffled movie regex
-        data = {"stim_name": ["natural_movie_1", "natural_movie_2", "natural_movie_3"]}
+        data = {
+            "stim_name": [
+                "natural_movie_1",
+                "natural_movie_2",
+                "natural_movie_3",
+            ]
+        }
         df = pd.DataFrame(data)
 
         # Expected DataFrame (unchanged)
@@ -150,7 +168,11 @@ class TestDropEmptyColumns(unittest.TestCase):
 
         # Expected DataFrame with the stim_name column modified
         expected_data = {
-            "stim_name": ["natural_movie_1", "natural_movie_1", "natural_movie_1"]
+            "stim_name": [
+                "natural_movie_1",
+                "natural_movie_1",
+                "natural_movie_1",
+            ]
         }
         expected_df = pd.DataFrame(expected_data)
 
@@ -218,7 +240,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         name_map = {"stim1": "new_stim1", np.nan: "new_spontaneous"}
 
         # Expected DataFrame with stim_name column modified according to the mapping
-        expected_data = {"stim_name": ["new_stim1", "stim2", "new_spontaneous"]}
+        expected_data = {
+            "stim_name": ["new_stim1", "stim2", "new_spontaneous"]
+        }
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function and assert the result
@@ -232,7 +256,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         name_map = {"stim1": "new_stim1", "stim3": "new_stim3"}
 
         # Expected DataFrame with custom_stimulus_name column modified according to the mapping
-        expected_data = {"custom_stimulus_name": ["new_stim1", "stim2", "new_stim3"]}
+        expected_data = {
+            "custom_stimulus_name": ["new_stim1", "stim2", "new_stim3"]
+        }
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function with the custom column name and assert the result
@@ -278,7 +304,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function with ignore_case=True and assert the result
-        result_df = naming.map_column_names(df, name_map=name_map, ignore_case=True)
+        result_df = naming.map_column_names(
+            df, name_map=name_map, ignore_case=True
+        )
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_column_names_with_ignore_case_false(self):
@@ -291,7 +319,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         expected_df = df.copy()
 
         # Call the function with ignore_case=False and assert the result
-        result_df = naming.map_column_names(df, name_map=name_map, ignore_case=False)
+        result_df = naming.map_column_names(
+            df, name_map=name_map, ignore_case=False
+        )
         pd.testing.assert_frame_equal(result_df, expected_df)
 
 

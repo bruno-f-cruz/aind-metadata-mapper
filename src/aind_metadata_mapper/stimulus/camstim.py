@@ -159,9 +159,7 @@ class Camstim:
 
         stim_table_final.to_csv(self.stim_table_path, index=False)
 
-    def build_optogenetics_table(
-        self, keys=stim.OPTOGENETIC_STIMULATION_KEYS
-    ):
+    def build_optogenetics_table(self, keys=stim.OPTOGENETIC_STIMULATION_KEYS):
         """
         Builds an optogenetics table from the opto pickle file and sync file.
         Writes the table to a csv file.
