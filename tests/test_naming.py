@@ -99,7 +99,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_collapse_columns_merge_with_overwrite(self):
-        # Create a DataFrame with columns that can be merged, with some overlapping non-NaN values
+        # Create a DataFrame with overlapping non-NaN columns to be merged
         data = {
             "A": [1, None, None],
             "B": [None, 2, None],
@@ -181,7 +181,8 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_add_number_to_shuffled_movie_mixed_columns(self):
-        # Create a DataFrame with mixed columns including rows matching the shuffled movie regex
+        # Create a DataFrame with mixed columns
+        # including rows with a shuffled movie regex
         data = {
             "stim_name": [
                 "natural_movie_1_shuffled",
@@ -225,7 +226,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
         name_map = {"stim1": "new_stim1", "stim3": "new_stim3"}
 
-        # Expected DataFrame with stim_name column modified according to the mapping
+        # Change name column with mapping
         expected_data = {"stim_name": ["new_stim1", "stim2", "new_stim3"]}
         expected_df = pd.DataFrame(expected_data)
 
@@ -239,7 +240,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
         name_map = {"stim1": "new_stim1", np.nan: "new_spontaneous"}
 
-        # Expected DataFrame with stim_name column modified according to the mapping
+        # Change name column with mapping
         expected_data = {
             "stim_name": ["new_stim1", "stim2", "new_spontaneous"]
         }
@@ -250,12 +251,12 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_stimulus_names_with_column_name(self):
-        # Create a DataFrame with a custom stimulus column name
+        # Create a DataFrame with a custom stim name
         data = {"custom_stimulus_name": ["stim1", "stim2", "stim3"]}
         df = pd.DataFrame(data)
         name_map = {"stim1": "new_stim1", "stim3": "new_stim3"}
 
-        # Expected DataFrame with custom_stimulus_name column modified according to the mapping
+        # Expected DataFrame with names modified to the mapping
         expected_data = {
             "custom_stimulus_name": ["new_stim1", "stim2", "new_stim3"]
         }
@@ -285,7 +286,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
         name_map = {"A": "X", "B": "Y", "C": "Z"}
 
-        # Expected DataFrame with column names modified according to the mapping
+        # Expected DataFrame with names changed to the mapping
         expected_data = {"X": [1, 2, 3], "Y": [4, 5, 6], "Z": [7, 8, 9]}
         expected_df = pd.DataFrame(expected_data)
 
@@ -299,11 +300,11 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
         name_map = {"a": "X", "b": "Y", "C": "Z"}
 
-        # Expected DataFrame with column names modified according to the mapping, ignoring case
+        # Expected DataFrame names changed
+        # Ignoring case
         expected_data = {"X": [1, 2, 3], "Y": [4, 5, 6], "Z": [7, 8, 9]}
         expected_df = pd.DataFrame(expected_data)
 
-        # Call the function with ignore_case=True and assert the result
         result_df = naming.map_column_names(
             df, name_map=name_map, ignore_case=True
         )
@@ -315,7 +316,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
         name_map = {"a": "X", "b": "Y", "C": "Z"}
 
-        # Expected DataFrame (unchanged) because ignore_case=False and column names are case-sensitive
+        # Don't change the column names
         expected_df = df.copy()
 
         # Call the function with ignore_case=False and assert the result
