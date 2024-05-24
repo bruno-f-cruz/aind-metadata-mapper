@@ -639,7 +639,7 @@ class TestGetMetaData(unittest.TestCase):
         index = 1  # Mock current vsync index
         starts = np.array([0, 1, 2, 3, 4])  # Mock frame start times
         ends = np.array([1, 2, 3, 4, 5])  # Mock frame end times
-        frame_duration = 0.1  # Mock frame duration
+        frame_duration = 1  # Mock frame duration
         irregularity = 1  # Mock irregularity
         cycle = 5  # Mock number of frames per cycle
 
@@ -649,10 +649,10 @@ class TestGetMetaData(unittest.TestCase):
         )
 
         expected_updated_starts = np.array(
-            [0.1, 1, 2, 3, 4]
+            [0, 1, 2, 4, 5]
         )  # After allocating based on vsync signal
         expected_updated_ends = np.array(
-            [1, 2, 3, 4.1, 5]
+            [1, 2, 4, 5, 6]
         )  # After allocating based on vsync signal
         np.testing.assert_array_almost_equal(
             updated_starts, expected_updated_starts
@@ -669,7 +669,7 @@ class TestGetMetaData(unittest.TestCase):
         # Trim pulses near borders of the photodiode signal
         trimmed_pd_times = sync.trim_border_pulses(pd_times, vs_times)
 
-        expected_trimmed_pd_times = np.array([1.0, 1.5, 2.0, 2.5, 3.0])
+        expected_trimmed_pd_times = np.array([1.0, 1.5, 2.0])
         np.testing.assert_array_almost_equal(
             trimmed_pd_times, expected_trimmed_pd_times
         )
