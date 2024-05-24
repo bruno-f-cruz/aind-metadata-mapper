@@ -15,7 +15,7 @@ class TestPKL(unittest.TestCase):
         # Calling the function with the sample pkl dictionary
         result = pkl.get_stimuli(sample_pkl)
 
-        # Asserting that the result is the value associated with the "stimuli" key
+        # Asserting that the result is the "stimuli" key
         self.assertEqual(result, sample_pkl["stimuli"])
 
     def test_get_stimuli_missing_key(self):
@@ -51,7 +51,7 @@ class TestPKL(unittest.TestCase):
         # Calling the function with the sample pkl dictionary
         result = pkl.get_pre_blank_sec(sample_pkl)
 
-        # Asserting that the result is the value associated with the "pre_blank_sec" key
+        # Asserting that the result is the "pre_blank_sec" key
         self.assertEqual(result, sample_pkl["pre_blank_sec"])
 
     def test_get_pre_blank_sec_missing_key(self):
