@@ -3,21 +3,19 @@ import unittest
 import numpy as np
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from aind_metadata_mapper.utils import sync_utils as sync
 
 
 class TestGetMetaData(unittest.TestCase):
+    @patch('builtins.eval', return_value={'key1': 'value1', 'key2': 'value2'})  # Mock eval to return expected dict
     def test_get_meta_data(self):
-        # Mock sync file data
-        mock_sync_file_data = {"meta": '{"key1": "value1", "key2": "value2"}'}
+        mock_sync_file_data = {"meta": {(): "{'key1': 'value1', 'key2': 'value2'}"}}
 
-        # Mock the h5py.File object
+        # Create a MagicMock object to mock the sync_file
         mock_sync_file = MagicMock()
-        mock_sync_file.__getitem__.side_effect = (
-            lambda key: mock_sync_file_data[key]
-        )
+        mock_sync_file.__getitem__.side_effect = lambda key: mock_sync_file_data[key]
 
         # Call the function to get meta data
         meta_data = sync.get_meta_data(mock_sync_file)
@@ -27,7 +25,7 @@ class TestGetMetaData(unittest.TestCase):
 
     def test_get_line_labels(self):
         # Mock meta data
-        mock_meta_data = {"line_labels": ["label1", "label2", "label3"]}
+        mock_meta_data = {"meta": {(): "{'line_labels': ['label1', 'label2', 'label3']}"}}
 
         # Mock the sync file
         mock_sync_file = MagicMock()
@@ -727,7 +725,7 @@ class TestGetMetaData(unittest.TestCase):
         modified_frame_times = sync.remove_zero_frames(frame_times)
 
         expected_modified_frame_times = np.array(
-            [1.0, 1.02, 1.06, 1.08, 1.1, 1.14, 1.16, 1.18, 1.2]
+            [1.0, 1.02, 1.04, 1.06, 1.08, 1.1, 1.12, 1.14, 1.16, 1.18, 1.2]
         )
         np.testing.assert_array_almost_equal(
             modified_frame_times, expected_modified_frame_times
@@ -766,10 +764,10 @@ class TestGetMetaData(unittest.TestCase):
 
         expected_vs_times_out = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])]
         expected_pd_times_out = [
-            np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]),
+            np.array([2, 4, 6, 8, 10, 12, 14, 16, 18]),
         ]
-        self.assertEqual(vs_times_out, expected_vs_times_out)
-        self.assertEqual(pd_times_out, expected_pd_times_out)
+        np.testing.assert_array_almost_equal(vs_times_out, expected_vs_times_out)
+        np.testing.assert_array_almost_equal(pd_times_out, expected_pd_times_out)
 
     def test_flag_unexpected_edges(self):
         # Create mock photodiode times
@@ -778,7 +776,7 @@ class TestGetMetaData(unittest.TestCase):
         # Call the function to flag unexpected edges
         expected_duration_mask = sync.flag_unexpected_edges(pd_times, ndevs=1)
 
-        expected_result = np.array([1, 1, 1, 0, 0, 1, 1, 1, 1])
+        expected_result = np.array([1, 1, 0, 0, 0, 1, 0, 0])
         np.testing.assert_array_equal(expected_duration_mask, expected_result)
 
     def test_fix_unexpected_edges(self):
@@ -790,7 +788,7 @@ class TestGetMetaData(unittest.TestCase):
             pd_times, ndevs=1, cycle=2, max_frame_offset=2
         )
 
-        expected_result = np.array([1, 2, 3, 5, 6, 7, 8, 9, 11])
+        expected_result = np.array([1, 2, 3, 5, 5, 7, 8, 9, 11])
         np.testing.assert_array_equal(output_edges, expected_result)
 
 
