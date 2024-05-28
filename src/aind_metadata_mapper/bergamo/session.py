@@ -107,10 +107,10 @@ class JobSettings(BaseSettings):
         0,
     ]  # in mm from face of the mouse
     behavior_task_name: str = "single neuron BCI conditioning"
-    hit_rate_trials_0_10 float: = np.nan
-    hit_rate_trials_20_40 float: = np.nan
-    total_hits float: = np.nan
-    average_hit_rate float: = np.nan
+    hit_rate_trials_0_10: float = np.nan
+    hit_rate_trials_20_40: float = np.nan
+    total_hits: float = np.nan
+    average_hit_rate: float = np.nan
     # ZoneInfo object doesn't serialize well, so we can define it as a str
     timezone: str = "US/Pacific"
 
