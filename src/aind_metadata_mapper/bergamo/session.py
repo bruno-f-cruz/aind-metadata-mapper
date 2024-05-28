@@ -107,6 +107,10 @@ class JobSettings(BaseSettings):
         0,
     ]  # in mm from face of the mouse
     behavior_task_name: str = "single neuron BCI conditioning"
+    hit_rate_trials_0_10 float: = np.nan
+    hit_rate_trials_20_40 float: = np.nan
+    total_hits float: = np.nan
+    average_hit_rate float: = np.nan
     # ZoneInfo object doesn't serialize well, so we can define it as a str
     timezone: str = "US/Pacific"
 
@@ -851,10 +855,10 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 # opticalBCI class to be added in future
                 stimulus_device_names=[],
                 # from json file, to be added (speaker, bpod ID, )
-                output_parameters={'hit_rate_trials_0_10':,
-                                   'hit_rate_trials_20_40':,
-                                   'total_hits':,
-                                  'average_hit_rate':,},  # hit rate, time to reward, ...?
+                output_parameters={'hit_rate_trials_0_10':self.job_settings.hit_rate_trials_0_10,
+                                   'hit_rate_trials_20_40':self.job_settings.hit_rate_trials_20_40,
+                                   'total_hits':self.job_settings.total_hits,
+                                  'average_hit_rate':self.job_settings.average_hit_rate},  # hit rate, time to reward, ...?
                 trials_total=len(behavior_file_info_now[1][1][0]),
                 # trials_rewarded = ,  # not using BPOD info yet
             )
