@@ -111,6 +111,7 @@ class JobSettings(BaseSettings):
     hit_rate_trials_20_40: float = np.nan
     total_hits: float = np.nan
     average_hit_rate: float = np.nan
+    trial_num: float = np.nan
     # ZoneInfo object doesn't serialize well, so we can define it as a str
     timezone: str = "US/Pacific"
 
@@ -859,7 +860,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
                                    'hit_rate_trials_20_40':self.job_settings.hit_rate_trials_20_40,
                                    'total_hits':self.job_settings.total_hits,
                                   'average_hit_rate':self.job_settings.average_hit_rate},  # hit rate, time to reward, ...?
-                trials_total=len(behavior_file_info_now[1][1][0]),
+                trials_total=self.job_settings.trial_num,
                 # trials_rewarded = ,  # not using BPOD info yet
             )
             stim_epochs.append(stim_epoch_behavior)
