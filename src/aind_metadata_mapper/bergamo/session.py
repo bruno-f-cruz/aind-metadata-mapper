@@ -77,11 +77,18 @@ class JobSettings(BaseSettings):
     active_mouse_platform: bool = False
     session_type: str = "BCI"
     iacuc_protocol: str = "2109"
-    rig_id: str = "Bergamo photostim rig"  # should match rig json
+    # should match rig json:
+    rig_id: str = "Bergamo photostim rig"  
     behavior_camera_names: List[str] = [
         "Side Face Camera",
         "Bottom Face Camera",
-    ]  # should match rig json
+    ]  
+    ch1_filter_names: List[str]= []
+    ch1_detector_name: str = ''
+    ch1_daq_name: str = ''
+    ch2_filter_names: List[str] = []
+    ch2_detector_name: str = ''
+    ch2_daq_name: str = ''
     imaging_laser_name: str = (
         "Chameleon tunable pulsing laser"  # should match rig json
     )
@@ -371,22 +378,22 @@ class BergamoEtl(GenericEtl[JobSettings]):
             1: {
                 "channel_name": "Ch1",
                 "light_source_name": self.job_settings.imaging_laser_name,
-                "filter_names": [],  # FROM RIG JSON
-                "detector_name": "",  # FROM RIG JSON
+                "filter_names": self.job_settings.ch1_filter_names,  # FROM RIG JSON
+                "detector_name": self.job_settings.ch1_detector_name,  # FROM RIG JSON
                 "excitation_wavelength": (
                     self.job_settings.imaging_laser_wavelength
                 ),
-                "daq_name": "",  # FROM RIG JSON
+                "daq_name": self.job_settings.ch1_daq_name,  # FROM RIG JSON
             },
             2: {
                 "channel_name": "Ch2",
                 "light_source_name": self.job_settings.imaging_laser_name,
-                "filter_names": [],  # FROM RIG JSON
-                "detector_name": "",  # FROM RIG JSON
+                "filter_names": self.job_settings.ch2_filter_names,  # FROM RIG JSON
+                "detector_name": self.job_settings.ch2_detector_name,  # FROM RIG JSON
                 "excitation_wavelength": (
                     self.job_settings.imaging_laser_wavelength
                 ),
-                "daq_name": "",  # FROM RIG JSON
+                "daq_name": self.job_settings.ch2_daq_name,  # FROM RIG JSON
             },
         }
         laser_dict = {
@@ -433,7 +440,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
         )
         pybpod_script = Software(
             name="pybpod_basic.py",  # file name
-            version="1",  # commit#
+            version="2d77d15",  # commit#
             url=(
                 "https://github.com/rozmar/BCI-motor-control/blob/main/"
                 "BCI-pybpod-protocols/bci_basic.py"
@@ -844,7 +851,10 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 # opticalBCI class to be added in future
                 stimulus_device_names=[],
                 # from json file, to be added (speaker, bpod ID, )
-                output_parameters={},  # hit rate, time to reward, ...?
+                output_parameters={'hit_rate_trials_0_10':,
+                                   'hit_rate_trials_20_40':,
+                                   'total_hits':,
+                                  'average_hit_rate':,},  # hit rate, time to reward, ...?
                 trials_total=len(behavior_file_info_now[1][1][0]),
                 # trials_rewarded = ,  # not using BPOD info yet
             )
