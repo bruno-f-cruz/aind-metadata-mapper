@@ -219,14 +219,6 @@ class MRIEtl(GenericEtl[JobSettings]):
         scale = self.cur_method["SpatResol"]
         if not isinstance(scale, list):
             scale = scale.tolist()
-        
-        
-        # while len(scale) < 3:  # TODO: THIS IS NOT THE IDEAL SOLUTION,
-        #     # talk to scientists about too few items in spatreso list
-        #     scale.append(
-        #         0
-        #     )  # Perhaps if list is not long enough, we just set it to none
-        #     logging.error(f"Spatreso too short: {scale} for scan {scan_index}")
 
         if len(scale) == 3:
             scale = Scale3dTransform(scale=scale)
