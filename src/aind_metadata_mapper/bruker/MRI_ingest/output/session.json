@@ -7,8 +7,8 @@
    "experimenter_full_name": [
       "fake mae"
    ],
-   "session_start_time": "2024-05-23T19:19:49.207609-04:00",
-   "session_end_time": "2024-05-23T19:19:49.207609-04:00",
+   "session_start_time": "2023-07-21T11:07:59-04:00",
+   "session_end_time": "2023-07-21T12:56:23-04:00",
    "session_type": "3D MRI Scan",
    "iacuc_protocol": "fake iacuc",
    "rig_id": "fake scanner",
@@ -21,8 +21,8 @@
    "anaesthesia": null,
    "data_streams": [
       {
-         "stream_start_time": "2024-05-23T19:19:49.207609-04:00",
-         "stream_end_time": "2024-05-23T19:19:49.207609-04:00",
+         "stream_start_time": "2024-05-28T18:19:03.084602-04:00",
+         "stream_end_time": "2024-05-28T18:19:03.084602-04:00",
          "daq_names": [],
          "camera_names": [],
          "light_sources": [],
@@ -64,14 +64,7 @@
                "vc_orientation": null,
                "vc_position": null,
                "subject_position": "Supine",
-               "voxel_sizes": {
-                  "type": "scale",
-                  "scale": [
-                     "0.234375",
-                     "0.234375",
-                     "0"
-                  ]
-               },
+               "voxel_sizes": null,
                "processing_steps": [],
                "additional_scan_parameters": {},
                "notes": "Scan sequence FLASH not recognized"
@@ -104,14 +97,7 @@
                "vc_orientation": null,
                "vc_position": null,
                "subject_position": "Supine",
-               "voxel_sizes": {
-                  "type": "scale",
-                  "scale": [
-                     "0.09765625",
-                     "0.1953125",
-                     "0"
-                  ]
-               },
+               "voxel_sizes": null,
                "processing_steps": [],
                "additional_scan_parameters": {},
                "notes": null
@@ -144,14 +130,7 @@
                "vc_orientation": null,
                "vc_position": null,
                "subject_position": "Supine",
-               "voxel_sizes": {
-                  "type": "scale",
-                  "scale": [
-                     "0.09765625",
-                     "0.1953125",
-                     "0"
-                  ]
-               },
+               "voxel_sizes": null,
                "processing_steps": [],
                "additional_scan_parameters": {},
                "notes": null

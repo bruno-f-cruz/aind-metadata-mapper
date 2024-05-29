@@ -1,21 +1,21 @@
-from aind_metadata_mapper.bruker.mri_loader import MRIEtl, JobSettings
-from pathlib import Path
-import json
-import os
-import unittest
-from datetime import datetime
+"""File for testing the MRI Loader package"""
+
 import pickle
+import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from unittest.mock import MagicMock, patch
-
+from aind_data_schema.components.devices import (
+    MagneticStrength,
+    ScannerLocation,
+)
 
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
-from aind_data_schema.components.devices import Scanner, ScannerLocation, MagneticStrength
-from aind_data_schema.core.session import MRIScan, Session, MriScanSequence, ScanType, SubjectPosition
-from bruker2nifti._metadata import BrukerMetadata
 
-
-EXAMPLE_MRI_INPUT = "src/aind_metadata_mapper/bruker/MRI_ingest/MRI_files/RawData-2023_07_21/RAW/DL_AI2.kX2"
+EXAMPLE_MRI_INPUT = (
+    "src/aind_metadata_mapper/bruker/MRI_ingest/"
+    "MRI_files/RawData-2023_07_21/RAW/DL_AI2.kX2"
+)
 EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 
 TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
@@ -32,7 +32,9 @@ class TestMRIWriter(unittest.TestCase):
 
         cls.example_job_settings = JobSettings(
             data_path=EXAMPLE_MRI_INPUT,
-            output_directory=Path("src/aind_metadata_mapper/bruker/MRI_ingest/output"),
+            output_directory=Path(
+                "src/aind_metadata_mapper/bruker/MRI_ingest/output"
+            ),
             experimenter_full_name=["fake mae"],
             primary_scan_number=7,
             setup_scan_number=1,
@@ -45,7 +47,6 @@ class TestMRIWriter(unittest.TestCase):
             session_notes="test",
         )
 
-    
     def test_constructor_from_string(self) -> None:
         """Test constructor from string."""
 
@@ -57,7 +58,7 @@ class TestMRIWriter(unittest.TestCase):
 
     @patch("aind_metadata_mapper.bruker.mri_loader.MRIEtl._extract")
     def test_etl(self, mock_extract) -> None:
-        """Tests that the transform and load methods returns the correct data."""
+        """Tests that ETL methods return the correct data."""
 
         with open(TEST_INPUT_METADATA, "rb") as f:
             metadata = pickle.load(f)
@@ -66,7 +67,5 @@ class TestMRIWriter(unittest.TestCase):
 
         mock_extract.return_value = metadata
         job_response = etl.run_job()
-
-        print("JOB RESPONSE: ", job_response)
 
         self.assertEqual(job_response.status_code, 200)

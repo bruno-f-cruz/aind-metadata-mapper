@@ -1,32 +1,44 @@
 """Sets up the MRI ingest ETL"""
 
-from bruker2nifti._metadata import BrukerMetadata
-
-from pathlib import Path
-from aind_data_schema.components.coordinates import Rotation3dTransform, Scale3dTransform, Translation3dTransform
-from aind_data_schema.core.session import MRIScan, Session, MriScanSequence, ScanType, SubjectPosition, Stream
-from decimal import Decimal
-from aind_data_schema_models.units import MassUnit, TimeUnit
-from aind_data_schema.components.devices import Scanner, ScannerLocation, MagneticStrength
-from datetime import datetime
-from pydantic_settings import BaseSettings
-from aind_metadata_mapper.core import GenericEtl, JobResponse
-from dataclasses import dataclass
-from aind_data_schema.base import AindCoreModel
-from typing import Any, Generic, Optional, TypeVar, Union
-from aind_data_schema_models.modalities import Modality
-
-import traceback
 import logging
+import traceback
+from datetime import datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
+from typing import List, Optional
 
+from aind_data_schema.base import AindCoreModel
+from aind_data_schema.components.coordinates import (
+    Rotation3dTransform,
+    Scale3dTransform,
+    Translation3dTransform,
+)
+from aind_data_schema.components.devices import (
+    MagneticStrength,
+    Scanner,
+    ScannerLocation,
+)
+from aind_data_schema.core.session import (
+    MRIScan,
+    MriScanSequence,
+    ScanType,
+    Session,
+    Stream,
+    SubjectPosition,
+)
+from aind_data_schema_models.modalities import Modality
+from aind_data_schema_models.units import TimeUnit
+from bruker2nifti._metadata import BrukerMetadata
 from pydantic import Field
-from typing import List, Optional, Union
+from pydantic_settings import BaseSettings
+
+from aind_metadata_mapper.core import GenericEtl, JobResponse
 
 
 class JobSettings(BaseSettings):
     """Data that needs to be input by user."""
 
-    data_path: Path 
+    data_path: Path
     output_directory: Optional[Path] = Field(
         default=None,
         description=(
@@ -48,6 +60,9 @@ class JobSettings(BaseSettings):
 
 PROTOCOL_ID = "placeholder mri protocol id"
 
+DATETIME_FORMAT = "%H:%M:%S %d %b %Y"
+LENGTH_FORMAT = "%Hh%Mm%Ss%fms"
+
 
 class MRIEtl(GenericEtl[JobSettings]):
     """Class for MRI ETL process."""
@@ -66,8 +81,6 @@ class MRIEtl(GenericEtl[JobSettings]):
         else:
             job_settings_model = job_settings
         super().__init__(job_settings=job_settings_model)
-        
-
 
     def _extract(self) -> BrukerMetadata:
         """Extract the data from the bruker files."""
@@ -88,7 +101,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         return self.load_mri_session(
             experimenter=self.job_settings.experimenter_full_name,
             primary_scan_number=self.job_settings.primary_scan_number,
-            setup_scan_number=self.job_settings.setup_scan_number
+            setup_scan_number=self.job_settings.setup_scan_number,
         )
 
     def run_job(self) -> JobResponse:
@@ -98,18 +111,21 @@ class MRIEtl(GenericEtl[JobSettings]):
         transformed = self._transform(extracted)
 
         job_response = self._load(
-            transformed,
-            self.job_settings.output_directory
+            transformed, self.job_settings.output_directory
         )
 
         return job_response
 
-    def load_mri_session(self, experimenter: str, primary_scan_number: str, setup_scan_number: str) -> Session:
+    def load_mri_session(
+        self,
+        experimenter: str,
+        primary_scan_number: str,
+        setup_scan_number: str,
+    ) -> Session:
         """Load the MRI session data into the AIND data schema."""
 
         scans = []
         for scan in self.scan_data.keys():
-            print("SCAN: ", scan)
             scan_type = "3D Scan"
             if scan == setup_scan_number:
                 scan_type = "Set Up"
@@ -117,115 +133,136 @@ class MRIEtl(GenericEtl[JobSettings]):
             if scan == primary_scan_number:
                 primary_scan = True
             new_scan = self.make_model_from_scan(scan, scan_type, primary_scan)
-            logging.info(f'loaded scan {new_scan}')
+            logging.info(f"loaded scan {new_scan}")
 
-            print("dumped: ", new_scan.model_dump_json())
             scans.append(new_scan)
 
+        logging.info(f"loaded scans: {scans}")
 
-        logging.info(f'loaded scans: {scans}')
+        start_time = datetime.strptime(self.scan_data[list(self.scan_data.keys())[0]]["acqp"]["ACQ_time"], DATETIME_FORMAT)
+        final_scan_start = datetime.strptime(self.scan_data[list(self.scan_data.keys())[-1]]["acqp"]["ACQ_time"], DATETIME_FORMAT)
+        final_scan_duration = datetime.strptime(self.scan_data[list(self.scan_data.keys())[-1]]["method"]["ScanTimeStr"], LENGTH_FORMAT)
+        end_time = final_scan_start + timedelta(hours=final_scan_duration.hour, minutes=final_scan_duration.minute, seconds=final_scan_duration.second, microseconds=final_scan_duration.microsecond)
 
         stream = Stream(
-            stream_start_time=datetime.now(), # This is probably the same as session start/end
+            stream_start_time=datetime.now(),
+            # This is probably the same as session start/end
             stream_end_time=datetime.now(),
             mri_scans=scans,
-            stream_modalities=[Modality.MRI]
+            stream_modalities=[Modality.MRI],
         )
 
         return Session(
             subject_id=self.job_settings.subject_id,
-            session_start_time=datetime.now(), # see where to find this
-            session_end_time=datetime.now(),
+            session_start_time=start_time,  # see where to find this
+            session_end_time=end_time,
             session_type=self.job_settings.session_type,
-            experimenter_full_name=experimenter, 
+            experimenter_full_name=experimenter,
             protocol_id=[PROTOCOL_ID],
             iacuc_protocol=self.job_settings.iacuc_protocol,
             data_streams=[stream],
             rig_id=self.job_settings.scanner_name,
             mouse_platform_name="NA",
             active_mouse_platform=False,
-            notes=self.job_settings.session_notes
+            notes=self.job_settings.session_notes,
         )
-    
 
-    def make_model_from_scan(self, scan_index: str, scan_type, primary_scan: bool) -> MRIScan:
+    def make_model_from_scan(  # noqa: C901
+        self, scan_index: str, scan_type, primary_scan: bool
+    ) -> MRIScan:
         """load scan data into the AIND data schema."""
-        
-        logging.info(f'loading scan {scan_index}')   
 
-        self.cur_visu_pars = self.scan_data[scan_index]['recons']['1']['visu_pars']
-        self.cur_method = self.scan_data[scan_index]['method']
+        logging.info(f"loading scan {scan_index}")
+
+        self.cur_visu_pars = self.scan_data[scan_index]["recons"]["1"][
+            "visu_pars"
+        ]
+        self.cur_method = self.scan_data[scan_index]["method"]
 
         subj_pos = self.subject_data["SUBJECT_position"]
-        if 'supine' in subj_pos.lower():
-            subj_pos = 'Supine'
-        elif 'prone' in subj_pos.lower():
-            subj_pos = 'Prone'
+        if "supine" in subj_pos.lower():
+            subj_pos = "Supine"
+        elif "prone" in subj_pos.lower():
+            subj_pos = "Prone"
 
         scan_sequence = MriScanSequence.OTHER
         notes = None
-        if 'RARE' in self.cur_method['Method']:
-            scan_sequence = MriScanSequence(self.cur_method['Method'])
+        if "RARE" in self.cur_method["Method"]:
+            scan_sequence = MriScanSequence(self.cur_method["Method"])
         else:
             notes = f"Scan sequence {self.cur_method['Method']} not recognized"
 
         rare_factor = None
-        if 'RareFactor' in self.cur_method.keys():
-            rare_factor = self.cur_method['RareFactor']
+        if "RareFactor" in self.cur_method.keys():
+            rare_factor = self.cur_method["RareFactor"]
 
-        if 'EffectiveTE' in self.cur_method.keys():
-            eff_echo_time = Decimal(self.cur_method['EffectiveTE'])
+        if "EffectiveTE" in self.cur_method.keys():
+            eff_echo_time = Decimal(self.cur_method["EffectiveTE"])
         else:
             eff_echo_time = None
 
-        rotation=self.cur_visu_pars['VisuCoreOrientation']
-        if rotation.shape == (1,9):
-            rotation=Rotation3dTransform(rotation=rotation.tolist()[0])
+        rotation = self.cur_visu_pars["VisuCoreOrientation"]
+        if rotation.shape == (1, 9):
+            rotation = Rotation3dTransform(rotation=rotation.tolist()[0])
         else:
             rotation = None
-        
-        translation=self.cur_visu_pars['VisuCorePosition']
 
-        if translation.shape == (1,3):
-            translation=Translation3dTransform(translation=translation.tolist()[0])
+        translation = self.cur_visu_pars["VisuCorePosition"]
+
+        if translation.shape == (1, 3):
+            translation = Translation3dTransform(
+                translation=translation.tolist()[0]
+            )
         else:
             translation = None
 
-        print("spatreso: ", self.cur_method['SpatResol'])
-        scale=self.cur_method['SpatResol']
+        scale = self.cur_method["SpatResol"]
         if not isinstance(scale, list):
             scale = scale.tolist()
-        while len(scale) < 3: # TODO: THIS IS NOT THE IDEAL SOLUTION, talk to scientists about what to do for too few items in spatreso list
-            scale.append(0) # Perhaps if list is not long enough, we just set it to none
         
-        scale = Scale3dTransform(scale=scale)
+        
+        # while len(scale) < 3:  # TODO: THIS IS NOT THE IDEAL SOLUTION,
+        #     # talk to scientists about too few items in spatreso list
+        #     scale.append(
+        #         0
+        #     )  # Perhaps if list is not long enough, we just set it to none
+        #     logging.error(f"Spatreso too short: {scale} for scan {scan_index}")
+
+        if len(scale) == 3:
+            scale = Scale3dTransform(scale=scale)
+        else:
+            scale = None
 
         try:
             return MRIScan(
                 scan_index=scan_index,
-                scan_type=ScanType(scan_type), # set by scientists
-                primary_scan=primary_scan, # set by scientists
+                scan_type=ScanType(scan_type),  # set by scientists
+                primary_scan=primary_scan,  # set by scientists
                 mri_scanner=Scanner(
                     name=self.job_settings.scanner_name,
                     scanner_location=self.job_settings.scan_location,
-                    magnetic_strength=self.job_settings.magnetic_strength, 
-                    magnetic_strength_unit="T", 
+                    magnetic_strength=self.job_settings.magnetic_strength,
+                    magnetic_strength_unit="T",
                 ),
-                scan_sequence_type=scan_sequence, # method ##$Method=RARE,
-                rare_factor=rare_factor, # method ##$PVM_RareFactor=8,
-                echo_time=self.cur_method['EchoTime'], # method ##$PVM_EchoTime=0.01,
-                effective_echo_time=eff_echo_time, # method ##$EffectiveTE=(1)
-                echo_time_unit=TimeUnit.MS, # what do we want here?
-                repetition_time=self.cur_method['RepetitionTime'], # method ##$PVM_RepetitionTime=500,
-                repetition_time_unit=TimeUnit.MS, # ditto
-                vc_orientation=rotation,# visu_pars  ##$VisuCoreOrientation=( 1, 9 )
-                vc_position=translation, # visu_pars ##$VisuCorePosition=( 1, 3 )
-                subject_position=SubjectPosition(subj_pos), 
+                scan_sequence_type=scan_sequence,  # method ##$Method=RARE,
+                rare_factor=rare_factor,  # method ##$PVM_RareFactor=8,
+                echo_time=self.cur_method[
+                    "EchoTime"
+                ],  # method ##$PVM_EchoTime=0.01,
+                effective_echo_time=eff_echo_time,  # method ##$EffectiveTE=(1)
+                echo_time_unit=TimeUnit.MS,  # what do we want here?
+                repetition_time=self.cur_method[
+                    "RepetitionTime"
+                ],  # method ##$PVM_RepetitionTime=500,
+                repetition_time_unit=TimeUnit.MS,  # ditto
+                vc_orientation=rotation,
+                vc_position=translation,
+                subject_position=SubjectPosition(subj_pos),
                 voxel_sizes=scale,
                 processing_steps=[],
                 additional_scan_parameters={},
                 notes=notes,
-            )      
+            )
         except Exception as e:
             logging.error(traceback.format_exc())
-            logging.error(f'Error loading scan {scan_index}: {e}') 
+            logging.error(f"Error loading scan {scan_index}: {e}")
