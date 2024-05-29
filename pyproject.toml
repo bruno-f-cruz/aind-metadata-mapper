@@ -23,7 +23,10 @@ dependencies = [
     "tifffile==2024.2.12",
     "pydantic-settings>=2.0",
     "requests",
-    "pillow"
+    "pillow",
+    "h5py",
+    "pandas",
+    "numpy"
 ]
 
 [project.optional-dependencies]
