@@ -1,3 +1,4 @@
+""" Unit tests for the naming_utils module in the utils package. """
 import unittest
 
 import pandas as pd
@@ -7,7 +8,13 @@ from aind_metadata_mapper.utils import naming_utils as naming
 
 
 class TestDropEmptyColumns(unittest.TestCase):
+    """
+        Tests naming utils
+    """
     def test_drop_empty_columns_all_nan(self):
+        """
+        Test that columns with all NaN values are dropped.
+        """
         # Create a DataFrame with some columns all NaN
         data = {
             "A": [1, 2, 3],
@@ -26,6 +33,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_drop_empty_columns_no_nan(self):
+        """
+        Test that columns with no NaN values are not dropped.
+        """
         # Create a DataFrame with no columns all NaN
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
         df = pd.DataFrame(data)
@@ -38,6 +48,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_drop_empty_columns_some_nan(self):
+        """
+        Test that columns with some NaN values are not dropped.
+        """
         # Create a DataFrame with some NaN values but not all in any column
         data = {"A": [1, None, 3], "B": [None, 2, 3], "C": [4, 5, 6]}
         df = pd.DataFrame(data)
@@ -50,6 +63,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_drop_empty_columns_all_empty(self):
+        """
+        Test that columns with all NaN values are dropped.
+        """
         # Create a DataFrame with all columns containing only NaN values
         data = {
             "A": [None, None, None],
@@ -65,6 +81,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_collapse_columns_merge(self):
+        """
+        Test that columns with the same values are merged.
+        """
         # Create a DataFrame with columns that can be merged
         data = {
             "A": [1, None, None],
@@ -86,6 +105,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_collapse_columns_no_merge(self):
+        """
+        Test that columns with different values are not merged.
+        """
         # Create a DataFrame with columns that cannot be merged
         data = {
             "A": [1, None, None],
@@ -102,6 +124,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_collapse_columns_merge_with_overwrite(self):
+        """
+        Test that columns with overlapping non-NaN values are merged.
+        """
         # Create a DataFrame with overlapping non-NaN columns to be merged
         data = {
             "A": [1, None, None],
@@ -126,6 +151,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_add_number_to_shuffled_movie_no_matching_rows(self):
+        """
+        Test that rows not matching the shuffled movie regex are unchanged.
+        """
         # Create a DataFrame with no rows matching the shuffled movie regex
         data = {
             "stim_name": [
@@ -144,6 +172,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_add_number_to_shuffled_movie_multiple_movie_numbers(self):
+        """
+        Test that an error is raised if multiple different movie numbers are found.
+        """
         # Create a DataFrame with multiple different movie numbers
         data = {
             "stim_name": [
@@ -160,6 +191,9 @@ class TestDropEmptyColumns(unittest.TestCase):
             naming.add_number_to_shuffled_movie(df)
 
     def test_add_number_to_shuffled_movie_single_movie_number(self):
+        """
+        Test that the movie number is added to the shuffled movie name.
+        """
         # Create a DataFrame with a single movie number
         data = {
             "stim_name": [
@@ -185,6 +219,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_add_number_to_shuffled_movie_mixed_columns(self):
+        """
+        Test that only the matching rows are modified in a DataFrame with mixed columns.
+        """
         # Create a DataFrame with mixed columns
         # including rows with a shuffled movie regex
         data = {
@@ -213,6 +250,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_stimulus_names_no_mapping(self):
+        """
+        Test that the DataFrame is unchanged if no mapping is provided.
+        """
         # Create a DataFrame with no mapping provided
         data = {"stim_name": ["stim1", "stim2", "stim3"]}
         df = pd.DataFrame(data)
@@ -225,6 +265,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_stimulus_names_with_mapping(self):
+        """
+        Test that the stimulus names are changed according to the mapping.
+        """
         # Create a DataFrame with a mapping provided
         data = {"stim_name": ["stim1", "stim2", "stim3"]}
         df = pd.DataFrame(data)
@@ -239,6 +282,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_stimulus_names_with_nan_mapping(self):
+        """
+        Test that the stimulus names are changed according to the mapping including NaN.
+        """
         # Create a DataFrame with a mapping provided including NaN
         data = {"stim_name": ["stim1", "stim2", np.nan]}
         df = pd.DataFrame(data)
@@ -255,6 +301,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_stimulus_names_with_column_name(self):
+        """
+        Test that the stimulus names are changed according to the mapping with a custom column name.
+        """
         # Create a DataFrame with a custom stim name
         data = {"custom_stimulus_name": ["stim1", "stim2", "stim3"]}
         df = pd.DataFrame(data)
@@ -274,6 +323,9 @@ class TestDropEmptyColumns(unittest.TestCase):
 
 
     def test_map_column_names_with_mapping(self):
+        """
+        Test that the column names are changed according to the mapping.
+        """
         # Create a DataFrame with a mapping provided
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
         df = pd.DataFrame(data)
@@ -288,6 +340,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_column_names_with_ignore_case(self):
+        """
+        Test that the column names are changed according to the mapping with ignore_case=True.
+        """
         # Create a DataFrame with a mapping provided and ignore_case=True
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
         df = pd.DataFrame(data)
@@ -304,6 +359,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_map_column_names_with_ignore_case_false(self):
+        """
+        Test that the column names are not changed according to the mapping with ignore_case=False.
+        """
         # Create a DataFrame with a mapping provided and ignore_case=False
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
         df = pd.DataFrame(data)
