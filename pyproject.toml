@@ -26,7 +26,9 @@ dependencies = [
     "pillow",
     "h5py",
     "pandas",
-    "numpy"
+    "numpy",
+    "np_session",
+    "scipy"
 ]
 
 [project.optional-dependencies]
