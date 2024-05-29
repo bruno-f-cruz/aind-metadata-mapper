@@ -320,7 +320,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         # Create a DataFrame with a mapping provided and ignore_case=False
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
         df = pd.DataFrame(data)
-        name_map = {"a": "X", "b": "Y", "C": "Z"}
+        name_map = {"a": "X", "b": "Y", "c": "Z"}
 
         # Don't change the column names
         expected_df = df.copy()
