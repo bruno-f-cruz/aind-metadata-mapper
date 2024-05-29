@@ -630,7 +630,7 @@ def allocate_by_vsync(
     ends : np.ndarray
         End times of the frames.
     """
-    current_vs_diff = vs_diff[index * cycle : (index + 1) * cycle]
+    current_vs_diff = vs_diff[index * cycle: (index + 1) * cycle]
     sign = np.sign(irregularity)
 
     if sign > 0:
@@ -639,7 +639,7 @@ def allocate_by_vsync(
         vs_ind = np.argmin(current_vs_diff)
 
     ends[vs_ind:] += sign * frame_duration
-    starts[vs_ind + 1 :] += sign * frame_duration
+    starts[vs_ind + 1:] += sign * frame_duration
 
     return starts, ends
 
@@ -744,9 +744,9 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
         if largest_chunk == 0:
             return vs_times[: np.min(breaks + 1)]
         elif largest_chunk == len(breaks):
-            return vs_times[np.max(breaks + 1) :]
+            return vs_times[np.max(breaks + 1):]
         else:
-            return vs_times[breaks[largest_chunk - 1] : breaks[largest_chunk]]
+            return vs_times[breaks[largest_chunk - 1]: breaks[largest_chunk]]
     else:
         return vs_times
 
@@ -1039,7 +1039,7 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
 
     output_edges = []
     for low, high in zip(bad_blocks[:-1], bad_blocks[1:]):
-        current_bad_edge_indices = bad_edges[low : high - 1]
+        current_bad_edge_indices = bad_edges[low: high - 1]
         current_bad_edges = pd_times[current_bad_edge_indices]
         low_bound = pd_times[current_bad_edge_indices[0]]
         high_bound = pd_times[current_bad_edge_indices[-1] + 1]
