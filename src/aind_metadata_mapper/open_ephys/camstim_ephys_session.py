@@ -244,6 +244,9 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         probe_exp = r"(?<=[pP{1}]robe)[-_\s]*(?P<letter>[A-F]{1})(?![a-zA-Z])"
 
         def extract_probe_letter(s):
+            """
+            Extracts probe letter from a string.
+            """
             match = re.search(probe_exp, s)
             if match:
                 return match.group("letter")
