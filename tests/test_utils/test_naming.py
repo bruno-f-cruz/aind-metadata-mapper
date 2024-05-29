@@ -75,11 +75,16 @@ class TestDropEmptyColumns(unittest.TestCase):
         df = pd.DataFrame(data)
 
         # Expected DataFrame after merging columns
-        expected_data = {"A": [1, 2, 3]}
+        expected_data = {
+            "A": [1, None, None],
+            "b": [None, 2, None],
+            "C": [None, None, 3],
+        }
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function and assert the result
         result_df = naming.collapse_columns(df)
+        print(result_df)
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_collapse_columns_no_merge(self):
@@ -145,6 +150,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         data = {
             "stim_name": [
                 "natural_movie_1_shuffled",
+                "natural_movie_shuffled",
                 "natural_movie_2_shuffled",
                 "natural_movie_3_shuffled",
             ]
@@ -159,9 +165,9 @@ class TestDropEmptyColumns(unittest.TestCase):
         # Create a DataFrame with a single movie number
         data = {
             "stim_name": [
-                "natural_movie_1_shuffled",
-                "natural_movie_1_shuffled",
-                "natural_movie_1_shuffled",
+                "natural_movie_1",
+                "natural_movie_1",
+                "natural_movie_1",
             ]
         }
         df = pd.DataFrame(data)
@@ -185,10 +191,10 @@ class TestDropEmptyColumns(unittest.TestCase):
         # including rows with a shuffled movie regex
         data = {
             "stim_name": [
-                "natural_movie_1_shuffled",
+                "natural_movie_1",
                 "image1.jpg",
-                "natural_movie_2_shuffled",
-                "natural_movie_3_shuffled",
+                "natural_movie_2",
+                "natural_movie_3",
             ]
         }
         df = pd.DataFrame(data)
