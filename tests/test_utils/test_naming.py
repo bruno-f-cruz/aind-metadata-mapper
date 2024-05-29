@@ -175,7 +175,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_add_number_to_shuffled_movie_multiple_movie_numbers(self):
         """
-        Test that an error is raised if multiple different movie numbers are found.
+        Test that an error is raised if multiple different
+        movie numbers are found.
         """
         # Create a DataFrame with multiple different movie numbers
         data = {
@@ -222,7 +223,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_add_number_to_shuffled_movie_mixed_columns(self):
         """
-        Test that only the matching rows are modified in a DataFrame with mixed columns.
+        Test that only the matching rows are modified in
+        a DataFrame with mixed columns.
         """
         # Create a DataFrame with mixed columns
         # including rows with a shuffled movie regex
@@ -285,7 +287,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_map_stimulus_names_with_nan_mapping(self):
         """
-        Test that the stimulus names are changed according to the mapping including NaN.
+        Test that the stimulus names are changed
+        according to the mapping including NaN.
         """
         # Create a DataFrame with a mapping provided including NaN
         data = {"stim_name": ["stim1", "stim2", np.nan]}
@@ -302,7 +305,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_map_stimulus_names_with_column_name(self):
         """
-        Test that the stimulus names are changed according to the mapping with a custom column name.
+        Test that the stimulus names are changed
+        according to the mapping with a custom column name.
         """
         # Create a DataFrame with a custom stim name
         data = {"custom_stimulus_name": ["stim1", "stim2", "stim3"]}
@@ -340,7 +344,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_map_column_names_with_ignore_case(self):
         """
-        Test that the column names are changed according to the mapping with ignore_case=True.
+        Test that the column names are changed
+        according to the mapping with ignore_case=True.
         """
         # Create a DataFrame with a mapping provided and ignore_case=True
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
@@ -359,7 +364,8 @@ class TestDropEmptyColumns(unittest.TestCase):
 
     def test_map_column_names_with_ignore_case_false(self):
         """
-        Test that the column names are not changed according to the mapping with ignore_case=False.
+        Test that the column names are not changed
+        according to the mapping with ignore_case=False.
         """
         # Create a DataFrame with a mapping provided and ignore_case=False
         data = {"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]}
