@@ -1,3 +1,5 @@
+""" Utils to process naming of stimulus columns"""
+
 import numpy as np
 import re
 import warnings
@@ -178,7 +180,30 @@ def add_number_to_shuffled_movie(
     template="natural_movie_{}_shuffled",
     tmp_colname="__movie_number__",
 ):
-    """ """
+    """
+    Adds a number to a shuffled movie stimulus name, if possible.
+
+    Parameters
+    ----------
+    table : pd.DataFrame
+        the incoming stimulus table
+    natural_movie_re : re.Pattern, optional
+        regex that matches movie stimulus names
+    template_re : re.Pattern, optional
+        regex that matches shuffled movie stimulus names
+    stim_colname : str, optional
+        the name of the dataframe column that contains stimulus names
+    template : str, optional
+        the template's name
+    tmp_colname : str, optional
+        the name of the template column to use
+
+    Returns
+    -------
+    table : pd.DataFrame
+        the stimulus table with the shuffled movie names updated
+
+    """
 
     if not table[stim_colname].str.contains(SHUFFLED_MOVIE_RE).any():
         return table
@@ -199,6 +224,19 @@ def add_number_to_shuffled_movie(
     movie_number = unique_numbers[0]
 
     def renamer(row):
+        """
+        renames the shuffled movie stimulus according to the template
+
+        Parameters
+        ----------
+        row : pd.Series
+            a row in the stimulus table
+
+        Returns
+        -------
+        table : pd.DataFrame
+            the stimulus table with the shuffled movie names updated
+        """
         if not isinstance(row[stim_colname], str):
             return row[stim_colname]
         if not template_re.match(row[stim_colname]):
@@ -246,6 +284,22 @@ def standardize_movie_numbers(
     """
 
     def replace(match_obj):
+        """
+        replaces the numeral in a movie stimulus name with its english
+        equivalent
+
+        Parameters
+        ----------
+        match_obj : re.Match
+            the match object
+
+        Returns
+        -------
+        str
+            the stimulus name with the numeral replaced by its english
+            equivalent
+
+        """
         return digit_names[match_obj["number"]]
 
     # for some reason pandas really wants us to use the captures
@@ -311,6 +365,19 @@ def map_column_names(table, name_map=None, ignore_case=True):
         name_map = {key.lower(): value for key, value in name_map.items()}
 
         def mapper(name):
+            """
+            Maps a column name to a new name from the map
+
+            Parameters
+            ----------
+            name : str
+                the column name to map
+
+            Returns
+            -------
+            str
+                the mapped column name
+            """
             name_lower = name.lower()
             if name_lower in name_map:
                 return name_map[name_lower]

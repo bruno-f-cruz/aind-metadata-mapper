@@ -1,3 +1,5 @@
+""" Utils to process behavior info for stimulus"""
+
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
 
@@ -8,6 +10,7 @@ import utils.stimulus_utils as stim
 from project_constants import PROJECT_CODES, VBO_ACTIVE_MAP, VBO_PASSIVE_MAP
 
 INT_NULL = -99
+
 
 
 def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
@@ -436,6 +439,27 @@ def get_draw_epochs(
 
 
 def unpack_change_log(change):
+    """
+    Unpacks the change log into a dictionary containing the category of the
+    stimuli that was changed, the name of the stimuli that was changed, the
+    category of the stimuli that the change was made to, the name of the
+    stimuli that the change was made to, the time of the change, and the frame
+    of the change.
+
+    Parameters
+    ----------
+    change: Tuple[str, str, str, str, int, int]
+        A tuple containing the category of the stimuli that was changed
+
+    Returns
+    -------
+    Dict:
+        A dictionary containing the category of the stimuli that was changed,
+        the name of the stimuli that was changed, the category of the stimuli
+        that the change was made to, the name of the stimuli that the change
+        was made to, the time of the change, and the frame of the change.
+    """
+
     (
         (from_category, from_name),
         (
@@ -1282,6 +1306,21 @@ def check_for_errant_omitted_stimulus(
     """
 
     def safe_omitted_check(input_df: pd.Series, stimulus_block: Optional[int]):
+        """
+        Check if the first row in the input_df is an omitted stimulus.
+
+        Parameters
+        ----------
+        input_df : pd.Series
+            Input stimulus table to check for "omitted" stimulus.
+        stimulus_block : Optional[int]
+            Stimulus block to check for omitted stimulus in.
+
+        Returns
+        -------
+        input_df : pd.Series
+            Dataframe with omitted stimulus removed from first row or if not
+        """
         if stimulus_block is not None:
             first_row = input_df[
                 input_df["stimulus_block"] == stim_block

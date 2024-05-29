@@ -1,3 +1,4 @@
+""" Utilities for working with stimulus data."""
 import ast
 import functools
 import re
@@ -43,6 +44,19 @@ BEHAVIOR_TRACKING_KEYS = (
 
 
 def convert_filepath_caseinsensitive(filename_in):
+    """
+    Replaces the case of training
+
+    Parameters
+    ----------
+    filename_in : str
+        The filename to convert
+
+    Returns
+    -------
+    str
+        The filename with the case replaced
+    """
     return filename_in.replace("TRAINING", "training")
 
 

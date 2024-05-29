@@ -1,3 +1,4 @@
+""" Functions for working with sync files. """
 import datetime
 from typing import Optional, Sequence, Union
 
@@ -795,6 +796,22 @@ def remove_zero_frames(frame_times):
     big_deltas = np.where((deltas > 0.018) * (deltas < 0.1))[0]
 
     def find_match(big_deltas, value):
+        """
+        Finds max match for the value in the big deltas.
+
+        Parameters
+        ----------
+        big_deltas : np.ndarray
+            Big deltas.
+        value : float
+            Value to match.
+
+        Returns
+        -------
+        float
+            Matched value.
+        """
+
         try:
             return (
                 big_deltas[np.max(np.where((big_deltas < value))[0])] - value
