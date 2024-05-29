@@ -145,16 +145,15 @@ class MRIEtl(GenericEtl[JobSettings]):
         end_time = final_scan_start + timedelta(hours=final_scan_duration.hour, minutes=final_scan_duration.minute, seconds=final_scan_duration.second, microseconds=final_scan_duration.microsecond)
 
         stream = Stream(
-            stream_start_time=datetime.now(),
-            # This is probably the same as session start/end
-            stream_end_time=datetime.now(),
+            stream_start_time=start_time,
+            stream_end_time=end_time,
             mri_scans=scans,
             stream_modalities=[Modality.MRI],
         )
 
         return Session(
             subject_id=self.job_settings.subject_id,
-            session_start_time=start_time,  # see where to find this
+            session_start_time=start_time,
             session_end_time=end_time,
             session_type=self.job_settings.session_type,
             experimenter_full_name=experimenter,
