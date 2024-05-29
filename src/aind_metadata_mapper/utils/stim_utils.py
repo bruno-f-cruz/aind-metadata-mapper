@@ -1,4 +1,5 @@
 """ Utilities for working with stimulus data."""
+
 import ast
 import functools
 import re

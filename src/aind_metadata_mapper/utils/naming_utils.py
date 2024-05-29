@@ -382,6 +382,7 @@ def map_column_names(table, name_map=None, ignore_case=True):
             if name_lower in name_map:
                 return name_map[name_lower]
             return name
+
     else:
         mapper = name_map
 

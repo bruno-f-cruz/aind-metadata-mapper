@@ -1,4 +1,5 @@
 """ Unit tests for the naming_utils module in the utils package. """
+
 import unittest
 
 import pandas as pd
@@ -9,8 +10,9 @@ from aind_metadata_mapper.utils import naming_utils as naming
 
 class TestDropEmptyColumns(unittest.TestCase):
     """
-        Tests naming utils
+    Tests naming utils
     """
+
     def test_drop_empty_columns_all_nan(self):
         """
         Test that columns with all NaN values are dropped.
@@ -291,9 +293,7 @@ class TestDropEmptyColumns(unittest.TestCase):
         name_map = {"stim1": "new_stim1", np.nan: "new_spontaneous"}
 
         # Change name column with mapping
-        expected_data = {
-            "stim_name": ["new_stim1", "stim2", "spontaneous"]
-        }
+        expected_data = {"stim_name": ["new_stim1", "stim2", "spontaneous"]}
         expected_df = pd.DataFrame(expected_data)
 
         # Call the function and assert the result
@@ -320,7 +320,6 @@ class TestDropEmptyColumns(unittest.TestCase):
             df, name_map=name_map, stim_colname="custom_stimulus_name"
         )
         pd.testing.assert_frame_equal(result_df, expected_df)
-
 
     def test_map_column_names_with_mapping(self):
         """
