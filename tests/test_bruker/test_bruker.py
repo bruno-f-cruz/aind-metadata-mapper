@@ -2,7 +2,6 @@
 
 import pickle
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 from aind_data_schema.components.devices import (

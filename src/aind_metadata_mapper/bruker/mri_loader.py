@@ -139,10 +139,28 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         logging.info(f"loaded scans: {scans}")
 
-        start_time = datetime.strptime(self.scan_data[list(self.scan_data.keys())[0]]["acqp"]["ACQ_time"], DATETIME_FORMAT)
-        final_scan_start = datetime.strptime(self.scan_data[list(self.scan_data.keys())[-1]]["acqp"]["ACQ_time"], DATETIME_FORMAT)
-        final_scan_duration = datetime.strptime(self.scan_data[list(self.scan_data.keys())[-1]]["method"]["ScanTimeStr"], LENGTH_FORMAT)
-        end_time = final_scan_start + timedelta(hours=final_scan_duration.hour, minutes=final_scan_duration.minute, seconds=final_scan_duration.second, microseconds=final_scan_duration.microsecond)
+        start_time = datetime.strptime(
+            self.scan_data[list(self.scan_data.keys())[0]]["acqp"]["ACQ_time"],
+            DATETIME_FORMAT,
+        )
+        final_scan_start = datetime.strptime(
+            self.scan_data[list(self.scan_data.keys())[-1]]["acqp"][
+                "ACQ_time"
+            ],
+            DATETIME_FORMAT,
+        )
+        final_scan_duration = datetime.strptime(
+            self.scan_data[list(self.scan_data.keys())[-1]]["method"][
+                "ScanTimeStr"
+            ],
+            LENGTH_FORMAT,
+        )
+        end_time = final_scan_start + timedelta(
+            hours=final_scan_duration.hour,
+            minutes=final_scan_duration.minute,
+            seconds=final_scan_duration.second,
+            microseconds=final_scan_duration.microsecond,
+        )
 
         stream = Stream(
             stream_start_time=start_time,
