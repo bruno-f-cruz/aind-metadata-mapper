@@ -78,23 +78,23 @@ class JobSettings(BaseSettings):
     session_type: str = "BCI"
     iacuc_protocol: str = "2109"
     # should match rig json:
-    rig_id: str = "Bergamo photostim rig"  
+    rig_id: str = "442 Bergamo 2p photostim"  
     behavior_camera_names: List[str] = [
         "Side Face Camera",
         "Bottom Face Camera",
     ]  
-    ch1_filter_names: List[str]= []
-    ch1_detector_name: str = ''
-    ch1_daq_name: str = ''
-    ch2_filter_names: List[str] = []
-    ch2_detector_name: str = ''
-    ch2_daq_name: str = ''
+    ch1_filter_names: List[str]= ['Green emission filter','Emission dichroic']
+    ch1_detector_name: str = 'Green PMT'
+    ch1_daq_name: str = 'PXI'
+    ch2_filter_names: List[str] = ['Red emission filter','Emission dichroic']
+    ch2_detector_name: str = 'Red PMT'
+    ch2_daq_name: str = 'PXI'
     imaging_laser_name: str = (
-        "Chameleon tunable pulsing laser"  # should match rig json
+        "Chameleon Laser"  # should match rig json
     )
 
     photostim_laser_name: str = (
-        "Monaco 1040nm pulsing laser"  # should match rig json
+        "Monaco Laser"  # should match rig json
     )
     photostim_laser_wavelength: int = 1040
     fov_coordinate_ml: Decimal = Decimal("1.5")
