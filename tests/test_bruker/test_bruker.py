@@ -32,9 +32,6 @@ class TestMRIWriter(unittest.TestCase):
 
         cls.example_job_settings = JobSettings(
             data_path=EXAMPLE_MRI_INPUT,
-            output_directory=Path(
-                "src/aind_metadata_mapper/bruker/MRI_ingest/output"
-            ),
             experimenter_full_name=["fake mae"],
             primary_scan_number=7,
             setup_scan_number=1,
