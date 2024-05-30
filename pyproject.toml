@@ -28,6 +28,7 @@ dependencies = [
     "pandas",
     "numpy",
     "np_session",
+    "npc_ephys",
     "scipy"
 ]
 
