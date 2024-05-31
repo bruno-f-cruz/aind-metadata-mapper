@@ -381,7 +381,7 @@ class GatherMetadataJob:
                     contents = json.load(f)
                 try:
                     output = model.model_validate_json(json.dumps(contents))
-                except ValidationError:
+                except (ValidationError, AttributeError, ValueError, KeyError):
                     output = model.model_construct(**contents)
 
                 return output
@@ -412,19 +412,34 @@ class GatherMetadataJob:
             self.settings.metadata_settings.processing_filepath, Processing
         )
 
-        metadata = Metadata(
-            name=self.settings.metadata_settings.name,
-            location=self.settings.metadata_settings.location,
-            subject=subject,
-            data_description=data_description,
-            procedures=procedures,
-            session=session,
-            rig=rig,
-            processing=processing,
-            acquisition=acquisition,
-            instrument=instrument,
-        )
-        return metadata
+        try:
+            metadata = Metadata(
+                name=self.settings.metadata_settings.name,
+                location=self.settings.metadata_settings.location,
+                subject=subject,
+                data_description=data_description,
+                procedures=procedures,
+                session=session,
+                rig=rig,
+                processing=processing,
+                acquisition=acquisition,
+                instrument=instrument,
+            )
+            return metadata
+        except (ValidationError, ValueError, AttributeError, KeyError):
+            metadata = Metadata.model_construct(
+                name=self.settings.metadata_settings.name,
+                location=self.settings.metadata_settings.location,
+                subject=subject,
+                data_description=data_description,
+                procedures=procedures,
+                session=session,
+                rig=rig,
+                processing=processing,
+                acquisition=acquisition,
+                instrument=instrument,
+            )
+            return metadata
 
     def _write_json_file(self, filename: str, contents: dict) -> None:
         """
