@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from aind_metadata_mapper.utils import sync_utils as sync
+from aind_metadata_mapper.open_ephys.utils import sync_utils as sync
 
 
 class TestGetMetaData(unittest.TestCase):

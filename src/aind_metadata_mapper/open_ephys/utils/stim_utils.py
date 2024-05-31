@@ -8,8 +8,8 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-import aind_metadata_mapper.utils.pkl_utils as pkl
-import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
 
 DROP_PARAMS = (  # psychopy boilerplate, more or less
     "autoLog",

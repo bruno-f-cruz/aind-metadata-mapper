@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 import scipy.spatial.distance as distance
 
-import aind_metadata_mapper.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
 
 
 def load_sync(path):

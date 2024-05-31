@@ -20,8 +20,8 @@ import numpy as np
 import pandas as pd
 
 import aind_metadata_mapper.stimulus.camstim
-import aind_metadata_mapper.utils.naming_utils as names
-import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.naming_utils as names
+import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):

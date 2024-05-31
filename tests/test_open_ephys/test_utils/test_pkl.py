@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 
-from aind_metadata_mapper.utils import pkl_utils as pkl
+from aind_metadata_mapper.open_ephys.utils import pkl_utils as pkl
 
 
 class TestPKL(unittest.TestCase):

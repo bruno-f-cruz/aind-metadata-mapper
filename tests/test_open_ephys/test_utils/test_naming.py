@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from aind_metadata_mapper.utils import naming_utils as naming
+from aind_metadata_mapper.open_ephys.utils import naming_utils as naming
 
 
 class TestDropEmptyColumns(unittest.TestCase):

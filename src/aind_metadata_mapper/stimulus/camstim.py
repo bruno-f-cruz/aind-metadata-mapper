@@ -10,10 +10,10 @@ import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
 
-import aind_metadata_mapper.utils.naming_utils as names
-import aind_metadata_mapper.utils.pkl_utils as pkl
-import aind_metadata_mapper.utils.stim_utils as stim
-import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.naming_utils as names
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.stim_utils as stim
+import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
 
 
 class Camstim:
