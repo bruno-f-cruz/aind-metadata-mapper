@@ -8,9 +8,11 @@ import pandas as pd
 import utils.pickle_utils as pkl
 import utils.stimulus_utils as stim
 from project_constants import PROJECT_CODES, VBO_ACTIVE_MAP, VBO_PASSIVE_MAP
+import logging 
 
 INT_NULL = -99
 
+logger = logging.getLogger(__name__)
 
 def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
     """
@@ -41,7 +43,7 @@ def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
         for start_frame in stimulus_table.start_frame.values
     ]
     end_time = []
-    print("stimulus_table", stimulus_table)
+    logger.debug(f"stimulus_table {stimulus_table}")
     for end_frame in stimulus_table.end_frame.values:
         if not np.isnan(end_frame):
             end_time.append(stimulus_timestamps[int(end_frame)])
@@ -62,7 +64,7 @@ def get_images_dict(pkl_dict) -> Dict:
     metadata from the pkl file and return this dictionary.
     Parameters
     ----------
-    pkl: The pkl file containing the data for the stimuli presented during
+    pkl_dict: The pkl file containing the data for the stimuli presented during
          experiment
 
     Returns
@@ -945,11 +947,11 @@ def compute_is_sham_change(
     return stim_df.sort_index()
 
 
-def finger_print_from_stimulus_file(
+def fingerprint_from_stimulus_file(
     stimulus_presentations: pd.DataFrame, stimulus_file, stimulus_timestamps
 ):
     """
-    Instantiates `FingerprintStimulus` from stimulus file
+    Instantiates `fingerprintStimulus` from stimulus file
 
     Parameters
     ----------
@@ -962,8 +964,8 @@ def finger_print_from_stimulus_file(
 
     Returns
     -------
-    `FingerprintStimulus`
-        Instantiated FingerprintStimulus
+    `fingerprintStimulus`
+        Instantiated fingerprintStimulus
     """
     fingerprint_stim = stimulus_file["items"]["behavior"]["items"][
         "fingerprint"
@@ -1470,7 +1472,7 @@ def add_fingerprint_stimulus(
     pd.DataFrame: stimulus presentations with gray screen + fingerprint
     movie added"""
 
-    fingerprint_stimulus = finger_print_from_stimulus_file(
+    fingerprint_stimulus = fingerprint_from_stimulus_file(
         stimulus_presentations=stimulus_presentations,
         stimulus_file=stimulus_file,
         stimulus_timestamps=stimulus_timestamps,

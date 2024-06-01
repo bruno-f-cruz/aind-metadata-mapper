@@ -3,9 +3,10 @@
 import numpy as np
 import re
 import warnings
-
+import logging
 
 INT_NULL = -99
+logger = logging.getLogger(__name__)
 
 # defaults
 DEFAULT_OPTO_CONDITIONS = {
@@ -245,7 +246,7 @@ def add_number_to_shuffled_movie(
             return template.format(movie_number)
 
     table[stim_colname] = table.apply(renamer, axis=1)
-    print(table.keys())
+    logger.debug(table.keys())
     table.drop(columns=tmp_colname, inplace=True)
     return table
 

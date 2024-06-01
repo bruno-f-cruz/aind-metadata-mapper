@@ -18,10 +18,12 @@ import npc_mvr
 import npc_sessions
 import numpy as np
 import pandas as pd
+import logging
 
 import aind_metadata_mapper.stimulus.camstim
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+logger = logging.getLogger(__name__)
 
 
 class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -88,25 +90,20 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-        print(
-            "session start : session end\n",
-            self.session_start,
-            ":",
-            self.session_end,
-        )
+        logger.debug(f"session start: {self.session_start} \n session end: {self.session_end}")
 
         if not self.stim_table_path.exists() or overwrite_tables:
-            print("building stim table")
+            logger.debug("building stim table")
             self.build_stimulus_table()
         if (
             self.opto_pkl_path.exists()
             and not self.opto_table_path.exists()
             or overwrite_tables
         ):
-            print("building opto table")
+            logger.debug("building opto table")
             self.build_optogenetics_table()
 
-        print("getting stim epochs")
+        logger.debug("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
         if self.opto_table_path.exists():
             self.stim_epochs.append(self.epoch_from_opto_table())
@@ -145,7 +142,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         Writes the session json to a session.json file
         """
         self.session_json.write_standard_file(self.npexp_path)
-        print(f"File created at {str(self.npexp_path)}/session.json")
+        logger.debug(f"File created at {str(self.npexp_path)}/session.json")
 
     def get_available_probes(self) -> tuple[str]:
         """
@@ -164,8 +161,9 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
                     "FailedToInsert", False
                 )
             ]
-        print("available probes:", available_probes)
+        logger.debug("available probes:", available_probes)
         return tuple(available_probes)
+
 
     def manipulator_coords(
         self, probe_name: str, newscale_coords: pd.DataFrame

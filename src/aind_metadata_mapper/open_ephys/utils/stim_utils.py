@@ -5,11 +5,14 @@ import functools
 import re
 from pathlib import Path
 from typing import List
+import logging
 
 import numpy as np
 import pandas as pd
 import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+
+logger = logging.getLogger(__name__)
 
 DROP_PARAMS = (  # psychopy boilerplate, more or less
     "autoLog",
@@ -232,7 +235,7 @@ def parse_stim_repr(
         if drop_param in stim_params:
             del stim_params[drop_param]
 
-    print(stim_params)
+    logger.debug(stim_params)
     return stim_params
 
 

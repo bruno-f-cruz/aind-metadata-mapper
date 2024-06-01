@@ -2,6 +2,7 @@
 
 import datetime
 from typing import Optional, Sequence, Union
+import logging
 
 import h5py
 import numpy as np
@@ -9,6 +10,7 @@ import scipy.spatial.distance as distance
 
 import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
 
+logger = logging.getLogger(__name__)
 
 def load_sync(path):
     """
@@ -289,7 +291,7 @@ def get_clipped_stim_timestamps(sync, pkl_path):
     stim_data_length = get_stim_data_length(pkl_path)
 
     delta = 0
-    print(sync)
+    logger.debug(sync)
     if stim_data_length is not None and stim_data_length < len(timestamps):
         try:
             stim_key = "vsync_stim"
@@ -303,18 +305,18 @@ def get_clipped_stim_timestamps(sync, pkl_path):
         # Some versions of camstim caused a spike when the DAQ is first
         # initialized. Remove it.
         if rising[1] - rising[0] > 0.2:
-            print("Initial DAQ spike detected from stimulus, " "removing it")
+            logger.debug("Initial DAQ spike detected from stimulus, " "removing it")
             timestamps = timestamps[1:]
 
         delta = len(timestamps) - stim_data_length
         if delta != 0:
-            print(
+            logger.debug(
                 "Stim data of length %s has timestamps of " "length %s",
                 stim_data_length,
                 len(timestamps),
             )
     elif stim_data_length is None:
-        print("No data length provided for stim stream")
+        logger.debug("No data length provided for stim stream")
     return timestamps, delta
 
 
@@ -381,7 +383,7 @@ def get_edges(
     if isinstance(keys, str):
         keys = [keys]
 
-    print(keys)
+    logger.debug(keys)
 
     for line in keys:
         try:
