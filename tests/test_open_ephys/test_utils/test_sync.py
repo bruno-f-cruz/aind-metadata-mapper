@@ -1,4 +1,3 @@
-
 """ Tests for the sync_utils module """
 import unittest
 
@@ -14,6 +13,7 @@ class TestGetMetaData(unittest.TestCase):
     """
     Test class for the get_meta_data function.
     """
+
     def test_get_meta_data(self):
         """
         Test the get_meta_data function with a mock sync file.
@@ -203,6 +203,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the extract_led_times function with a mock sync file.
         """
+
         # Mock get_edges function to return rising edges
         def mock_get_edges(sync_file, kind, keys, units):
             """
@@ -227,6 +228,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the extract_led_times function when rising edges are not found.
         """
+
         # Mock get_edges function to raise a KeyError
         def mock_get_edges(sync_file, kind, keys, units):
             """
@@ -264,6 +266,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the get_ophys_stimulus_timestamps function with a mock sync file.
         """
+
         def mock_get_clipped_stim_timestamps(sync, pkl):
             """
             Mocks clipped stimulus timestamps
@@ -293,6 +296,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the get_behavior_stim_timestamps function with a mock sync file.
         """
+
         # Mock get_falling_edges function to return stimulus timestamps
         def mock_get_falling_edges(sync, stim_key, units):
             """
@@ -321,6 +325,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the get_behavior_stim_timestamps function when no stimulus stream
         """
+
         # Mock get_falling_edges function to raise an Exception
         def mock_get_falling_edges(sync, stim_key, units):
             """
@@ -345,6 +350,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the get_clipped_stim_timestamps function when the stimulus length
         """
+
         def mock_get_behavior_stim_timestamps(sync):
             """
             Mocks behavior stimulus timestamps
@@ -398,6 +404,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the get_clipped_stim_timestamps function when the stimulus length
         """
+
         # Mock get_behavior_stim_timestamps to return timestamps
         def mock_get_behavior_stim_timestamps(sync):
             """
@@ -439,6 +446,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests the line_to_bit function with a mock sync file.
         """
+
         # Mock get_line_labels function to return line labels
         def mock_get_line_labels(sync_file):
             """
@@ -498,6 +506,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests bit change detection
         """
+
         def mock_get_sync_file_bit(sync_file, bit):
             """
             Mocks a sync bile's bit array
@@ -537,6 +546,7 @@ class TestGetMetaData(unittest.TestCase):
         """
         Tests getting a specific bit from a sync file
         """
+
         # Mock get_all_bits function to return all bits
         def mock_get_all_bits(sync_file):
             """
@@ -707,7 +717,6 @@ class TestGetMetaData(unittest.TestCase):
                 return_value=np.array([0, 1, 2, 3]),
             ),
         ):
-
             # Mock the sync file
             mock_sync_file = MagicMock()
             mock_sync_file.__getitem__.side_effect = (
@@ -754,7 +763,6 @@ class TestGetMetaData(unittest.TestCase):
                 return_value=mock_times,
             ),
         ):
-
             # Call the function to get rising edges
             rising_edges = sync.get_rising_edges(mock_sync_file, "line")
 

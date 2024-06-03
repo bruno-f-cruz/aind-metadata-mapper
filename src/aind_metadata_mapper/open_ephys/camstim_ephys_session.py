@@ -23,6 +23,7 @@ import logging
 import aind_metadata_mapper.stimulus.camstim
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,7 +91,10 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         sync_data = sync.load_sync(self.sync_path)
         self.session_start = sync.get_start_time(sync_data)
         self.session_end = sync.get_stop_time(sync_data)
-        logger.debug(f"session start: {self.session_start} \n session end: {self.session_end}")
+        logger.debug(
+            f"session start: {self.session_start} \n"
+            f" session end: {self.session_end}"
+        )
 
         if not self.stim_table_path.exists() or overwrite_tables:
             logger.debug("building stim table")
@@ -163,7 +167,6 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
             ]
         logger.debug("available probes:", available_probes)
         return tuple(available_probes)
-
 
     def manipulator_coords(
         self, probe_name: str, newscale_coords: pd.DataFrame

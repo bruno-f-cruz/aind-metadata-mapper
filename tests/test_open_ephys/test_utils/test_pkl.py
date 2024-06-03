@@ -9,6 +9,7 @@ class TestPKL(unittest.TestCase):
     """
     Test class for the pkl_utils module.
     """
+
     def test_get_stimuli(self):
         """
         Creating a sample pkl dictionary with a "stimuli" key

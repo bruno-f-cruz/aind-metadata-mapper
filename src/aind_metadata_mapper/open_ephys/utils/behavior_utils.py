@@ -8,11 +8,12 @@ import pandas as pd
 import utils.pickle_utils as pkl
 import utils.stimulus_utils as stim
 from project_constants import PROJECT_CODES, VBO_ACTIVE_MAP, VBO_PASSIVE_MAP
-import logging 
+import logging
 
 INT_NULL = -99
 
 logger = logging.getLogger(__name__)
+
 
 def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
     """
@@ -828,9 +829,9 @@ def fix_omitted_end_frame(stim_pres_table: pd.DataFrame) -> pd.DataFrame:
         stim_pres_table[stim_pres_table["omitted"]]["start_frame"]
         + median_stim_frame_duration
     )
-    stim_pres_table.loc[stim_pres_table["omitted"], "end_frame"] = (
-        omitted_end_frames
-    )
+    stim_pres_table.loc[
+        stim_pres_table["omitted"], "end_frame"
+    ] = omitted_end_frames
 
     stim_dtypes = stim_pres_table.dtypes.to_dict()
     stim_dtypes["start_frame"] = int
@@ -940,9 +941,9 @@ def compute_is_sham_change(
                 if np.array_equal(
                     active_images, stim_image_names[passive_block_mask].values
                 ):
-                    stim_df.loc[passive_block_mask, "is_sham_change"] = (
-                        stim_df[active_block_mask]["is_sham_change"].values
-                    )
+                    stim_df.loc[
+                        passive_block_mask, "is_sham_change"
+                    ] = stim_df[active_block_mask]["is_sham_change"].values
 
     return stim_df.sort_index()
 
