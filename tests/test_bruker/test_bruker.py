@@ -20,7 +20,7 @@ EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
 TEST_INPUT_SUBJECT_DATA = "tests/resources/bruker/test_output_subject"
 TEST_INPUT_METADATA = (
-    "tests/resources/bruker/test_output_metadata_string.pickle"
+    "tests/resources/bruker/test_output_metadata.pickle"
 )
 
 
@@ -58,8 +58,12 @@ class TestMRIWriter(unittest.TestCase):
     def test_etl(self, mock_extract) -> None:
         """Tests that ETL methods return the correct data."""
 
-        with open(TEST_INPUT_METADATA, "r") as f:
-            metadata = pickle.loads(f)
+        try: 
+            with open(TEST_INPUT_METADATA, "rb") as f:
+                metadata = pickle.load(f)
+        except:
+            with open("tests/resources/bruker/test_output_metadata.txt", "rb") as f:
+                metadata = pickle.load(f)
 
         etl = MRIEtl(self.example_job_settings)
 
