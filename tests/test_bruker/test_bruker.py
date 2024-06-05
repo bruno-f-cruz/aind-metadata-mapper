@@ -10,6 +10,8 @@ from aind_data_schema.components.devices import (
 )
 
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
+from pathlib import Path
+
 
 EXAMPLE_MRI_INPUT = (
     "src/aind_metadata_mapper/bruker/MRI_ingest/"
@@ -19,7 +21,7 @@ EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 
 TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
 TEST_INPUT_SUBJECT_DATA = "tests/resources/bruker/test_output_subject"
-TEST_INPUT_METADATA = "tests/resources/bruker/test_output_metadata.pickle"
+TEST_INPUT_METADATA = Path("tests/resources/bruker/test_output_metadata.pickle")
 
 
 class TestMRIWriter(unittest.TestCase):
@@ -61,7 +63,7 @@ class TestMRIWriter(unittest.TestCase):
                 metadata = pickle.load(f)
         except NotImplementedError:
             with open(
-                "tests/resources/bruker/test_output_metadata.txt", "rb"
+                Path("tests/resources/bruker/test_output_metadata.txt"), "rb"
             ) as f:
                 metadata = pickle.load(f)
 
