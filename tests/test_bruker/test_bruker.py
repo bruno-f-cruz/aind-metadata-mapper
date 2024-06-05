@@ -59,7 +59,7 @@ class TestMRIWriter(unittest.TestCase):
         """Tests that ETL methods return the correct data."""
 
         with open(TEST_INPUT_METADATA, "rb") as f:
-            metadata = pickle.load(f)
+            metadata = pickle.loads(f)
 
         etl = MRIEtl(self.example_job_settings)
 
