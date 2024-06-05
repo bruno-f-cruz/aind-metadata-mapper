@@ -19,7 +19,7 @@ EXPECTED_MRI_SESSION = "tests/resources/bruker/test_mri_session.json"
 
 TEST_INPUT_SCAN_DATA = "tests/resources/bruker/test_output_scan"
 TEST_INPUT_SUBJECT_DATA = "tests/resources/bruker/test_output_subject"
-TEST_INPUT_METADATA = "tests/resources/bruker/test_output_metadata.pickle"
+TEST_INPUT_METADATA = "tests/resources/bruker/test_output_metadata_string.pickle"
 
 
 class TestMRIWriter(unittest.TestCase):
