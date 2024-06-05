@@ -59,7 +59,7 @@ class TestMRIWriter(unittest.TestCase):
         try:
             with open(TEST_INPUT_METADATA, "rb") as f:
                 metadata = pickle.load(f)
-        except FileNotFoundError:
+        except NotImplementedError:
             with open(
                 "tests/resources/bruker/test_output_metadata.txt", "rb"
             ) as f:
