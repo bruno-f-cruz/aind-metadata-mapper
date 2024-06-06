@@ -5,9 +5,8 @@ import traceback
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from aind_data_schema.base import AindCoreModel
 from aind_data_schema.components.coordinates import (
     Rotation3dTransform,
     Scale3dTransform,
@@ -67,7 +66,7 @@ LENGTH_FORMAT = "%Hh%Mm%Ss%fms"
 class MRIEtl(GenericEtl[JobSettings]):
     """Class for MRI ETL process."""
 
-    def __init__(self, job_settings: JobSettings):
+    def __init__(self, job_settings: Union[JobSettings, str]):
         """
         Class constructor for Base etl class.
         Parameters
@@ -92,16 +91,15 @@ class MRIEtl(GenericEtl[JobSettings]):
         # self.n_scans = self.metadata.list_scans()
         return metadata
 
-    def _transform(self, input_metadata) -> AindCoreModel:
+    def _transform(self, input_metadata: BrukerMetadata) -> Session:
         """Transform the data into the AIND data schema."""
-
-        self.scan_data = input_metadata.scan_data
-        self.subject_data = input_metadata.subject_data
 
         return self.load_mri_session(
             experimenter=self.job_settings.experimenter_full_name,
             primary_scan_number=self.job_settings.primary_scan_number,
             setup_scan_number=self.job_settings.setup_scan_number,
+            scan_data=input_metadata.scan_data,
+            subject_data=input_metadata.subject_data,
         )
 
     def run_job(self) -> JobResponse:
@@ -118,21 +116,29 @@ class MRIEtl(GenericEtl[JobSettings]):
 
     def load_mri_session(
         self,
-        experimenter: str,
-        primary_scan_number: str,
-        setup_scan_number: str,
+        scan_data,
+        subject_data,
+        experimenter: List[str],
+        primary_scan_number: int,
+        setup_scan_number: int,
     ) -> Session:
         """Load the MRI session data into the AIND data schema."""
 
         scans = []
-        for scan in self.scan_data.keys():
+        for scan in scan_data.keys():
             scan_type = "3D Scan"
             if scan == setup_scan_number:
                 scan_type = "Set Up"
             primary_scan = False
             if scan == primary_scan_number:
                 primary_scan = True
-            new_scan = self.make_model_from_scan(scan, scan_type, primary_scan)
+            new_scan = self.make_model_from_scan(
+                scan_index=scan,
+                scan_type=scan_type,
+                primary_scan=primary_scan,
+                scan_data=scan_data,
+                subject_data=subject_data,
+            )
             logging.info(f"loaded scan {new_scan}")
 
             scans.append(new_scan)
@@ -140,19 +146,15 @@ class MRIEtl(GenericEtl[JobSettings]):
         logging.info(f"loaded scans: {scans}")
 
         start_time = datetime.strptime(
-            self.scan_data[list(self.scan_data.keys())[0]]["acqp"]["ACQ_time"],
+            scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
         )
         final_scan_start = datetime.strptime(
-            self.scan_data[list(self.scan_data.keys())[-1]]["acqp"][
-                "ACQ_time"
-            ],
+            scan_data[list(scan_data.keys())[-1]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
         )
         final_scan_duration = datetime.strptime(
-            self.scan_data[list(self.scan_data.keys())[-1]]["method"][
-                "ScanTimeStr"
-            ],
+            scan_data[list(scan_data.keys())[-1]]["method"]["ScanTimeStr"],
             LENGTH_FORMAT,
         )
         end_time = final_scan_start + timedelta(
@@ -185,18 +187,21 @@ class MRIEtl(GenericEtl[JobSettings]):
         )
 
     def make_model_from_scan(  # noqa: C901
-        self, scan_index: str, scan_type, primary_scan: bool
+        self,
+        scan_index: str,
+        scan_type,
+        primary_scan: bool,
+        scan_data,
+        subject_data,
     ) -> MRIScan:
         """load scan data into the AIND data schema."""
 
         logging.info(f"loading scan {scan_index}")
 
-        self.cur_visu_pars = self.scan_data[scan_index]["recons"]["1"][
-            "visu_pars"
-        ]
-        self.cur_method = self.scan_data[scan_index]["method"]
+        cur_visu_pars = scan_data[scan_index]["recons"]["1"]["visu_pars"]
+        cur_method = scan_data[scan_index]["method"]
 
-        subj_pos = self.subject_data["SUBJECT_position"]
+        subj_pos = subject_data["SUBJECT_position"]
         if "supine" in subj_pos.lower():
             subj_pos = "Supine"
         elif "prone" in subj_pos.lower():
@@ -204,27 +209,27 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         scan_sequence = MriScanSequence.OTHER
         notes = None
-        if "RARE" in self.cur_method["Method"]:
-            scan_sequence = MriScanSequence(self.cur_method["Method"])
+        if "RARE" in cur_method["Method"]:
+            scan_sequence = MriScanSequence(cur_method["Method"])
         else:
-            notes = f"Scan sequence {self.cur_method['Method']} not recognized"
+            notes = f"Scan sequence {cur_method['Method']} not recognized"
 
         rare_factor = None
-        if "RareFactor" in self.cur_method.keys():
-            rare_factor = self.cur_method["RareFactor"]
+        if "RareFactor" in cur_method.keys():
+            rare_factor = cur_method["RareFactor"]
 
-        if "EffectiveTE" in self.cur_method.keys():
-            eff_echo_time = Decimal(self.cur_method["EffectiveTE"])
+        if "EffectiveTE" in cur_method.keys():
+            eff_echo_time = Decimal(cur_method["EffectiveTE"])
         else:
             eff_echo_time = None
 
-        rotation = self.cur_visu_pars["VisuCoreOrientation"]
+        rotation = cur_visu_pars["VisuCoreOrientation"]
         if rotation.shape == (1, 9):
             rotation = Rotation3dTransform(rotation=rotation.tolist()[0])
         else:
             rotation = None
 
-        translation = self.cur_visu_pars["VisuCorePosition"]
+        translation = cur_visu_pars["VisuCorePosition"]
 
         if translation.shape == (1, 3):
             translation = Translation3dTransform(
@@ -233,7 +238,7 @@ class MRIEtl(GenericEtl[JobSettings]):
         else:
             translation = None
 
-        scale = self.cur_method["SpatResol"]
+        scale = cur_method["SpatResol"]
         if not isinstance(scale, list):
             scale = scale.tolist()
 
@@ -255,12 +260,12 @@ class MRIEtl(GenericEtl[JobSettings]):
                 ),
                 scan_sequence_type=scan_sequence,  # method ##$Method=RARE,
                 rare_factor=rare_factor,  # method ##$PVM_RareFactor=8,
-                echo_time=self.cur_method[
+                echo_time=cur_method[
                     "EchoTime"
                 ],  # method ##$PVM_EchoTime=0.01,
                 effective_echo_time=eff_echo_time,  # method ##$EffectiveTE=(1)
                 echo_time_unit=TimeUnit.MS,  # what do we want here?
-                repetition_time=self.cur_method[
+                repetition_time=cur_method[
                     "RepetitionTime"
                 ],  # method ##$PVM_RepetitionTime=500,
                 repetition_time_unit=TimeUnit.MS,  # ditto
