@@ -32,6 +32,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from aind_metadata_mapper.core import GenericEtl, JobResponse
+import pytz
 
 
 class JobSettings(BaseSettings):
@@ -149,6 +150,7 @@ class MRIEtl(GenericEtl[JobSettings]):
             scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
         )
+        start_time = pytz.timezone("UTC").localize(start_time)
         final_scan_start = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
@@ -163,6 +165,7 @@ class MRIEtl(GenericEtl[JobSettings]):
             seconds=final_scan_duration.second,
             microseconds=final_scan_duration.microsecond,
         )
+        end_time = pytz.timezone("UTC").localize(end_time)
 
         stream = Stream(
             stream_start_time=start_time,

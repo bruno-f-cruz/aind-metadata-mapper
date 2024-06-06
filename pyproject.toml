@@ -24,7 +24,8 @@ dependencies = [
     "pydantic-settings>=2.0",
     "pillow",
     "bruker2nifti==1.0.4",
-    "requests"
+    "requests",
+    "pytz"
 ]
 
 [project.optional-dependencies]
