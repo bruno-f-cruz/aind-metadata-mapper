@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import List, Optional, Union
 
+import pytz
 from aind_data_schema.components.coordinates import (
     Rotation3dTransform,
     Scale3dTransform,
@@ -32,7 +33,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from aind_metadata_mapper.core import GenericEtl, JobResponse
-import pytz
 
 
 class JobSettings(BaseSettings):

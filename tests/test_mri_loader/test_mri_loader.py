@@ -13,8 +13,6 @@ from aind_data_schema.components.devices import (
 )
 
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
-import pytz
-
 
 RESOURCES_DIR = (
     Path(os.path.dirname(os.path.realpath(__file__)))
@@ -111,9 +109,9 @@ class TestMRIWriter(unittest.TestCase):
         etl = MRIEtl(self.example_job_settings)
         job_response = etl.run_job()
         actual_session = json.loads(job_response.data)
-        utc_tz = pytz.timezone("UTC")
-
-        actual_session["session_start_time"] = actual_session["session_start_time"]
+        actual_session["session_start_time"] = actual_session[
+            "session_start_time"
+        ]
         for field in ["session_start_time", "session_end_time", ""]:
             self.assertIn(field, actual_session)
         self.assertEqual(job_response.status_code, 200)
