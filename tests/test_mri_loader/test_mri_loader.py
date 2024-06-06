@@ -109,11 +109,6 @@ class TestMRIWriter(unittest.TestCase):
         etl = MRIEtl(self.example_job_settings)
         job_response = etl.run_job()
         actual_session = json.loads(job_response.data)
-        actual_session["session_start_time"] = actual_session[
-            "session_start_time"
-        ]
-        for field in ["session_start_time", "session_end_time", ""]:
-            self.assertIn(field, actual_session)
         self.assertEqual(job_response.status_code, 200)
         self.assertEqual(self.expected_session, actual_session)
 
