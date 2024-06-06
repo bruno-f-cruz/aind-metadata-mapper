@@ -596,10 +596,12 @@ class TestGatherMetadataJob(unittest.TestCase):
             "  Expected `BreedingInfo` but got `dict`"
             " - serialized value may not be as expected\n"
             "  Expected `Union[AllenInstitute, ColumbiaUniversity,"
-            " HuazhongUniversityOfScienceAndTechnology, JacksonLaboratory,"
-            " NewYorkUniversity, Other]` but got `dict`"
+            " HuazhongUniversityOfScienceAndTechnology, JaneliaResearchCampus, "
+            "JacksonLaboratory, NewYorkUniversity, Other]` but got `dict`"
             " - serialized value may not be as expected"
         )
+        print("\nWARNING: \n", str(w.warning))
+        print("\nEXPECTED: \n", expected_warnings)
 
         self.assertEqual(expected_warnings, str(w.warning))
         self.assertEqual(
