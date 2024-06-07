@@ -93,4 +93,4 @@ exclude = ["setup.py", "docs", "build"]
 fail-under = 100
 
 [tool.flake8]
-ignore = "E203"
+extend-ignore = "E203"
