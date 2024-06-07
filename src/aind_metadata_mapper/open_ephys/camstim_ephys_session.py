@@ -168,8 +168,9 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         logger.debug("available probes:", available_probes)
         return tuple(available_probes)
 
+    @staticmethod
     def manipulator_coords(
-        self, probe_name: str, newscale_coords: pd.DataFrame
+        probe_name: str, newscale_coords: pd.DataFrame
     ) -> tuple[aind_data_schema.components.coordinates.Coordinates3d, str]:
         """
         Returns the schema coordinates object containing probe's manipulator

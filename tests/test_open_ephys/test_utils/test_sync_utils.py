@@ -131,7 +131,7 @@ class TestGetMetaData(unittest.TestCase):
         expected_start_time = datetime.fromisoformat("2022-05-18T15:30:00")
         self.assertEqual(start_time, expected_start_time)
 
-    @patch("aind_metadata_mapper.utils.sync_utils.get_sample_freq")
+    @patch("aind_metadata_mapper.open_ephys.utils.sync_utils.get_sample_freq")
     def test_get_total_seconds(self, mock_get_sample_freq):
         """
         Tests the get_total_seconds function with a mock sync file.
@@ -183,11 +183,13 @@ class TestGetMetaData(unittest.TestCase):
 
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_start_time",
+                "aind_metadata_mapper.open_ephys.utils."
+                "sync_utils.get_start_time",
                 side_effect=mock_get_start_time,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_total_seconds",
+                "aind_metadata_mapper.open_ephys.utils."
+                "sync_utils.get_total_seconds",
                 side_effect=mock_get_total_seconds,
             ),
         ):
@@ -215,7 +217,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_edges",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_edges",
             side_effect=mock_get_edges,
         ):
             # Call the function to extract LED times
@@ -248,11 +250,13 @@ class TestGetMetaData(unittest.TestCase):
 
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_edges",
+                "aind_metadata_mapper.open_ephys.utils."
+                "sync_utils.get_edges",
                 side_effect=mock_get_edges,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_rising_edges",
+                "aind_metadata_mapper.open_ephys.utils."
+                "sync_utils.get_rising_edges",
                 side_effect=mock_get_rising_edges,
             ),
         ):
@@ -278,7 +282,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_pkl = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils."
+            "aind_metadata_mapper.open_ephys.utils.sync_utils."
             "get_clipped_stim_timestamps",
             side_effect=mock_get_clipped_stim_timestamps,
         ):
@@ -308,7 +312,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_falling_edges",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_falling_edges",
             side_effect=mock_get_falling_edges,
         ):
             # Call the function to get behavior stimulus timestamps
@@ -337,7 +341,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_falling_edges",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_falling_edges",
             side_effect=mock_get_falling_edges,
         ):
             # Call the function and assert that it raises a ValueError
@@ -375,16 +379,16 @@ class TestGetMetaData(unittest.TestCase):
 
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils."
+                "aind_metadata_mapper.open_ephys.utils.sync_utils."
                 "get_behavior_stim_timestamps",
                 side_effect=mock_get_behavior_stim_timestamps,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_stim_data_length",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_stim_data_length",
                 side_effect=mock_get_stim_data_length,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_rising_edges",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_rising_edges",
                 side_effect=mock_get_rising_edges,
             ),
         ):
@@ -424,12 +428,12 @@ class TestGetMetaData(unittest.TestCase):
 
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils."
+                "aind_metadata_mapper.open_ephys.utils.sync_utils."
                 "get_behavior_stim_timestamps",
                 side_effect=mock_get_behavior_stim_timestamps,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_stim_data_length",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_stim_data_length",
                 side_effect=mock_get_stim_data_length,
             ),
         ):
@@ -458,7 +462,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_line_labels",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_line_labels",
             side_effect=mock_get_line_labels,
         ):
             # Call the function to get the bit for the specified line name
@@ -517,7 +521,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_sync_file_bit",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_sync_file_bit",
             side_effect=mock_get_sync_file_bit,
         ):
             # Call the function to get the first derivative
@@ -558,7 +562,7 @@ class TestGetMetaData(unittest.TestCase):
         mock_sync_file = MagicMock()
 
         with unittest.mock.patch(
-            "aind_metadata_mapper.utils.sync_utils.get_all_bits",
+            "aind_metadata_mapper.open_ephys.utils.sync_utils.get_all_bits",
             side_effect=mock_get_all_bits,
         ):
             # Call the function to get a specific bit from the sync file
@@ -701,19 +705,19 @@ class TestGetMetaData(unittest.TestCase):
         # Mock the required functions to return expected values
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_meta_data",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_meta_data",
                 return_value=mock_meta_data,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.line_to_bit",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.line_to_bit",
                 return_value=3,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_bit_changes",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_bit_changes",
                 return_value=np.array([0, 255, 0, 255]),
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_all_times",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_all_times",
                 return_value=np.array([0, 1, 2, 3]),
             ),
         ):
@@ -747,19 +751,19 @@ class TestGetMetaData(unittest.TestCase):
 
         with (
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_meta_data",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_meta_data",
                 return_value=mock_meta_data,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.line_to_bit",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.line_to_bit",
                 return_value=3,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_bit_changes",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_bit_changes",
                 return_value=mock_bit_changes,
             ),
             unittest.mock.patch(
-                "aind_metadata_mapper.utils.sync_utils.get_all_times",
+                "aind_metadata_mapper.open_ephys.utils.sync_utils.get_all_times",
                 return_value=mock_times,
             ),
         ):
