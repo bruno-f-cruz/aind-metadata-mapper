@@ -1,5 +1,7 @@
 """Tests parsing of session information from open_ephys rig."""
 
+# TODO: implement tests once np package issues are resolved
+
 # import csv
 # import json
 # import os
