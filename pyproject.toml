@@ -22,7 +22,8 @@ dependencies = [
     "tifffile==2024.2.12",
     "pydantic-settings>=2.0",
     "requests",
-    "pillow"
+    "pillow",
+    "pyaml"
 ]
 
 [project.optional-dependencies]
