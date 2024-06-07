@@ -91,6 +91,3 @@ profile = "black"
 [tool.interrogate]
 exclude = ["setup.py", "docs", "build"]
 fail-under = 100
-
-[tool.flake8]
-extend-ignore = "E203"
