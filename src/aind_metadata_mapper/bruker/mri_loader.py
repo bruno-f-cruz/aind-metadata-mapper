@@ -188,8 +188,47 @@ class MRIEtl(GenericEtl[JobSettings]):
             active_mouse_platform=False,
             notes=self.job_settings.session_notes,
         )
+    
+    def get_position(self, subject_data):
+        """Get the position of the subject."""
+        subj_pos = subject_data["SUBJECT_position"]
+        if "supine" in subj_pos.lower():
+            return "Supine"
+        elif "prone" in subj_pos.lower():
+            return "Prone"
+        return subj_pos
+    
+    def get_scan_sequence_type(self, method):
+        """Get the scan sequence type."""
+        if "RARE" in method["Method"]:
+            return MriScanSequence(method["Method"])
+        
+        return MriScanSequence.OTHER
+    
+    def get_rotation(self, visu_pars):
+        """Get the rotation."""
+        rotation = visu_pars.get("VisuCoreOrientation")
+        if rotation.shape == (1, 9):
+            return Rotation3dTransform(rotation=rotation.tolist()[0])
+        return None
+    
+    def get_translation(self, visu_pars):
+        """Get the translation."""
+        translation = visu_pars.get("VisuCorePosition")
+        if translation.shape == (1, 3):
+            return Translation3dTransform(translation=translation.tolist()[0])
+        return None
+    
+    def get_scale(self, method):
+        """Get the scale."""
+        scale = method.get("SpatResol")
+        if not isinstance(scale, list):
+            scale = scale.tolist()
+        if len(scale) == 3:
+            return Scale3dTransform(scale=scale)
+        return None
 
-    def make_model_from_scan(  # noqa: C901
+    def make_model_from_scan(
         self,
         scan_index: str,
         scan_type,
@@ -204,73 +243,48 @@ class MRIEtl(GenericEtl[JobSettings]):
         cur_visu_pars = scan_data[scan_index]["recons"]["1"]["visu_pars"]
         cur_method = scan_data[scan_index]["method"]
 
-        subj_pos = subject_data["SUBJECT_position"]
-        if "supine" in subj_pos.lower():
-            subj_pos = "Supine"
-        elif "prone" in subj_pos.lower():
-            subj_pos = "Prone"
+        subj_pos = self.get_position(subject_data)
 
-        scan_sequence = MriScanSequence.OTHER
+        scan_sequence = self.get_scan_sequence_type(cur_method)
+
         notes = None
-        if "RARE" in cur_method["Method"]:
-            scan_sequence = MriScanSequence(cur_method["Method"])
-        else:
+        if scan_sequence == MriScanSequence.OTHER:
             notes = f"Scan sequence {cur_method['Method']} not recognized"
 
-        rare_factor = None
-        if "RareFactor" in cur_method.keys():
-            rare_factor = cur_method["RareFactor"]
 
-        if "EffectiveTE" in cur_method.keys():
-            eff_echo_time = Decimal(cur_method["EffectiveTE"])
-        else:
-            eff_echo_time = None
+        rare_factor = cur_method.get("RareFactor", None)
 
-        rotation = cur_visu_pars["VisuCoreOrientation"]
-        if rotation.shape == (1, 9):
-            rotation = Rotation3dTransform(rotation=rotation.tolist()[0])
-        else:
-            rotation = None
+        eff_echo_time = cur_method.get("EffectiveTE", None)
+        if eff_echo_time is not None:
+            eff_echo_time = Decimal(eff_echo_time)
 
-        translation = cur_visu_pars["VisuCorePosition"]
+        rotation = self.get_rotation(cur_visu_pars)
 
-        if translation.shape == (1, 3):
-            translation = Translation3dTransform(
-                translation=translation.tolist()[0]
-            )
-        else:
-            translation = None
+        translation = self.get_translation(cur_visu_pars)
 
-        scale = cur_method["SpatResol"]
-        if not isinstance(scale, list):
-            scale = scale.tolist()
-
-        if len(scale) == 3:
-            scale = Scale3dTransform(scale=scale)
-        else:
-            scale = None
+        scale = self.get_scale(cur_method)
 
         try:
             return MRIScan(
                 scan_index=scan_index,
-                scan_type=ScanType(scan_type),  # set by scientists
-                primary_scan=primary_scan,  # set by scientists
+                scan_type=ScanType(scan_type),
+                primary_scan=primary_scan,
                 mri_scanner=Scanner(
                     name=self.job_settings.scanner_name,
                     scanner_location=self.job_settings.scan_location,
                     magnetic_strength=self.job_settings.magnetic_strength,
                     magnetic_strength_unit="T",
                 ),
-                scan_sequence_type=scan_sequence,  # method ##$Method=RARE,
-                rare_factor=rare_factor,  # method ##$PVM_RareFactor=8,
+                scan_sequence_type=scan_sequence,
+                rare_factor=rare_factor,
                 echo_time=cur_method[
                     "EchoTime"
-                ],  # method ##$PVM_EchoTime=0.01,
-                effective_echo_time=eff_echo_time,  # method ##$EffectiveTE=(1)
+                ],
+                effective_echo_time=eff_echo_time,
                 echo_time_unit=TimeUnit.MS,  # what do we want here?
                 repetition_time=cur_method[
                     "RepetitionTime"
-                ],  # method ##$PVM_RepetitionTime=500,
+                ],
                 repetition_time_unit=TimeUnit.MS,  # ditto
                 vc_orientation=rotation,
                 vc_position=translation,
