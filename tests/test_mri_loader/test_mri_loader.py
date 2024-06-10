@@ -7,15 +7,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from aind_data_schema.components.devices import (
-    MagneticStrength,
-    ScannerLocation,
-)
-
 from aind_data_schema.components.coordinates import (
     Rotation3dTransform,
     Scale3dTransform,
     Translation3dTransform,
+)
+from aind_data_schema.components.devices import (
+    MagneticStrength,
+    ScannerLocation,
 )
 
 from aind_metadata_mapper.bruker.mri_loader import JobSettings, MRIEtl
@@ -63,7 +62,6 @@ class TestMRIWriter(unittest.TestCase):
                 example_scan_data = pickle.load(f)
             self.scan_data = example_scan_data
 
-    
     @classmethod
     @patch(
         "aind_metadata_mapper.bruker.mri_loader.BrukerMetadata",
@@ -128,19 +126,18 @@ class TestMRIWriter(unittest.TestCase):
         self.assertEqual(job_response.status_code, 200)
         self.assertEqual(self.expected_session, actual_session)
 
-
     def test_get_subj_position(self) -> None:
         """Tests the get_session method."""
 
         subj_data = self.example_model.subject_data
-        
+
         position = self.example_etl.get_position(subj_data)
         self.assertEqual(position, "Supine")
 
     def test_get_scan_sequence_type(self) -> None:
         """Tests the get_scan_sequence_type method."""
 
-        method = self.example_model.scan_data['1']['method']
+        method = self.example_model.scan_data["1"]["method"]
 
         scan_sequence_type = self.example_etl.get_scan_sequence_type(method)
         self.assertEqual(scan_sequence_type, "Other")
@@ -150,67 +147,53 @@ class TestMRIWriter(unittest.TestCase):
 
         print(self.example_model.scan_data.keys())
 
-        visu_pars = self.example_model.scan_data['4']['recons']['1']['visu_pars']
+        visu_pars = self.example_model.scan_data["4"]["recons"]["1"][
+            "visu_pars"
+        ]
 
         rotation = self.example_etl.get_rotation(visu_pars)
-        
+
         expected_rotation = Rotation3dTransform(
-               rotation = [
-                  "1.0",
-                  "0.0",
-                  "0.0",
-                  "0.0",
-                  "0.0",
-                  "-1.0",
-                  "0.0",
-                  "1.0",
-                  "0.0"
-               ]
-            )
-        
-        self.assertEqual(
-            rotation, 
-            expected_rotation            
+            rotation=[
+                "1.0",
+                "0.0",
+                "0.0",
+                "0.0",
+                "0.0",
+                "-1.0",
+                "0.0",
+                "1.0",
+                "0.0",
+            ]
         )
+
+        self.assertEqual(rotation, expected_rotation)
 
     def test_get_translation(self) -> None:
         """Tests the get_translation method."""
 
-        visu_pars = self.example_model.scan_data['4']['recons']['1']['visu_pars']
+        visu_pars = self.example_model.scan_data["4"]["recons"]["1"][
+            "visu_pars"
+        ]
 
         translation = self.example_etl.get_translation(visu_pars)
-        
+
         expected_translation = Translation3dTransform(
-               translation = [
-                  "-6.1",
-                  "-7.1",
-                  "8.4"
-               ]
-            )
-        
-        self.assertEqual(
-            translation, 
-            expected_translation
+            translation=["-6.1", "-7.1", "8.4"]
         )
+
+        self.assertEqual(translation, expected_translation)
 
     def test_get_scale(self) -> None:
         """Tests the get_scale method."""
 
-        method = self.example_model.scan_data['4']['method']
+        method = self.example_model.scan_data["4"]["method"]
 
         scale = self.example_etl.get_scale(method)
 
-        expected_scale = Scale3dTransform(
-               scale = [
-                  "0.5",
-                  "0.4375",
-                  "0.52"
-               ]
-            )
-        self.assertEqual(
-            scale, 
-            expected_scale
-        )
+        expected_scale = Scale3dTransform(scale=["0.5", "0.4375", "0.52"])
+        self.assertEqual(scale, expected_scale)
+
 
 if __name__ == "__main__":
     unittest.main()

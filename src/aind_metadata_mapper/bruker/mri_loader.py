@@ -188,7 +188,7 @@ class MRIEtl(GenericEtl[JobSettings]):
             active_mouse_platform=False,
             notes=self.job_settings.session_notes,
         )
-    
+
     def get_position(self, subject_data):
         """Get the position of the subject."""
         subj_pos = subject_data["SUBJECT_position"]
@@ -197,28 +197,28 @@ class MRIEtl(GenericEtl[JobSettings]):
         elif "prone" in subj_pos.lower():
             return "Prone"
         return subj_pos
-    
+
     def get_scan_sequence_type(self, method):
         """Get the scan sequence type."""
         if "RARE" in method["Method"]:
             return MriScanSequence(method["Method"])
-        
+
         return MriScanSequence.OTHER
-    
+
     def get_rotation(self, visu_pars):
         """Get the rotation."""
         rotation = visu_pars.get("VisuCoreOrientation")
         if rotation.shape == (1, 9):
             return Rotation3dTransform(rotation=rotation.tolist()[0])
         return None
-    
+
     def get_translation(self, visu_pars):
         """Get the translation."""
         translation = visu_pars.get("VisuCorePosition")
         if translation.shape == (1, 3):
             return Translation3dTransform(translation=translation.tolist()[0])
         return None
-    
+
     def get_scale(self, method):
         """Get the scale."""
         scale = method.get("SpatResol")
@@ -251,7 +251,6 @@ class MRIEtl(GenericEtl[JobSettings]):
         if scan_sequence == MriScanSequence.OTHER:
             notes = f"Scan sequence {cur_method['Method']} not recognized"
 
-
         rare_factor = cur_method.get("RareFactor", None)
 
         eff_echo_time = cur_method.get("EffectiveTE", None)
@@ -277,14 +276,10 @@ class MRIEtl(GenericEtl[JobSettings]):
                 ),
                 scan_sequence_type=scan_sequence,
                 rare_factor=rare_factor,
-                echo_time=cur_method[
-                    "EchoTime"
-                ],
+                echo_time=cur_method["EchoTime"],
                 effective_echo_time=eff_echo_time,
                 echo_time_unit=TimeUnit.MS,  # what do we want here?
-                repetition_time=cur_method[
-                    "RepetitionTime"
-                ],
+                repetition_time=cur_method["RepetitionTime"],
                 repetition_time_unit=TimeUnit.MS,  # ditto
                 vc_orientation=rotation,
                 vc_position=translation,
