@@ -88,7 +88,7 @@ class TestMRIWriter(unittest.TestCase):
             subject_id="fake subject",
             iacuc_protocol="fake iacuc",
             session_notes="test",
-            collection_tz=ZoneInfo("US/Pacific")
+            collection_tz="US/Pacific"
         )
 
         cls.example_etl = MRIEtl(cls.example_job_settings)

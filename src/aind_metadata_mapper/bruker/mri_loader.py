@@ -36,6 +36,7 @@ import pytz
 from zoneinfo import ZoneInfo
 from aind_metadata_mapper.core import GenericEtl, JobResponse
 
+from datetime import timezone
 
 class JobSettings(BaseSettings):
     """Data that needs to be input by user."""
@@ -49,7 +50,10 @@ class JobSettings(BaseSettings):
         ),
     )
     experimenter_full_name: List[str]
-    collection_tz: ZoneInfo
+    collection_tz: str = Field(
+        default="America/Los_Angeles",
+        description="Timezone string of the collection site",
+    )
     session_type: str
     primary_scan_number: int
     setup_scan_number: int
@@ -153,18 +157,18 @@ class MRIEtl(GenericEtl[JobSettings]):
         start_time = datetime.strptime(
             scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
-        ).replace(tzinfo=self.job_settings.collection_tz)
+        ).replace(tzinfo=ZoneInfo(self.job_settings.collection_tz))
         print("\nSTART: ", start_time)
         start_time = start_time.astimezone(ZoneInfo("UTC"))
         print("\nFINAL START: ", start_time)
         final_scan_start = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
-        ).replace(tzinfo=self.job_settings.collection_tz)
+        ).replace(tzinfo=ZoneInfo(self.job_settings.collection_tz))
         final_scan_duration = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["method"]["ScanTimeStr"],
             LENGTH_FORMAT,
-        ).replace(tzinfo=self.job_settings.collection_tz)
+        ).replace(tzinfo=ZoneInfo(self.job_settings.collection_tz))
         end_time = final_scan_start + timedelta(
             hours=final_scan_duration.hour,
             minutes=final_scan_duration.minute,
