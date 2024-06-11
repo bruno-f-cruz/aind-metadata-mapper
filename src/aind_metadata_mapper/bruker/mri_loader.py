@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import List, Optional, Union
+from zoneinfo import ZoneInfo
 
 import pytz
 from aind_data_schema.components.coordinates import (
@@ -32,11 +33,8 @@ from bruker2nifti._metadata import BrukerMetadata
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-import pytz
-from zoneinfo import ZoneInfo
 from aind_metadata_mapper.core import GenericEtl, JobResponse
 
-from datetime import timezone
 
 class JobSettings(BaseSettings):
     """Data that needs to be input by user."""
@@ -153,7 +151,10 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         logging.info(f"loaded scans: {scans}")
 
-        print("\nScan Time: ", scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"])
+        print(
+            "\nScan Time: ",
+            scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
+        )
         start_time = datetime.strptime(
             scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,

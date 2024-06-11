@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from zoneinfo import ZoneInfo
 from aind_data_schema.components.coordinates import (
     Rotation3dTransform,
     Scale3dTransform,
@@ -88,7 +87,7 @@ class TestMRIWriter(unittest.TestCase):
             subject_id="fake subject",
             iacuc_protocol="fake iacuc",
             session_notes="test",
-            collection_tz="US/Pacific"
+            collection_tz="US/Pacific",
         )
 
         cls.example_etl = MRIEtl(cls.example_job_settings)
@@ -126,8 +125,8 @@ class TestMRIWriter(unittest.TestCase):
         job_response = etl.run_job()
         actual_session = json.loads(job_response.data)
         self.assertEqual(job_response.status_code, 200)
-        print("EXPECTED: ", self.expected_session['session_start_time'])
-        print("ACTUAL: ", actual_session['session_start_time'])
+        print("EXPECTED: ", self.expected_session["session_start_time"])
+        print("ACTUAL: ", actual_session["session_start_time"])
         self.assertEqual(self.expected_session, actual_session)
 
     def test_get_subj_position(self) -> None:
