@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
-import pytz
 from aind_data_schema.components.coordinates import (
     Rotation3dTransform,
     Scale3dTransform,
