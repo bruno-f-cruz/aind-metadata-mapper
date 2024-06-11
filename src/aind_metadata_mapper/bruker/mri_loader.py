@@ -32,6 +32,8 @@ from bruker2nifti._metadata import BrukerMetadata
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
+import pytz
+from zoneinfo import ZoneInfo
 from aind_metadata_mapper.core import GenericEtl, JobResponse
 
 
@@ -47,6 +49,7 @@ class JobSettings(BaseSettings):
         ),
     )
     experimenter_full_name: List[str]
+    collection_tz: ZoneInfo
     session_type: str
     primary_scan_number: int
     setup_scan_number: int
@@ -146,26 +149,29 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         logging.info(f"loaded scans: {scans}")
 
+        print("\nScan Time: ", scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"])
         start_time = datetime.strptime(
             scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
-        )
-        start_time = pytz.timezone("UTC").localize(start_time)
+        ).replace(tzinfo=self.job_settings.collection_tz)
+        print("\nSTART: ", start_time)
+        start_time = start_time.astimezone(ZoneInfo("UTC"))
+        print("\nFINAL START: ", start_time)
         final_scan_start = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
-        )
+        ).replace(tzinfo=self.job_settings.collection_tz)
         final_scan_duration = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["method"]["ScanTimeStr"],
             LENGTH_FORMAT,
-        )
+        ).replace(tzinfo=self.job_settings.collection_tz)
         end_time = final_scan_start + timedelta(
             hours=final_scan_duration.hour,
             minutes=final_scan_duration.minute,
             seconds=final_scan_duration.second,
             microseconds=final_scan_duration.microsecond,
         )
-        end_time = pytz.timezone("UTC").localize(end_time)
+        end_time = end_time.astimezone(ZoneInfo("UTC"))
 
         stream = Stream(
             stream_start_time=start_time,

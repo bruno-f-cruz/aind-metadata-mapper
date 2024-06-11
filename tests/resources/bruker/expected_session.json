@@ -7,8 +7,8 @@
    "experimenter_full_name": [
       "fake mae"
    ],
-   "session_start_time": "2023-07-21T11:07:59Z",
-   "session_end_time": "2023-07-21T12:56:23Z",
+   "session_start_time": "2023-07-21T18:07:59Z",
+   "session_end_time": "2023-07-21T19:56:23Z",
    "session_type": "3D MRI Scan",
    "iacuc_protocol": "fake iacuc",
    "rig_id": "fake scanner",
@@ -21,8 +21,8 @@
    "anaesthesia": null,
    "data_streams": [
       {
-         "stream_start_time": "2023-07-21T11:07:59Z",
-         "stream_end_time": "2023-07-21T12:56:23Z",
+         "stream_start_time": "2023-07-21T18:07:59Z",
+         "stream_end_time": "2023-07-21T19:56:23Z",
          "daq_names": [],
          "camera_names": [],
          "light_sources": [],
