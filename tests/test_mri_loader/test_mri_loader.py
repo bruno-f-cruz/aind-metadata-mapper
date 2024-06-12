@@ -93,7 +93,6 @@ class TestMRIWriter(unittest.TestCase):
         cls.example_etl = MRIEtl(cls.example_job_settings)
 
         cls.example_model = cls.example_etl._extract()
-        print("SCAN DATA: ", cls.example_model.scan_data.keys())
 
     def test_constructor_from_string(self) -> None:
         """Test constructor from string."""
@@ -125,8 +124,6 @@ class TestMRIWriter(unittest.TestCase):
         job_response = etl.run_job()
         actual_session = json.loads(job_response.data)
         self.assertEqual(job_response.status_code, 200)
-        print("EXPECTED: ", self.expected_session["session_start_time"])
-        print("ACTUAL: ", actual_session["session_start_time"])
         self.assertEqual(self.expected_session, actual_session)
 
     def test_get_subj_position(self) -> None:
@@ -147,8 +144,6 @@ class TestMRIWriter(unittest.TestCase):
 
     def test_get_rotation(self) -> None:
         """Tests the get_rotation method."""
-
-        print(self.example_model.scan_data.keys())
 
         visu_pars = self.example_model.scan_data["4"]["recons"]["1"][
             "visu_pars"

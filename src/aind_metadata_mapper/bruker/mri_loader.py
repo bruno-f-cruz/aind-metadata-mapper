@@ -149,17 +149,11 @@ class MRIEtl(GenericEtl[JobSettings]):
 
         logging.info(f"loaded scans: {scans}")
 
-        print(
-            "\nScan Time: ",
-            scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
-        )
         start_time = datetime.strptime(
             scan_data[list(scan_data.keys())[0]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
         ).replace(tzinfo=ZoneInfo(self.job_settings.collection_tz))
-        print("\nSTART: ", start_time)
         start_time = start_time.astimezone(ZoneInfo("UTC"))
-        print("\nFINAL START: ", start_time)
         final_scan_start = datetime.strptime(
             scan_data[list(scan_data.keys())[-1]]["acqp"]["ACQ_time"],
             DATETIME_FORMAT,
