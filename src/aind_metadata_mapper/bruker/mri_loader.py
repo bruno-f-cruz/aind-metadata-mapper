@@ -47,6 +47,7 @@ class JobSettings(BaseSettings):
         ),
     )
     experimenter_full_name: List[str]
+    protocol_id: str = Field(default="", description="Protocol ID")
     collection_tz: str = Field(
         default="America/Los_Angeles",
         description="Timezone string of the collection site",
@@ -61,8 +62,6 @@ class JobSettings(BaseSettings):
     iacuc_protocol: str
     session_notes: str
 
-
-PROTOCOL_ID = "placeholder mri protocol id"
 
 DATETIME_FORMAT = "%H:%M:%S %d %b %Y"
 LENGTH_FORMAT = "%Hh%Mm%Ss%fms"
@@ -190,7 +189,7 @@ class MRIEtl(GenericEtl[JobSettings]):
             session_end_time=end_time,
             session_type=self.job_settings.session_type,
             experimenter_full_name=experimenter,
-            protocol_id=[PROTOCOL_ID],
+            protocol_id=[self.job_settings.protocol_id],
             iacuc_protocol=self.job_settings.iacuc_protocol,
             data_streams=[stream],
             rig_id=self.job_settings.scanner_name,
