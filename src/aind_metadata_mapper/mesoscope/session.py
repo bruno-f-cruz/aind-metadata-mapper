@@ -6,11 +6,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Union
+import h5py as h5
 
 import tifffile
 from aind_data_schema.core.session import FieldOfView, Session, Stream
-from aind_data_schema.models.modalities import Modality
-from aind_data_schema.models.units import PowerUnit, SizeUnit
+from aind_data_schema_models.modalities import Modality
 from PIL import Image
 from PIL.TiffTags import TAGS
 from pydantic import Field
@@ -37,7 +37,9 @@ class JobSettings(BaseSettings):
     fov_coordinate_ml: float = 1.5
     fov_coordinate_ap: float = 1.5
     fov_reference: str = "Bregma"
-    experimenter_full_name: List[str] = Field(..., title="Full name of the experimenter")
+    experimenter_full_name: List[str] = Field(
+        ..., title="Full name of the experimenter"
+    )
     mouse_platform_name: str = "disc"
 
 
@@ -73,10 +75,30 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         out so that it could be easily mocked in unit tests.
         """
         if not tiff_path.is_file():
-            raise ValueError(f"{tiff_path.resolve().absolute()} " "is not a file")
+            raise ValueError(
+                f"{tiff_path.resolve().absolute()} " "is not a file"
+            )
         with open(tiff_path, "rb") as tiff:
             file_handle = tifffile.FileHandle(tiff)
             file_contents = tifffile.read_scanimage_metadata(file_handle)
+        return file_contents
+
+    def _read_h5_metadata(self, h5_path: str):
+        """Reads scanimage metadata from h5path
+
+        Parameters
+        ----------
+        h5_path : str
+            Path to h5 file
+        
+        Returns
+        -------
+        dict
+        """
+        data = h5.File(h5_path)
+        file_contents = data['scanimage_metadata'][()].decode()
+        data.close()
+        file_contents = json.loads(file_contents)
         return file_contents
 
     def _extract(self) -> dict:
@@ -130,16 +152,25 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         Session
             The session object
         """
-        imaging_plane_groups = extracted_source["platform"]["imaging_plane_groups"]
-        timeseries = next(self.job_settings.input_source.glob("*timeseries*.tiff"), "")
-        meta = self._read_metadata(timeseries)
+        imaging_plane_groups = extracted_source["platform"][
+            "imaging_plane_groups"
+        ]
+        timeseries = next(
+            self.job_settings.input_source.glob("*timeseries*.tiff"), ""
+        )
+        if timeseries:
+            meta = self._read_metadata(timeseries)
+        else:
+            experiment_dir = list(self.job_settings.input_source.glob("ophys_experiment*"))[0]
+            experiment_id = experiment_dir.name.split("_")[-1]
+            timeseries = next(experiment_dir.glob(f"{experiment_id}.h5"))
+            meta = self._read_h5_metadata(str(timeseries))
         fovs = []
         data_streams = []
-        count = 0
         for group in imaging_plane_groups:
             for plane in group["imaging_planes"]:
                 fov = FieldOfView(
-                    index=count,
+                    index=int(group["local_z_stack_tif"].split(".")[0][-1]),
                     fov_coordinate_ml=self.job_settings.fov_coordinate_ml,
                     fov_coordinate_ap=self.job_settings.fov_coordinate_ap,
                     fov_reference=self.job_settings.fov_reference,
@@ -152,15 +183,11 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     fov_width=meta[0]["SI.hRoiManager.pixelsPerLine"],
                     fov_height=meta[0]["SI.hRoiManager.linesPerFrame"],
                     frame_rate=group["acquisition_framerate_Hz"],
-                    scanfield_z=plane["scanimage_scanfield_z"],
-                    scanfield_z_unit=SizeUnit.UM,
-                    power=plane["scanimage_power"],
-                    power_unit=PowerUnit.MW,
-                    coupled_fov_index=int(group["local_z_stack_tif"].split(".")[0][-1]),
-                    scanimage_roi_index=plane["scanimage_roi_index"],
+                    # scanfield_z=plane["scanimage_scanfield_z"],
+                    # scanfield_z_unit=SizeUnit.UM,
+                    # power=plane["scanimage_power"],
                 )
                 fovs.append(fov)
-                count += 1
         data_streams.append(
             Stream(
                 camera_names=["Mesoscope"],
@@ -198,15 +225,21 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         #   reading-tiff-image-metadata-in-python
         with Image.open(vasculature_fp) as img:
             vasculature_dt = [
-                img.tag[key] for key in img.tag.keys() if "DateTime" in TAGS[key]
+                img.tag[key]
+                for key in img.tag.keys()
+                if "DateTime" in TAGS[key]
             ][0]
-        vasculature_dt = datetime.strptime(vasculature_dt[0], "%Y:%m:%d %H:%M:%S")
+        vasculature_dt = datetime.strptime(
+            vasculature_dt[0], "%Y:%m:%d %H:%M:%S"
+        )
         data_streams.append(
             Stream(
                 camera_names=["Vasculature"],
                 stream_start_time=vasculature_dt,
                 stream_end_time=vasculature_dt,
-                stream_modalities=[Modality.CONFOCAL],  # TODO: ask Saskia about this
+                stream_modalities=[
+                    Modality.CONFOCAL
+                ],  # TODO: ask Saskia about this
             )
         )
         return Session(
