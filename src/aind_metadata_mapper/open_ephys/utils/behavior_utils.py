@@ -5,9 +5,8 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import utils.pickle_utils as pkl
-import utils.stimulus_utils as stim
-from project_constants import PROJECT_CODES, VBO_ACTIVE_MAP, VBO_PASSIVE_MAP
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.stim_utils as stim
 import logging
 
 INT_NULL = -99
@@ -829,61 +828,15 @@ def fix_omitted_end_frame(stim_pres_table: pd.DataFrame) -> pd.DataFrame:
         stim_pres_table[stim_pres_table["omitted"]]["start_frame"]
         + median_stim_frame_duration
     )
-    stim_pres_table.loc[
-        stim_pres_table["omitted"], "end_frame"
-    ] = omitted_end_frames
+    stim_pres_table.loc[stim_pres_table["omitted"], "end_frame"] = (
+        omitted_end_frames
+    )
 
     stim_dtypes = stim_pres_table.dtypes.to_dict()
     stim_dtypes["start_frame"] = int
     stim_dtypes["end_frame"] = int
 
     return stim_pres_table.astype(stim_dtypes)
-
-
-def produce_stimulus_block_names(
-    stim_df: pd.DataFrame, session_type: str, project_code: str
-) -> pd.DataFrame:
-    """Add a column stimulus_block_name to explicitly reference the kind
-    of stimulus block in addition to the numbered blocks.
-
-    Only implemented currently for the VBO dataset. Will not add the column
-    if it is not in the defined set of project codes.
-
-    Parameters
-    ----------
-    stim_df : pandas.DataFrame
-        Input stimulus presentations DataFrame with stimulus_block column
-    session_type : str
-        Full type name of session.
-    project_code : str
-        Full name of the project this session belongs to. As this function
-        is currently only written for VBO, if a non-VBO project name is
-        presented, the function will result in a noop.
-
-    Returns
-    -------
-    modified_df : pandas.DataFrame
-        Stimulus presentations DataFrame with added stimulus_block_name
-        column if the session is from a project that makes up the VBO release.
-        The data frame is return the same as the input if not.
-    """
-    if project_code not in PROJECT_CODES:
-        return stim_df
-
-    vbo_map = VBO_PASSIVE_MAP if "passive" in session_type else VBO_ACTIVE_MAP
-
-    for stim_block in stim_df.stimulus_block.unique():
-        # If we have a single block then this is a training session and we
-        # add +1 to the block number to reuse the general VBO map and get the
-        # correct task.
-        block_id = stim_block
-        if len(stim_df.stimulus_block.unique()) == 1:
-            block_id += 1
-        stim_df.loc[
-            stim_df["stimulus_block"] == stim_block, "stimulus_block_name"
-        ] = vbo_map[block_id]
-
-    return stim_df
 
 
 def compute_is_sham_change(
@@ -941,9 +894,9 @@ def compute_is_sham_change(
                 if np.array_equal(
                     active_images, stim_image_names[passive_block_mask].values
                 ):
-                    stim_df.loc[
-                        passive_block_mask, "is_sham_change"
-                    ] = stim_df[active_block_mask]["is_sham_change"].values
+                    stim_df.loc[passive_block_mask, "is_sham_change"] = (
+                        stim_df[active_block_mask]["is_sham_change"].values
+                    )
 
     return stim_df.sort_index()
 
@@ -984,8 +937,9 @@ def fingerprint_from_stimulus_file(
     movie_length = int(len(fingerprint_stim["sweep_frames"]) / n_repeats)
 
     # Start index within the spontaneous + fingerprint block
-    movie_start_index = (fingerprint_stim["frame_list"] == -1).sum()
-
+    movie_start_index = sum(
+        1 for frame in fingerprint_stim["frame_list"] if frame == -1
+    )
     res = []
     for repeat in range(n_repeats):
         for frame in range(movie_length):
@@ -999,19 +953,9 @@ def fingerprint_from_stimulus_file(
             start_frame, end_frame = stimulus_session_frame_indices[
                 stimulus_frame_indices + movie_start_index
             ]
-            start_time, stop_time = stimulus_timestamps[
-                [
-                    start_frame,
-                    # Sometimes stimulus timestamps gets truncated too
-                    # early. There should be 2 extra frames after last
-                    # stimulus presentation frame, since if the end
-                    # frame is end_frame, then the end timestamp occurs on
-                    # end_frame+1. The min is being taken to prevent
-                    # index out of bounds. This results in the last
-                    # frame's duration being too short TODO this is
-                    #  probably a bug somewhere in timestamp creation
-                    min(end_frame + 1, len(stimulus_timestamps) - 1),
-                ]
+            start_time = stimulus_timestamps[start_frame]
+            stop_time = stimulus_timestamps[
+                min(end_frame + 1, len(stimulus_timestamps) - 1)
             ]
             res.append(
                 {
@@ -1102,11 +1046,15 @@ def from_stimulus_file(
     stimulus_metadata_df = get_stimulus_metadata(data)
 
     idx_name = raw_stim_pres_df.index.name
+    if idx_name is None:
+        return raw_stim_pres_df
+
     stimulus_index_df = (
         raw_stim_pres_df.reset_index()
         .merge(stimulus_metadata_df.reset_index(), on=["image_name"])
         .set_index(idx_name)
     )
+
     stimulus_index_df = (
         stimulus_index_df[
             [
@@ -1159,11 +1107,6 @@ def from_stimulus_file(
 
     stim_pres_df = fix_omitted_end_frame(stim_pres_df)
 
-    # add_is_image_novel(
-    #    stimulus_presentations=stim_pres_df,
-    #    behavior_session_id=behavior_session_id,
-    # )
-
     has_fingerprint_stimulus = (
         "fingerprint" in data["items"]["behavior"]["items"]
     )
@@ -1178,10 +1121,6 @@ def from_stimulus_file(
         fill_omitted_values=fill_omitted_values,
         coerce_bool_to_boolean=True,
     )
-    if project_code is not None:
-        stim_pres_df = produce_stimulus_block_names(
-            stim_pres_df, stimulus_file.session_type, project_code
-        )
 
     return (stim_pres_df, column_list)
 
@@ -1225,27 +1164,6 @@ def get_is_image_novel(
     }
     return is_novel
     """
-
-
-def add_is_image_novel(
-    stimulus_presentations: pd.DataFrame, behavior_session_id: int
-):
-    """Adds a column 'is_image_novel' to `stimulus_presentations`
-
-    Parameters
-    ----------
-    stimulus_presentations: stimulus presentations table
-    behavior_session_id: LIMS id of behavior session
-
-    """
-    stimulus_presentations["is_image_novel"] = stimulus_presentations[
-        "image_name"
-    ].map(
-        get_is_image_novel(
-            image_names=stimulus_presentations["image_name"].tolist(),
-            behavior_session_id=behavior_session_id,
-        )
-    )
 
 
 def postprocess(
@@ -1559,3 +1477,13 @@ def get_stimulus_name(stim_file) -> str:
         else:
             stimulus_name = "behavior"
     return stimulus_name
+
+    def test_get_stimulus_name(self):
+        # Mock stimulus file with image set
+        stim_file = {
+            "items": {
+                "behavior": {"images": {"image_set": "/path/to/image_set.jpg"}}
+            }
+        }
+        expected_stimulus_name = "image_set"
+        self.assertEqual(get_stimulus_name(stim_file), expected_stimulus_name)

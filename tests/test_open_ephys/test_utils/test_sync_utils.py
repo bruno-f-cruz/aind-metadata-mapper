@@ -1,4 +1,5 @@
 """ Tests for the sync_utils module """
+
 import unittest
 
 import numpy as np
