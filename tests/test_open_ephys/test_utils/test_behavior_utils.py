@@ -922,7 +922,7 @@ class TestBehaviorUtils(unittest.TestCase):
         df = pd.DataFrame(data)
 
         # Call the function under test
-        processed_df = get_spontaneous_stimulus(df)
+        processed_df = behavior.get_spontaneous_stimulus(df)
 
         # Define expected output based on the expected behavior of the function
         expected_data = {
@@ -954,7 +954,7 @@ class TestBehaviorUtils(unittest.TestCase):
         stimulus_timestamps = np.array([0.0, 10.0, 20.0, 30.0, 40.0])
 
         # Call the function under test
-        processed_df = add_fingerprint_stimulus(
+        processed_df = behavior.add_fingerprint_stimulus(
             stimulus_presentations=stimulus_presentations,
             stimulus_file=stimulus_file,
             stimulus_timestamps=stimulus_timestamps,
@@ -978,26 +978,26 @@ class TestBehaviorUtils(unittest.TestCase):
         # Test case 1: No gaps between stimulus blocks
         stimulus_blocks1 = np.array([0, 1, 2, 3])
         expected_indices1 = np.array([], dtype=np.int64)
-        np.testing.assert_array_equal(get_spontaneous_block_indices(stimulus_blocks1), expected_indices1)
+        np.testing.assert_array_equal(behavior.get_spontaneous_block_indices(stimulus_blocks1), expected_indices1)
 
         # Test case 2: Single gap between stimulus blocks
         stimulus_blocks2 = np.array([0, 2, 3])
         expected_indices2 = np.array([1], dtype=np.int64)
-        np.testing.assert_array_equal(get_spontaneous_block_indices(stimulus_blocks2), expected_indices2)
+        np.testing.assert_array_equal(behavior.get_spontaneous_block_indices(stimulus_blocks2), expected_indices2)
 
         # Test case 3: Multiple gaps between stimulus blocks
         stimulus_blocks3 = np.array([0, 2, 5, 7, 9])
         expected_indices3 = np.array([1, 3], dtype=np.int64)
-        np.testing.assert_array_equal(get_spontaneous_block_indices(stimulus_blocks3), expected_indices3)
+        np.testing.assert_array_equal(behavior.get_spontaneous_block_indices(stimulus_blocks3), expected_indices3)
 
         # Test case 4: No spontaneous blocks (no gaps)
         stimulus_blocks4 = np.array([0, 1, 2, 3, 4])
         expected_indices4 = np.array([], dtype=np.int64)
-        np.testing.assert_array_equal(get_spontaneous_block_indices(stimulus_blocks4), expected_indices4)
+        np.testing.assert_array_equal(behavior.get_spontaneous_block_indices(stimulus_blocks4), expected_indices4)
 
         # Test case 5: Raises RuntimeError for large gap
         stimulus_blocks5 = np.array([0, 3, 4, 5])
         with self.assertRaises(RuntimeError):
-            get_spontaneous_block_indices(stimulus_blocks5)
+            behavior.get_spontaneous_block_indices(stimulus_blocks5)
 
 
