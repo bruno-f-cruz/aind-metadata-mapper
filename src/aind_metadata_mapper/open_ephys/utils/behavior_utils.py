@@ -1478,12 +1478,3 @@ def get_stimulus_name(stim_file) -> str:
             stimulus_name = "behavior"
     return stimulus_name
 
-    def test_get_stimulus_name(self):
-        # Mock stimulus file with image set
-        stim_file = {
-            "items": {
-                "behavior": {"images": {"image_set": "/path/to/image_set.jpg"}}
-            }
-        }
-        expected_stimulus_name = "image_set"
-        self.assertEqual(get_stimulus_name(stim_file), expected_stimulus_name)
