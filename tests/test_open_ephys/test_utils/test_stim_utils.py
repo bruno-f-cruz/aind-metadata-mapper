@@ -270,6 +270,9 @@ class TestStimUtils(unittest.TestCase):
 
         # Mock stimulus_tabler function
         def mock_stimulus_tabler(pkl_file, stimulus):
+            """
+            Mock function for stim intermediary func
+            """
             if stimulus["stimulus"] == "stim1":
                 return [stim_table_1]
             elif stimulus["stimulus"] == "stim2":
