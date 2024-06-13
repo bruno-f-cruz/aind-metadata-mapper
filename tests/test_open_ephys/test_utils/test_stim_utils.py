@@ -281,6 +281,9 @@ class TestStimUtils(unittest.TestCase):
 
         # Mock spontaneous_activity_tabler function
         def mock_spontaneous_activity_tabler(stimulus_tables):
+            """
+            Mock of the spontaneous activity tabler
+            """
             return [stim_table_3]
 
         result_stim_table_full = stim.create_stim_table(
@@ -344,6 +347,9 @@ class TestStimUtils(unittest.TestCase):
         )
 
     def test_extract_frame_times_from_photodiode(self):
+        """
+        Test the extract_frame_times_from_photodiode function.
+        """
         # Sample input data
         sync_file = MagicMock()
         photodiode_cycle = 60
@@ -505,6 +511,9 @@ class TestStimUtils(unittest.TestCase):
         self.assertEqual(result_stimulus_name, expected_stimulus_name)
 
     def test_get_stimulus_type(self):
+        """
+        Tests the get_stimulus_type function.
+        """
         # Sample input data
         stimulus = {"stim": "name='image_stimulus'"}
         expected_stimulus_type = "image_stimulus"

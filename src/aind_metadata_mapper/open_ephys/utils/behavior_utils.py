@@ -1477,4 +1477,3 @@ def get_stimulus_name(stim_file) -> str:
         else:
             stimulus_name = "behavior"
     return stimulus_name
-
