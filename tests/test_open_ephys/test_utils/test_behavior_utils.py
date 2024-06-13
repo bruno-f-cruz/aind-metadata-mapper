@@ -20,6 +20,9 @@ class TestBehaviorUtils(unittest.TestCase):
     )
     def test_get_stimulus_presentations(self,
                                         mock_get_visual_stimuli_df):
+        """
+        Tests the get_stimulus_presentations function
+        """
         data = {}  # Example data, replace with appropriate test data
         stimulus_timestamps = [0.0, 0.5, 1.0, 1.5]
 
@@ -52,6 +55,10 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_get_gratings_metadata(self):
+        """
+        Creates a stimuli with gratings and
+        tests the get_gratings_metadata
+        """
         # Example stimuli input containing gratings
         stimuli_with_gratings = {
             "grating": {
@@ -135,6 +142,9 @@ class TestBehaviorUtils(unittest.TestCase):
         mock_get_gratings_metadata,
         mock_get_images_dict,
     ):
+        """
+        Tests the get_stimulus_metadata function
+        """
         # Example pkl input
         pkl = {
             "items": {
@@ -238,6 +248,10 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, expected_df)
 
     def test_get_stimulus_epoch(self):
+        """
+        Tests the get_stimulus_epoch function
+        using a fake set_log
+        """
         # Example set_log input
         set_log = [
             ("Image", "image1.jpg", 0, 10),
@@ -275,6 +289,10 @@ class TestBehaviorUtils(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_get_draw_epochs(self):
+        """
+        Creats fake draw logs
+        tests the get_draw_epochs function
+        """
         # Example draw_log input
         draw_log = [0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1]
         start_frame = 2
@@ -320,6 +338,9 @@ class TestBehaviorUtils(unittest.TestCase):
         self.assertEqual(result_mixed, expected_output_mixed)
 
     def test_unpack_change_log(self):
+        """
+        Tests changing of the log using names with .jpg
+        """
         # Example change input
         change = (("Image", "image1.jpg"), ("Grating", "45_deg"), 12345, 67)
 
@@ -369,6 +390,10 @@ class TestBehaviorUtils(unittest.TestCase):
     def test_get_visual_stimuli_df(
         self, mock_get_draw_epochs, mock_get_stimulus_epoch
     ):
+        """
+        Tests the get_visual_stimuli_df function
+        Mocks some intermediary functions
+        """
         # Mock input data
         mock_data = {
             "items": {
@@ -454,6 +479,9 @@ class TestBehaviorUtils(unittest.TestCase):
         self.assertEquals(result_df["time"].all(), expected_df["time"].all())
 
     def test_get_image_names(self):
+        """
+        Tests the get_image_names function
+        """
         # Mock data
         behavior_stimulus_file = {
             "stimuli": {
@@ -507,6 +535,9 @@ class TestBehaviorUtils(unittest.TestCase):
         self.assertEqual(result_no_images, expected_output_no_images)
 
     def test_is_change_event(self):
+        """
+        Tests the is_change_event function
+        """
         # Mock data
         stimulus_presentations = pd.DataFrame(
             {
@@ -546,6 +577,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_series_equal(result, expected_output)
 
     def test_get_flashes_since_change(self):
+        """
+        Tests the get_flashes_since_change function
+        """
         # Mock data
         stimulus_presentations = pd.DataFrame(
             {
@@ -594,6 +628,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_series_equal(result, expected_output)
 
     def test_add_active_flag(self):
+        """
+        Tests the add_active_flag function
+        """
         # Mock data for stimulus presentations table
         stim_pres_table = pd.DataFrame(
             {
@@ -629,6 +666,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_series_equal(result["active"], expected_active)
 
     def test_compute_trials_id_for_stimulus(self):
+        """
+        Tests the compute_trials_id_for_stimulus function
+        """
         # Mock data for stimulus presentations table
         stim_pres_table = pd.DataFrame(
             {
@@ -683,6 +723,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_series_equal(result, expected_trials_id)
 
     def test_fix_omitted_end_frame(self):
+        """
+        Tests the fix_omitted_end_frame function
+        """
         # Mock data for stimulus presentations table
         stim_pres_table = pd.DataFrame(
             {
@@ -716,6 +759,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(result, expected_stim_pres_table)
 
     def test_compute_is_sham_change_no_column(self):
+        """
+        tests the compute_is_sham_change function
+        """
         stim_df_no_active = pd.DataFrame(
             {
                 "trials_id": [0, 0, 0, 1, 1, 1],
@@ -738,6 +784,10 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(result, expected_stim_df)
 
     def test_fingerprint_from_stimulus_file(self):
+        """
+        Creates a fake stim file and
+        Tests the fingerprint_from_stimulus_file function
+        """
         stimulus_presentations = pd.DataFrame(
             {
                 "stim_block": [1, 1, 2, 2],
@@ -874,6 +924,11 @@ class TestBehaviorUtils(unittest.TestCase):
         mock_get_stimulus_presentations,
         mock_load_pkl,
     ):
+        """
+        Tests the from_stimulus_file function
+        mocks intermediary functions so the test
+        isn't 1000 lines
+        """
         # Mock data
         stimulus_file = MagicMock()
         stimulus_timestamps = MagicMock()
@@ -986,6 +1041,9 @@ class TestBehaviorUtils(unittest.TestCase):
         )
 
     def test_postprocess(self):
+        """
+        Tests the postprocess function
+        """
         # Actual input data
         presentations = pd.DataFrame(
             {
@@ -1050,6 +1108,9 @@ class TestBehaviorUtils(unittest.TestCase):
         )
 
     def test_check_for_errant_omitted_stimulus(self):
+        """
+        Tests the check_for_errant_omitted_stimulus function
+        """
         # Actual input data
         data = {
             "omitted": [True, False, False, False],
@@ -1074,6 +1135,9 @@ class TestBehaviorUtils(unittest.TestCase):
         )
 
     def test_fill_missing_values_for_omitted_flashes(self):
+        """
+        Tests the fill_missing_values_for_omitted_flashes function
+        """
         # Actual input data
         data = {
             "start_time": [0.0, 1.0, 2.0, 3.0],
@@ -1101,6 +1165,9 @@ class TestBehaviorUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(processed_df, expected_df)
 
     def test_get_spontaneous_stimulus(self):
+        """
+        Tests the get_spontaneous_stimulus function
+        """
         # Define a sample stimulus presentations table with gaps
         data = {
             "start_frame": [0, 100, 200, 400, 500],
@@ -1138,6 +1205,10 @@ class TestBehaviorUtils(unittest.TestCase):
         )
 
     def test_add_fingerprint_stimulus(self):
+        """
+        Simulates a fingerprint stim and
+        Tests the add_fingerprint_stimulus function
+        """
         stimulus_file = {
             "items": {
                 "behavior": {
@@ -1195,6 +1266,9 @@ class TestBehaviorUtils(unittest.TestCase):
         )
 
     def test_get_spontaneous_block_indices(self):
+        """
+        Tests the get_spontaneous_block_indices function
+        """
         # Test case 1: No gaps between stimulus blocks
         stimulus_blocks1 = np.array([0, 1, 2, 3])
         expected_indices1 = np.array([], dtype=np.int64)

@@ -410,6 +410,9 @@ class TestStimUtils(unittest.TestCase):
                                 )
 
     def test_convert_frames_to_seconds(self):
+        """
+        Tests the convert_frames_to_seconds function.
+        """
         # Sample input data
         stimulus_table = pd.DataFrame(
             {
@@ -444,6 +447,9 @@ class TestStimUtils(unittest.TestCase):
         )
 
     def test_apply_display_sequence(self):
+        """
+        Tests application of display sequences
+        """
         # Sample input data
         sweep_frames_table = pd.DataFrame(
             {"start_time": [0, 5, 10], "stop_time": [3, 8, 18]}
@@ -468,6 +474,9 @@ class TestStimUtils(unittest.TestCase):
         )
 
     def test_get_image_set_name(self):
+        """
+        Tests the get_image_set_name function.
+        """
         # Sample input data
         image_set_path = "/path/to/image_set/image_set_name.jpg"
         expected_image_set_name = "image_set_name"
@@ -479,6 +488,9 @@ class TestStimUtils(unittest.TestCase):
         self.assertEqual(result_image_set_name, expected_image_set_name)
 
     def test_read_stimulus_name_from_path(self):
+        """
+        Tests the read_stimulus_name_from_path function.
+        """
         # Sample input data
         stimulus = {"stim_path": r"path\to\stimuli\stimulus_name.jpg"}
         expected_stimulus_name = "stimulus_name"
@@ -501,6 +513,9 @@ class TestStimUtils(unittest.TestCase):
         self.assertEqual(result_stimulus_type, expected_stimulus_type)
 
     def setUp(self):
+        """
+        Sets up a fake stim
+        """
         self.stimulus = {
             "display_sequence": [0, 10],
             "sweep_frames": [[0, 5], [7, 12]],
@@ -541,6 +556,11 @@ class TestStimUtils(unittest.TestCase):
         mock_read_stimulus_name_from_path,
         mock_seconds_to_frames,
     ):
+        """
+        Tests building of a stimwise table
+        Mocks most imports for the function
+
+        """
         # Mock functions
         mock_seconds_to_frames.return_value = [0, 10]
         mock_read_stimulus_name_from_path.return_value = "image_stimulus"
@@ -585,6 +605,9 @@ class TestStimUtils(unittest.TestCase):
         )  # Assuming 2 sweeps in the test data
 
     def test_split_column(self):
+        """
+        Tests splitting of columns
+        """
         # Sample input data
         data = {
             "column_to_split": [1, 2, 3, 4],
@@ -613,6 +636,9 @@ class TestStimUtils(unittest.TestCase):
         pd.testing.assert_frame_equal(result, expected_df)
 
     def test_assign_sweep_values(self):
+        """
+        Tests the assigning of sweep values
+        """
         # Sample input data for stim_table
         stim_data = {
             "start_time": [0, 10, 20],
