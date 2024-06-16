@@ -88,22 +88,21 @@ def get_images_dict(pkl_dict) -> Dict:
     images = []
     images_meta = []
 
-    ii = 0
     for cat, cat_images in image_set.items():
-        for img_name, img in cat_images.items():
-            meta = dict(
-                image_category=cat.decode("utf-8"),
-                image_name=img_name.decode("utf-8"),
-                orientation=np.NaN,
-                phase=np.NaN,
-                spatial_frequency=np.NaN,
-                image_index=ii,
-            )
+        cat_decoded = cat.decode("utf-8")
+        for img_index, (img_name, img) in enumerate(cat_images.items()):
+            meta = {
+                "image_category": cat_decoded,
+                "image_name": img_name.decode("utf-8"),
+                "orientation": np.NaN,
+                "phase": np.NaN,
+                "spatial_frequency": np.NaN,
+                "image_index": img_index,
+            }
 
             images.append(img)
             images_meta.append(meta)
 
-            ii += 1
 
     images_dict = dict(
         metadata=metadata,
@@ -137,7 +136,7 @@ def get_gratings_metadata(stimuli: Dict, start_idx: int = 0) -> pd.DataFrame:
         This returns empty if no gratings were presented.
 
     """
-    if "grating" in stimuli:
+    if stimuli.get("grating"):
         phase = stimuli["grating"]["phase"]
         correct_freq = stimuli["grating"]["sf"]
         set_logs = stimuli["grating"]["set_log"]
