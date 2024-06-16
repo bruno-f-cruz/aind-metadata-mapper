@@ -149,6 +149,14 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         self.session_json.write_standard_file(self.npexp_path)
         logger.debug(f"File created at {str(self.npexp_path)}/session.json")
 
+    def extract_probe_letter(probe_exp, s):
+        """
+        Extracts probe letter from a string.
+        """
+        match = re.search(probe_exp, s)
+        if match:
+            return match.group("letter")
+
     def get_available_probes(self) -> tuple[str]:
         """
         Returns a list of probe letters among ABCDEF that are inserted
@@ -246,14 +254,6 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
 
         probe_exp = r"(?<=[pP{1}]robe)[-_\s]*(?P<letter>[A-F]{1})(?![a-zA-Z])"
 
-        def extract_probe_letter(s):
-            """
-            Extracts probe letter from a string.
-            """
-            match = re.search(probe_exp, s)
-            if match:
-                return match.group("letter")
-
         times = npc_ephys.get_ephys_timing_on_sync(
             sync=self.sync_path, recording_dirs=[self.recording_dir]
         )
@@ -261,7 +261,8 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         ephys_timing_data = tuple(
             timing
             for timing in times
-            if (p := extract_probe_letter(timing.device.name)) is None
+            if (p := self.extract_probe_letter(probe_exp, timing.device.name))
+            is None
             or p in self.available_probes
         )
 
