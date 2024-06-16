@@ -103,7 +103,6 @@ def get_images_dict(pkl_dict) -> Dict:
             images.append(img)
             images_meta.append(meta)
 
-
     images_dict = dict(
         metadata=metadata,
         images=images,

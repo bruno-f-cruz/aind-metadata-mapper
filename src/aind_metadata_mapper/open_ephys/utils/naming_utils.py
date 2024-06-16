@@ -5,9 +5,7 @@ import warnings
 import logging
 import aind_metadata_mapper.open_ephys.utils.costants as constants
 
-
 logger = logging.getLogger(__name__)
-
 
 
 def drop_empty_columns(table):
