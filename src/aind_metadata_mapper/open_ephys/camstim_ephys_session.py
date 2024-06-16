@@ -23,6 +23,8 @@ import logging
 import aind_metadata_mapper.stimulus.camstim
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.costants as constants
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         used from naming_utils.
         """
         if json_settings.get("opto_conditions_map", None) is None:
-            self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+            self.opto_conditions_map = constants.DEFAULT_OPTO_CONDITIONS
         else:
             self.opto_conditions_map = json_settings["opto_conditions_map"]
         overwrite_tables = json_settings.get("overwrite_tables", False)
