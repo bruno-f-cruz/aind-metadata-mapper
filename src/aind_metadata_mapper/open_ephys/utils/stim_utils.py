@@ -1,13 +1,18 @@
+""" Utilities for working with stimulus data."""
+
 import ast
 import functools
 import re
 from pathlib import Path
 from typing import List
+import logging
 
 import numpy as np
 import pandas as pd
-import aind_metadata_mapper.utils.pkl_utils as pkl
-import aind_metadata_mapper.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+
+logger = logging.getLogger(__name__)
 
 DROP_PARAMS = (  # psychopy boilerplate, more or less
     "autoLog",
@@ -43,6 +48,19 @@ BEHAVIOR_TRACKING_KEYS = (
 
 
 def convert_filepath_caseinsensitive(filename_in):
+    """
+    Replaces the case of training
+
+    Parameters
+    ----------
+    filename_in : str
+        The filename to convert
+
+    Returns
+    -------
+    str
+        The filename with the case replaced
+    """
     return filename_in.replace("TRAINING", "training")
 
 
@@ -167,7 +185,6 @@ def extract_const_params_from_stim_repr(
         k, v = match.split("=")
 
         if k not in repr_params:
-
             m = array_re.match(v)
             if m is not None:
                 v = m["contents"]
@@ -218,7 +235,7 @@ def parse_stim_repr(
         if drop_param in stim_params:
             del stim_params[drop_param]
 
-    print(stim_params)
+    logger.debug(stim_params)
     return stim_params
 
 
@@ -380,7 +397,6 @@ def extract_frame_times_from_photodiode(
     frame_start_times = np.zeros((0,))
 
     for i in range(len(vsync_times_chunked)):
-
         photodiode_times = sync.trim_border_pulses(
             pd_times_chunked[i], vsync_times_chunked[i]
         )
@@ -595,7 +611,7 @@ def get_stimulus_type(stimulus):
         stim_type = stim_type.replace("unnamed ", "")
         return stim_type
     else:
-        return None
+        return "None or Blank"
 
 
 def build_stimuluswise_table(
@@ -708,7 +724,6 @@ def build_stimuluswise_table(
         )
         existing_columns = set(stim_table.columns)
         for const_param_key, const_param_value in const_params.items():
-
             existing_cap = const_param_key.capitalize() in existing_columns
             existing_upper = const_param_key.upper() in existing_columns
             existing = const_param_key in existing_columns

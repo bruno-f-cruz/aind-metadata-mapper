@@ -1,13 +1,17 @@
+""" Utils to process behavior info for stimulus"""
+
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import utils.pickle_utils as pkl
-import utils.stimulus_utils as stim
-from project_constants import PROJECT_CODES, VBO_ACTIVE_MAP, VBO_PASSIVE_MAP
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.stim_utils as stim
+import logging
 
 INT_NULL = -99
+
+logger = logging.getLogger(__name__)
 
 
 def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
@@ -39,7 +43,7 @@ def get_stimulus_presentations(data, stimulus_timestamps) -> pd.DataFrame:
         for start_frame in stimulus_table.start_frame.values
     ]
     end_time = []
-    print("stimulus_table", stimulus_table)
+    logger.debug(f"stimulus_table {stimulus_table}")
     for end_frame in stimulus_table.end_frame.values:
         if not np.isnan(end_frame):
             end_time.append(stimulus_timestamps[int(end_frame)])
@@ -60,7 +64,7 @@ def get_images_dict(pkl_dict) -> Dict:
     metadata from the pkl file and return this dictionary.
     Parameters
     ----------
-    pkl: The pkl file containing the data for the stimuli presented during
+    pkl_dict: The pkl file containing the data for the stimuli presented during
          experiment
 
     Returns
@@ -84,22 +88,20 @@ def get_images_dict(pkl_dict) -> Dict:
     images = []
     images_meta = []
 
-    ii = 0
     for cat, cat_images in image_set.items():
-        for img_name, img in cat_images.items():
-            meta = dict(
-                image_category=cat.decode("utf-8"),
-                image_name=img_name.decode("utf-8"),
-                orientation=np.NaN,
-                phase=np.NaN,
-                spatial_frequency=np.NaN,
-                image_index=ii,
-            )
+        cat_decoded = cat.decode("utf-8")
+        for img_index, (img_name, img) in enumerate(cat_images.items()):
+            meta = {
+                "image_category": cat_decoded,
+                "image_name": img_name.decode("utf-8"),
+                "orientation": np.NaN,
+                "phase": np.NaN,
+                "spatial_frequency": np.NaN,
+                "image_index": img_index,
+            }
 
             images.append(img)
             images_meta.append(meta)
-
-            ii += 1
 
     images_dict = dict(
         metadata=metadata,
@@ -133,7 +135,7 @@ def get_gratings_metadata(stimuli: Dict, start_idx: int = 0) -> pd.DataFrame:
         This returns empty if no gratings were presented.
 
     """
-    if "grating" in stimuli:
+    if stimuli.get("grating"):
         phase = stimuli["grating"]["phase"]
         correct_freq = stimuli["grating"]["sf"]
         set_logs = stimuli["grating"]["set_log"]
@@ -436,6 +438,27 @@ def get_draw_epochs(
 
 
 def unpack_change_log(change):
+    """
+    Unpacks the change log into a dictionary containing the category of the
+    stimuli that was changed, the name of the stimuli that was changed, the
+    category of the stimuli that the change was made to, the name of the
+    stimuli that the change was made to, the time of the change, and the frame
+    of the change.
+
+    Parameters
+    ----------
+    change: Tuple[str, str, str, str, int, int]
+        A tuple containing the category of the stimuli that was changed
+
+    Returns
+    -------
+    Dict:
+        A dictionary containing the category of the stimuli that was changed,
+        the name of the stimuli that was changed, the category of the stimuli
+        that the change was made to, the name of the stimuli that the change
+        was made to, the time of the change, and the frame of the change.
+    """
+
     (
         (from_category, from_name),
         (
@@ -814,52 +837,6 @@ def fix_omitted_end_frame(stim_pres_table: pd.DataFrame) -> pd.DataFrame:
     return stim_pres_table.astype(stim_dtypes)
 
 
-def produce_stimulus_block_names(
-    stim_df: pd.DataFrame, session_type: str, project_code: str
-) -> pd.DataFrame:
-    """Add a column stimulus_block_name to explicitly reference the kind
-    of stimulus block in addition to the numbered blocks.
-
-    Only implemented currently for the VBO dataset. Will not add the column
-    if it is not in the defined set of project codes.
-
-    Parameters
-    ----------
-    stim_df : pandas.DataFrame
-        Input stimulus presentations DataFrame with stimulus_block column
-    session_type : str
-        Full type name of session.
-    project_code : str
-        Full name of the project this session belongs to. As this function
-        is currently only written for VBO, if a non-VBO project name is
-        presented, the function will result in a noop.
-
-    Returns
-    -------
-    modified_df : pandas.DataFrame
-        Stimulus presentations DataFrame with added stimulus_block_name
-        column if the session is from a project that makes up the VBO release.
-        The data frame is return the same as the input if not.
-    """
-    if project_code not in PROJECT_CODES:
-        return stim_df
-
-    vbo_map = VBO_PASSIVE_MAP if "passive" in session_type else VBO_ACTIVE_MAP
-
-    for stim_block in stim_df.stimulus_block.unique():
-        # If we have a single block then this is a training session and we
-        # add +1 to the block number to reuse the general VBO map and get the
-        # correct task.
-        block_id = stim_block
-        if len(stim_df.stimulus_block.unique()) == 1:
-            block_id += 1
-        stim_df.loc[
-            stim_df["stimulus_block"] == stim_block, "stimulus_block_name"
-        ] = vbo_map[block_id]
-
-    return stim_df
-
-
 def compute_is_sham_change(
     stim_df: pd.DataFrame, trials: pd.DataFrame
 ) -> pd.DataFrame:
@@ -922,11 +899,11 @@ def compute_is_sham_change(
     return stim_df.sort_index()
 
 
-def finger_print_from_stimulus_file(
+def fingerprint_from_stimulus_file(
     stimulus_presentations: pd.DataFrame, stimulus_file, stimulus_timestamps
 ):
     """
-    Instantiates `FingerprintStimulus` from stimulus file
+    Instantiates `fingerprintStimulus` from stimulus file
 
     Parameters
     ----------
@@ -939,8 +916,8 @@ def finger_print_from_stimulus_file(
 
     Returns
     -------
-    `FingerprintStimulus`
-        Instantiated FingerprintStimulus
+    `fingerprintStimulus`
+        Instantiated fingerprintStimulus
     """
     fingerprint_stim = stimulus_file["items"]["behavior"]["items"][
         "fingerprint"
@@ -958,8 +935,9 @@ def finger_print_from_stimulus_file(
     movie_length = int(len(fingerprint_stim["sweep_frames"]) / n_repeats)
 
     # Start index within the spontaneous + fingerprint block
-    movie_start_index = (fingerprint_stim["frame_list"] == -1).sum()
-
+    movie_start_index = sum(
+        1 for frame in fingerprint_stim["frame_list"] if frame == -1
+    )
     res = []
     for repeat in range(n_repeats):
         for frame in range(movie_length):
@@ -973,19 +951,9 @@ def finger_print_from_stimulus_file(
             start_frame, end_frame = stimulus_session_frame_indices[
                 stimulus_frame_indices + movie_start_index
             ]
-            start_time, stop_time = stimulus_timestamps[
-                [
-                    start_frame,
-                    # Sometimes stimulus timestamps gets truncated too
-                    # early. There should be 2 extra frames after last
-                    # stimulus presentation frame, since if the end
-                    # frame is end_frame, then the end timestamp occurs on
-                    # end_frame+1. The min is being taken to prevent
-                    # index out of bounds. This results in the last
-                    # frame's duration being too short TODO this is
-                    #  probably a bug somewhere in timestamp creation
-                    min(end_frame + 1, len(stimulus_timestamps) - 1),
-                ]
+            start_time = stimulus_timestamps[start_frame]
+            stop_time = stimulus_timestamps[
+                min(end_frame + 1, len(stimulus_timestamps) - 1)
             ]
             res.append(
                 {
@@ -1076,11 +1044,15 @@ def from_stimulus_file(
     stimulus_metadata_df = get_stimulus_metadata(data)
 
     idx_name = raw_stim_pres_df.index.name
+    if idx_name is None:
+        return raw_stim_pres_df
+
     stimulus_index_df = (
         raw_stim_pres_df.reset_index()
         .merge(stimulus_metadata_df.reset_index(), on=["image_name"])
         .set_index(idx_name)
     )
+
     stimulus_index_df = (
         stimulus_index_df[
             [
@@ -1133,11 +1105,6 @@ def from_stimulus_file(
 
     stim_pres_df = fix_omitted_end_frame(stim_pres_df)
 
-    # add_is_image_novel(
-    #    stimulus_presentations=stim_pres_df,
-    #    behavior_session_id=behavior_session_id,
-    # )
-
     has_fingerprint_stimulus = (
         "fingerprint" in data["items"]["behavior"]["items"]
     )
@@ -1152,10 +1119,6 @@ def from_stimulus_file(
         fill_omitted_values=fill_omitted_values,
         coerce_bool_to_boolean=True,
     )
-    if project_code is not None:
-        stim_pres_df = produce_stimulus_block_names(
-            stim_pres_df, stimulus_file.session_type, project_code
-        )
 
     return (stim_pres_df, column_list)
 
@@ -1199,27 +1162,6 @@ def get_is_image_novel(
     }
     return is_novel
     """
-
-
-def add_is_image_novel(
-    stimulus_presentations: pd.DataFrame, behavior_session_id: int
-):
-    """Adds a column 'is_image_novel' to `stimulus_presentations`
-
-    Parameters
-    ----------
-    stimulus_presentations: stimulus presentations table
-    behavior_session_id: LIMS id of behavior session
-
-    """
-    stimulus_presentations["is_image_novel"] = stimulus_presentations[
-        "image_name"
-    ].map(
-        get_is_image_novel(
-            image_names=stimulus_presentations["image_name"].tolist(),
-            behavior_session_id=behavior_session_id,
-        )
-    )
 
 
 def postprocess(
@@ -1282,6 +1224,21 @@ def check_for_errant_omitted_stimulus(
     """
 
     def safe_omitted_check(input_df: pd.Series, stimulus_block: Optional[int]):
+        """
+        Check if the first row in the input_df is an omitted stimulus.
+
+        Parameters
+        ----------
+        input_df : pd.Series
+            Input stimulus table to check for "omitted" stimulus.
+        stimulus_block : Optional[int]
+            Stimulus block to check for omitted stimulus in.
+
+        Returns
+        -------
+        input_df : pd.Series
+            Dataframe with omitted stimulus removed from first row or if not
+        """
         if stimulus_block is not None:
             first_row = input_df[
                 input_df["stimulus_block"] == stim_block
@@ -1432,7 +1389,7 @@ def add_fingerprint_stimulus(
     pd.DataFrame: stimulus presentations with gray screen + fingerprint
     movie added"""
 
-    fingerprint_stimulus = finger_print_from_stimulus_file(
+    fingerprint_stimulus = fingerprint_from_stimulus_file(
         stimulus_presentations=stimulus_presentations,
         stimulus_file=stimulus_file,
         stimulus_timestamps=stimulus_timestamps,

@@ -1,136 +1,11 @@
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+""" Utils to process naming of stimulus columns"""
 
 import numpy as np
-import re
 import warnings
+import logging
+import aind_metadata_mapper.open_ephys.utils.costants as constants
 
-
-INT_NULL = -99
-
-# defaults
-DEFAULT_OPTO_CONDITIONS = {
-    "0": {
-        "duration": 0.01,
-        "name": "1Hz_10ms",
-        "condition": "10 ms pulse at 1 Hz",
-    },
-    "1": {
-        "duration": 0.002,
-        "name": "1Hz_2ms",
-        "condition": "2 ms pulse at 1 Hz",
-    },
-    "2": {
-        "duration": 1.0,
-        "name": "5Hz_2ms",
-        "condition": "2 ms pulses at 5 Hz",
-    },
-    "3": {
-        "duration": 1.0,
-        "name": "10Hz_2ms",
-        "condition": "2 ms pulses at 10 Hz",
-    },
-    "4": {
-        "duration": 1.0,
-        "name": "20Hz_2ms",
-        "condition": "2 ms pulses at 20 Hz",
-    },
-    "5": {
-        "duration": 1.0,
-        "name": "30Hz_2ms",
-        "condition": "2 ms pulses at 30 Hz",
-    },
-    "6": {
-        "duration": 1.0,
-        "name": "40Hz_2ms",
-        "condition": "2 ms pulses at 40 Hz",
-    },
-    "7": {
-        "duration": 1.0,
-        "name": "50Hz_2ms",
-        "condition": "2 ms pulses at 50 Hz",
-    },
-    "8": {
-        "duration": 1.0,
-        "name": "60Hz_2ms",
-        "condition": "2 ms pulses at 60 Hz",
-    },
-    "9": {
-        "duration": 1.0,
-        "name": "80Hz_2ms",
-        "condition": "2 ms pulses at 80 Hz",
-    },
-    "10": {
-        "duration": 1.0,
-        "name": "square_1s",
-        "condition": "1 second square pulse: continuously on for 1s",
-    },
-    "11": {"duration": 1.0, "name": "cosine_1s", "condition": "cosine pulse"},
-}
-
-default_stimulus_renames = {
-    "": "spontaneous",
-    "natural_movie_1": "natural_movie_one",
-    "natural_movie_3": "natural_movie_three",
-    "Natural Images": "natural_scenes",
-    "flash_250ms": "flashes",
-    "gabor_20_deg_250ms": "gabors",
-    "drifting_gratings": "drifting_gratings",
-    "static_gratings": "static_gratings",
-    "contrast_response": "drifting_gratings_contrast",
-    "Natural_Images_Shuffled": "natural_scenes_shuffled",
-    "Natural_Images_Sequential": "natural_scenes_sequential",
-    "natural_movie_1_more_repeats": "natural_movie_one",
-    "natural_movie_shuffled": "natural_movie_one_shuffled",
-    "motion_stimulus": "dot_motion",
-    "drifting_gratings_more_repeats": "drifting_gratings_75_repeats",
-    "signal_noise_test_0_200_repeats": "test_movie_one",
-    "signal_noise_test_0": "test_movie_one",
-    "signal_noise_test_1": "test_movie_two",
-    "signal_noise_session_1": "dense_movie_one",
-    "signal_noise_session_2": "dense_movie_two",
-    "signal_noise_session_3": "dense_movie_three",
-    "signal_noise_session_4": "dense_movie_four",
-    "signal_noise_session_5": "dense_movie_five",
-    "signal_noise_session_6": "dense_movie_six",
-}
-
-
-default_column_renames = {
-    "Contrast": "contrast",
-    "Ori": "orientation",
-    "SF": "spatial_frequency",
-    "TF": "temporal_frequency",
-    "Phase": "phase",
-    "Color": "color",
-    "Image": "frame",
-    "Pos_x": "x_position",
-    "Pos_y": "y_position",
-}
-
-
-GABOR_DIAMETER_RE = re.compile(
-    r"gabor_(\d*\.{0,1}\d*)_{0,1}deg(?:_\d+ms){0,1}"
-)
-
-GENERIC_MOVIE_RE = re.compile(
-    r"natural_movie_"
-    + r"(?P<number>\d+|one|two|three|four|five|six|seven|eight|nine)"
-    + r"(_shuffled){0,1}(_more_repeats){0,1}"
-)
-DIGIT_NAMES = {
-    "1": "one",
-    "2": "two",
-    "3": "three",
-    "4": "four",
-    "5": "five",
-    "6": "six",
-    "7": "seven",
-    "8": "eight",
-    "9": "nine",
-}
-SHUFFLED_MOVIE_RE = re.compile(r"natural_movie_shuffled")
-NUMERAL_RE = re.compile(r"(?P<number>\d+)")
+logger = logging.getLogger(__name__)
 
 
 def drop_empty_columns(table):
@@ -175,15 +50,38 @@ def collapse_columns(table):
 
 def add_number_to_shuffled_movie(
     table,
-    natural_movie_re=GENERIC_MOVIE_RE,
-    template_re=SHUFFLED_MOVIE_RE,
+    natural_movie_re=constants.GENERIC_MOVIE_RE,
+    template_re=constants.SHUFFLED_MOVIE_RE,
     stim_colname="stim_name",
     template="natural_movie_{}_shuffled",
     tmp_colname="__movie_number__",
 ):
-    """ """
+    """
+    Adds a number to a shuffled movie stimulus name, if possible.
 
-    if not table[stim_colname].str.contains(SHUFFLED_MOVIE_RE).any():
+    Parameters
+    ----------
+    table : pd.DataFrame
+        the incoming stimulus table
+    natural_movie_re : re.Pattern, optional
+        regex that matches movie stimulus names
+    template_re : re.Pattern, optional
+        regex that matches shuffled movie stimulus names
+    stim_colname : str, optional
+        the name of the dataframe column that contains stimulus names
+    template : str, optional
+        the template's name
+    tmp_colname : str, optional
+        the name of the template column to use
+
+    Returns
+    -------
+    table : pd.DataFrame
+        the stimulus table with the shuffled movie names updated
+
+    """
+
+    if not table[stim_colname].str.contains(constants.SHUFFLED_MOVIE_RE).any():
         return table
     table = table.copy()
 
@@ -202,6 +100,19 @@ def add_number_to_shuffled_movie(
     movie_number = unique_numbers[0]
 
     def renamer(row):
+        """
+        renames the shuffled movie stimulus according to the template
+
+        Parameters
+        ----------
+        row : pd.Series
+            a row in the stimulus table
+
+        Returns
+        -------
+        table : pd.DataFrame
+            the stimulus table with the shuffled movie names updated
+        """
         if not isinstance(row[stim_colname], str):
             return row[stim_colname]
         if not template_re.match(row[stim_colname]):
@@ -210,16 +121,16 @@ def add_number_to_shuffled_movie(
             return template.format(movie_number)
 
     table[stim_colname] = table.apply(renamer, axis=1)
-    print(table.keys())
+    logger.debug(table.keys())
     table.drop(columns=tmp_colname, inplace=True)
     return table
 
 
 def standardize_movie_numbers(
     table,
-    movie_re=GENERIC_MOVIE_RE,
-    numeral_re=NUMERAL_RE,
-    digit_names=DIGIT_NAMES,
+    movie_re=constants.GENERIC_MOVIE_RE,
+    numeral_re=constants.NUMERAL_RE,
+    digit_names=constants.DIGIT_NAMES,
     stim_colname="stim_name",
 ):
     """Natural movie stimuli in visual coding are numbered using words, like
@@ -249,6 +160,22 @@ def standardize_movie_numbers(
     """
 
     def replace(match_obj):
+        """
+        replaces the numeral in a movie stimulus name with its english
+        equivalent
+
+        Parameters
+        ----------
+        match_obj : re.Match
+            the match object
+
+        Returns
+        -------
+        str
+            the stimulus name with the numeral replaced by its english
+            equivalent
+
+        """
         return digit_names[match_obj["number"]]
 
     # for some reason pandas really wants us to use the captures
@@ -310,12 +237,28 @@ def map_column_names(table, name_map=None, ignore_case=True):
         the table with column names mapped
 
     """
-
     if ignore_case and name_map is not None:
         name_map = {key.lower(): value for key, value in name_map.items()}
-        mapper = lambda name: (
-            name if name.lower() not in name_map else name_map[name.lower()]
-        )
+
+        def mapper(name):
+            """
+            Maps a column name to a new name from the map
+
+            Parameters
+            ----------
+            name : str
+                the column name to map
+
+            Returns
+            -------
+            str
+                the mapped column name
+            """
+            name_lower = name.lower()
+            if name_lower in name_map:
+                return name_map[name_lower]
+            return name
+
     else:
         mapper = name_map
 

@@ -1,11 +1,16 @@
+""" Functions for working with sync files. """
+
 import datetime
 from typing import Optional, Sequence, Union
+import logging
 
 import h5py
 import numpy as np
 import scipy.spatial.distance as distance
 
-import aind_metadata_mapper.utils.pkl_utils as pkl
+import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
+
+logger = logging.getLogger(__name__)
 
 
 def load_sync(path):
@@ -287,7 +292,7 @@ def get_clipped_stim_timestamps(sync, pkl_path):
     stim_data_length = get_stim_data_length(pkl_path)
 
     delta = 0
-    print(sync)
+    logger.debug(sync)
     if stim_data_length is not None and stim_data_length < len(timestamps):
         try:
             stim_key = "vsync_stim"
@@ -301,18 +306,20 @@ def get_clipped_stim_timestamps(sync, pkl_path):
         # Some versions of camstim caused a spike when the DAQ is first
         # initialized. Remove it.
         if rising[1] - rising[0] > 0.2:
-            print("Initial DAQ spike detected from stimulus, " "removing it")
+            logger.debug(
+                "Initial DAQ spike detected from stimulus, " "removing it"
+            )
             timestamps = timestamps[1:]
 
         delta = len(timestamps) - stim_data_length
         if delta != 0:
-            print(
+            logger.debug(
                 "Stim data of length %s has timestamps of " "length %s",
                 stim_data_length,
                 len(timestamps),
             )
     elif stim_data_length is None:
-        print("No data length provided for stim stream")
+        logger.debug("No data length provided for stim stream")
     return timestamps, delta
 
 
@@ -379,7 +386,7 @@ def get_edges(
     if isinstance(keys, str):
         keys = [keys]
 
-    print(keys)
+    logger.debug(keys)
 
     for line in keys:
         try:
@@ -506,7 +513,7 @@ def get_all_times(sync_file, meta_data, units="samples"):
     if meta_data["ni_daq"]["counter_bits"] == 32:
         times = sync_file["data"][()][:, 0]
     else:
-        times = times
+        times = 0
     units = units.lower()
     if units == "samples":
         return times
@@ -628,7 +635,7 @@ def allocate_by_vsync(
     ends : np.ndarray
         End times of the frames.
     """
-    current_vs_diff = vs_diff[index * cycle : (index + 1) * cycle]
+    current_vs_diff = vs_diff[index * cycle: (index + 1) * cycle]
     sign = np.sign(irregularity)
 
     if sign > 0:
@@ -637,7 +644,7 @@ def allocate_by_vsync(
         vs_ind = np.argmin(current_vs_diff)
 
     ends[vs_ind:] += sign * frame_duration
-    starts[vs_ind + 1 :] += sign * frame_duration
+    starts[vs_ind + 1:] += sign * frame_duration
 
     return starts, ends
 
@@ -742,9 +749,9 @@ def trim_discontiguous_vsyncs(vs_times, photodiode_cycle=60):
         if largest_chunk == 0:
             return vs_times[: np.min(breaks + 1)]
         elif largest_chunk == len(breaks):
-            return vs_times[np.max(breaks + 1) :]
+            return vs_times[np.max(breaks + 1):]
         else:
-            return vs_times[breaks[largest_chunk - 1] : breaks[largest_chunk]]
+            return vs_times[breaks[largest_chunk - 1]: breaks[largest_chunk]]
     else:
         return vs_times
 
@@ -795,6 +802,22 @@ def remove_zero_frames(frame_times):
     big_deltas = np.where((deltas > 0.018) * (deltas < 0.1))[0]
 
     def find_match(big_deltas, value):
+        """
+        Finds max match for the value in the big deltas.
+
+        Parameters
+        ----------
+        big_deltas : np.ndarray
+            Big deltas.
+        value : float
+            Value to match.
+
+        Returns
+        -------
+        float
+            Matched value.
+        """
+
         try:
             return (
                 big_deltas[np.max(np.where((big_deltas < value))[0])] - value
@@ -859,7 +882,6 @@ def compute_frame_times(
     for start_index, (start_time, end_time) in enumerate(
         zip(photodiode_times[:-1], photodiode_times[1:])
     ):
-
         interval_duration = end_time - start_time
         irregularity = (
             int(np.around((interval_duration) / frame_duration)) - cycle
@@ -931,7 +953,6 @@ def separate_vsyncs_and_photodiode_times(
     pd_times_out = []
 
     for indx, b in enumerate(break_times[:-1]):
-
         pd_in_range = np.where(
             (pd_times > break_times[indx] + shift)
             * (pd_times <= break_times[indx + 1] + shift)
@@ -1023,7 +1044,7 @@ def fix_unexpected_edges(pd_times, ndevs=10, cycle=60, max_frame_offset=4):
 
     output_edges = []
     for low, high in zip(bad_blocks[:-1], bad_blocks[1:]):
-        current_bad_edge_indices = bad_edges[low : high - 1]
+        current_bad_edge_indices = bad_edges[low: high - 1]
         current_bad_edges = pd_times[current_bad_edge_indices]
         low_bound = pd_times[current_bad_edge_indices[0]]
         high_bound = pd_times[current_bad_edge_indices[-1] + 1]
