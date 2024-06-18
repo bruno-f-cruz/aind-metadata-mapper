@@ -3,7 +3,7 @@
 import numpy as np
 import warnings
 import logging
-import aind_metadata_mapper.open_ephys.utils.costants as constants
+import aind_metadata_mapper.open_ephys.utils.constants as constants
 
 logger = logging.getLogger(__name__)
 

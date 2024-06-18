@@ -22,7 +22,7 @@ import logging
 
 import aind_metadata_mapper.stimulus.camstim
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
-import aind_metadata_mapper.open_ephys.utils.costants as constants
+import aind_metadata_mapper.open_ephys.utils.constants as constants
 
 
 logger = logging.getLogger(__name__)
