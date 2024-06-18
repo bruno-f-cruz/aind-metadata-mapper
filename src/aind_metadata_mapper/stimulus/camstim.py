@@ -14,6 +14,7 @@ import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
 import aind_metadata_mapper.open_ephys.utils.stim_utils as stim
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
+import aind_metadata_mapper.open_ephys.utils.constants as constants
 
 
 class Camstim:
@@ -88,8 +89,8 @@ class Camstim:
         minimum_spontaneous_activity_duration=0.0,
         extract_const_params_from_repr=False,
         drop_const_params=stim.DROP_PARAMS,
-        stimulus_name_map=names.default_stimulus_renames,
-        column_name_map=names.default_column_renames,
+        stimulus_name_map=constants.default_stimulus_renames,
+        column_name_map=constants.default_column_renames,
     ):
         """
         Builds a stimulus table from the stimulus pickle file, sync file, and
@@ -228,7 +229,7 @@ class Camstim:
         """
         stim = aind_data_schema.core.session.StimulusModality
 
-        script_obj = aind_data_schema.models.devices.Software(
+        script_obj = aind_data_schema.components.devices.Software(
             name=self.mtrain["regimen"]["name"],
             version="1.0",
             url=self.mtrain["regimen"]["script"],
@@ -315,6 +316,11 @@ class Camstim:
 
             # if this row is a movie or image set, record it's stim name in
             # the epoch's templates entry
+            stimtype = row.get("stim_type","")
+            if type(stimtype) == float:
+                print(stimtype)
+                print(row)
+
             if (
                 "image" in row.get("stim_type", "").lower()
                 or "movie" in row.get("stim_type", "").lower()

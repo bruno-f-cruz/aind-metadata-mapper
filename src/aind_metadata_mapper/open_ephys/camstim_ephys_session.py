@@ -149,7 +149,7 @@ class CamstimEphysSession(aind_metadata_mapper.stimulus.camstim.Camstim):
         self.session_json.write_standard_file(self.npexp_path)
         logger.debug(f"File created at {str(self.npexp_path)}/session.json")
 
-    def extract_probe_letter(probe_exp, s):
+    def extract_probe_letter(self, probe_exp, s):
         """
         Extracts probe letter from a string.
         """
