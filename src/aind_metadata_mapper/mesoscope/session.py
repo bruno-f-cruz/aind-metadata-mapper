@@ -75,19 +75,18 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         super().__init__(job_settings=job_settings_model)
         with open('//allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
             json_settings_camstim = json.load(file)
-        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, '1364914325', json_settings_camstim)
-
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, self.job_settings.session_id, json_settings_camstim,self.job_settings.input_source,self.job_settings.output_directory)
     def custom_camstim_init(self, session_id: str, json_settings: dict):
         """
         Custom initializer for Camstim within the MesoscopeEtl class context.
         """
-        self.npexp_path = self.input_path
+        self.npexp_path = self.job_settings.input_source
 
-        self.pkl_path = self.npexp_path / r'1219702300.pkl'
+        self.pkl_path = next(self.npexp_path.glob("*.pkl"))
         self.stim_table_path = (
             self.npexp_path / f"{self.folder}_stim_epochs.csv"
         )
-        self.sync_path = self.npexp_path / r'1219702300_20221021T122013.h5'
+        self.sync_path = next(self.npexp_path.glob("*.h5"))
 
         sync_data = sync.load_sync(self.sync_path)
 

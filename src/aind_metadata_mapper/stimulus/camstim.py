@@ -4,11 +4,13 @@ File containing Camstim class
 
 import datetime
 import functools
-
+from typing import Union
 import aind_data_schema
+
 import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
+from pathlib import Path
 
 import aind_metadata_mapper.open_ephys.utils.constants as constants
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
@@ -27,6 +29,8 @@ class Camstim:
         self,
         session_id: str,
         json_settings: dict,
+        input_directory: Union[str, Path],
+        output_directory: Union[str, Path]
     ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
@@ -86,18 +90,22 @@ class Camstim:
             if self.opto_table_path.exists():
                 self.stim_epochs.append(self.epoch_from_opto_table())
         except Exception:
-            self.npexp_path = '/allen/programs/mindscope/production/learning/prod0/specimen_1212916213/ophys_session_1219702300/'
-            self.pkl_path = self.npexp_path + r'1219702300.pkl'
+            self.npexp_path = input_directory
+            if isinstance(input_directory, str):
+                self.npexp_path = Path(input_directory)
+            self.pkl_path = next(self.npexp_path.glob("*.pkl"))
+            stim_table_path = output_directory / f"{session_id}_behavior"
+            stim_table_path.mkdir(exist_ok=True)
             self.stim_table_path = (
-                r'/allen/programs/mindscope/workgroups/openscope/ahad/1219702300_20221021T122013_stim_epochs.csv'
+                stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
             )
-            self.sync_path = self.npexp_path +  r'1219702300_20221021T122013.h5'
+            self.sync_path = next(self.npexp_path.glob("*.h5"))
             sync_data = sync.load_sync(self.sync_path)
 
             self.session_start = sync.get_start_time(sync_data)
             self.session_end = sync.get_stop_time(sync_data)
-            #self.build_stimulus_table()
-            self.build_behavior_table()
+            self.build_stimulus_table()
+            # self.build_behavior_table()
 
             print("getting stim epochs")
             self.stim_epochs = self.epochs_from_stim_table()
