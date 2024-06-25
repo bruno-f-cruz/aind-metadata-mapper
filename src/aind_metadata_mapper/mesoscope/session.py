@@ -11,6 +11,9 @@ import h5py as h5
 import tifffile
 from aind_data_schema.core.session import FieldOfView, Session, Stream
 from aind_data_schema_models.modalities import Modality
+from aind_data_schema_models.units import SizeUnit
+from aind_data_schema.components.devices import Laser, Lamp
+from aind_data_schema_models.organizations import CoherentScientific
 from PIL import Image
 from PIL.TiffTags import TAGS
 from pydantic import Field
@@ -28,6 +31,7 @@ class JobSettings(BaseSettings):
     input_source: Path
     behavior_source: Path
     output_directory: Path
+    session_id: str
     session_start_time: datetime
     session_end_time: datetime
     subject_id: str
@@ -120,11 +124,12 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         session_metadata = {}
         if behavior_source.is_dir():
             # deterministic order
+            session_id = self.job_settings.session_id
             for ftype in sorted(list(behavior_source.glob("*json"))):
                 if (
-                    "Behavior" in ftype.stem
-                    or "Eye" in ftype.stem
-                    or "Face" in ftype.stem
+                    ("Behavior" in ftype.stem and session_id in ftype.stem)
+                    or ("Eye" in ftype.stem and session_id in ftype.stem)
+                    or ("Face" in ftype.stem and session_id in ftype.stem)
                 ):
                     with open(ftype, "r") as f:
                         session_metadata[ftype.stem] = json.load(f)
@@ -180,6 +185,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     targeted_structure=self._STRUCTURE_LOOKUP_DICT[
                         plane["targeted_structure_id"]
                     ],
+                    scanimage_roi_index=plane["scanimage_roi_index"],
                     fov_width=meta[0]["SI.hRoiManager.pixelsPerLine"],
                     fov_height=meta[0]["SI.hRoiManager.linesPerFrame"],
                     frame_rate=group["acquisition_framerate_Hz"],
@@ -190,7 +196,21 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                 fovs.append(fov)
         data_streams.append(
             Stream(
-                camera_names=["Mesoscope"],
+                light_sources=[
+                        Laser(
+                            device_type="Laser",
+                            name="Laser",
+                            wavelength=920,
+                            wavelength_unit=SizeUnit.NM,
+                            manufacturer=CoherentScientific(name="Coherent Scientific"),
+                        ),
+                        Lamp(
+                            name="Epi lamp",
+                            wavelength_max=600,
+                            wavelength_min=350,
+                            wavelength_unit=SizeUnit.NM,
+                        ),
+                    ],
                 stream_start_time=self.job_settings.session_start_time,
                 stream_end_time=self.job_settings.session_end_time,
                 ophys_fovs=fovs,
@@ -231,16 +251,6 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
             ][0]
         vasculature_dt = datetime.strptime(
             vasculature_dt[0], "%Y:%m:%d %H:%M:%S"
-        )
-        data_streams.append(
-            Stream(
-                camera_names=["Vasculature"],
-                stream_start_time=vasculature_dt,
-                stream_end_time=vasculature_dt,
-                stream_modalities=[
-                    Modality.CONFOCAL
-                ],  # TODO: ask Saskia about this
-            )
         )
         return Session(
             experimenter_full_name=self.job_settings.experimenter_full_name,
