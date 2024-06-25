@@ -185,7 +185,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     frame_rate=group["acquisition_framerate_Hz"],
                     # scanfield_z=plane["scanimage_scanfield_z"],
                     # scanfield_z_unit=SizeUnit.UM,
-                    # power=plane["scanimage_power"],
+                    power=plane["scanimage_power"],
                 )
                 fovs.append(fov)
         data_streams.append(
