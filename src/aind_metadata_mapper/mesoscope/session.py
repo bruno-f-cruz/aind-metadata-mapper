@@ -180,7 +180,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     fov_coordinate_ap=self.job_settings.fov_coordinate_ap,
                     fov_reference=self.job_settings.fov_reference,
                     magnification=self.job_settings.magnification,
-                    fov_scale_factor=meta[0]["SI.hRoiManager.scanZoomFactor"],
+                    fov_scale_factor=0.78,
                     imaging_depth=plane["targeted_depth"],
                     targeted_structure=self._STRUCTURE_LOOKUP_DICT[
                         plane["targeted_structure_id"]
