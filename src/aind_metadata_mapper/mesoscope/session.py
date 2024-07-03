@@ -9,10 +9,10 @@ from typing import List, Union
 import h5py as h5
 
 import tifffile
-from aind_data_schema.core.session import FieldOfView, Session, Stream
+from aind_data_schema.core.session import FieldOfView, Session, Stream, LaserConfig, LightEmittingDiodeConfig
 from aind_data_schema_models.modalities import Modality
 from aind_data_schema_models.units import SizeUnit
-from aind_data_schema.components.devices import Laser, Lamp
+from aind_data_schema.components.devices import Lamp
 from aind_data_schema_models.organizations import CoherentScientific
 from PIL import Image
 from PIL.TiffTags import TAGS
@@ -189,26 +189,21 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
                     fov_width=meta[0]["SI.hRoiManager.pixelsPerLine"],
                     fov_height=meta[0]["SI.hRoiManager.linesPerFrame"],
                     frame_rate=group["acquisition_framerate_Hz"],
-                    # scanfield_z=plane["scanimage_scanfield_z"],
-                    # scanfield_z_unit=SizeUnit.UM,
-                    power=plane["scanimage_power"],
+                    scanfield_z=plane["scanimage_scanfield_z"],
+                    power=float(plane["scanimage_power"]),
                 )
                 fovs.append(fov)
         data_streams.append(
             Stream(
                 light_sources=[
-                        Laser(
+                        LaserConfig(
                             device_type="Laser",
                             name="Laser",
                             wavelength=920,
                             wavelength_unit=SizeUnit.NM,
-                            manufacturer=CoherentScientific(name="Coherent Scientific"),
                         ),
-                        Lamp(
+                        LightEmittingDiodeConfig(
                             name="Epi lamp",
-                            wavelength_max=600,
-                            wavelength_min=350,
-                            wavelength_unit=SizeUnit.NM,
                         ),
                     ],
                 stream_start_time=self.job_settings.session_start_time,
