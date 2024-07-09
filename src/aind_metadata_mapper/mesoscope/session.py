@@ -20,6 +20,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from aind_metadata_mapper.core import GenericEtl
+import aind_metadata_mapper.stimulus.camstim
+import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
 
 
 class JobSettings(BaseSettings):
@@ -47,7 +49,7 @@ class JobSettings(BaseSettings):
     mouse_platform_name: str = "disc"
 
 
-class MesoscopeEtl(GenericEtl[JobSettings]):
+class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camstim.Camstim):
     """Class to manage transforming mesoscope platform json and metadata into
     a Session model."""
 
@@ -71,6 +73,31 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         else:
             job_settings_model = job_settings
         super().__init__(job_settings=job_settings_model)
+        with open('/allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
+            json_settings_camstim = json.load(file)
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, '1364914325', json_settings_camstim)
+
+    def custom_camstim_init(self, session_id: str, json_settings: dict):
+        """
+        Custom initializer for Camstim within the MesoscopeEtl class context.
+        """
+        self.npexp_path = self.input_path
+
+        self.pkl_path = self.npexp_path / r'1219702300.pkl'
+        self.stim_table_path = (
+            self.npexp_path / f"{self.folder}_stim_epochs.csv"
+        )
+        self.sync_path = self.npexp_path / r'1219702300_20221021T122013.h5'
+
+        sync_data = sync.load_sync(self.sync_path)
+
+        if not self.stim_table_path.exists():
+            print("building stim table")
+            self.build_stimulus_table()
+
+        print("getting stim epochs")
+        self.stim_epochs = self.epochs_from_stim_table()
+
 
     def _read_metadata(self, tiff_path: Path):
         """
@@ -78,10 +105,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
         path and returns teh result. This method was factored
         out so that it could be easily mocked in unit tests.
         """
-        if not tiff_path.is_file():
-            raise ValueError(
-                f"{tiff_path.resolve().absolute()} " "is not a file"
-            )
+
         with open(tiff_path, "rb") as tiff:
             file_handle = tifffile.FileHandle(tiff)
             file_contents = tifffile.read_scanimage_metadata(file_handle)
@@ -256,6 +280,7 @@ class MesoscopeEtl(GenericEtl[JobSettings]):
             session_end_time=self.job_settings.session_end_time,
             rig_id=extracted_source["platform"]["rig_id"],
             data_streams=data_streams,
+            stimulus_epochs=self.stim_epochs,
             mouse_platform_name=self.job_settings.mouse_platform_name,
             active_mouse_platform=True,
         )

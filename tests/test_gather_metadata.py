@@ -224,7 +224,10 @@ class TestGatherMetadataJob(unittest.TestCase):
         mock_get.assert_not_called()
 
     @patch("requests.get")
-    def test_get_procedures_error(self, mock_get: MagicMock):
+    @patch("logging.warning")
+    def test_get_procedures_warning(
+        self, mock_warn: MagicMock, mock_get: MagicMock
+    ):
         """Tests get_procedures when an error is raised"""
         mock_response = Response()
         mock_response.status_code = 500
@@ -240,13 +243,11 @@ class TestGatherMetadataJob(unittest.TestCase):
             ),
         )
         metadata_job = GatherMetadataJob(settings=job_settings)
-        with self.assertRaises(AssertionError) as e:
-            metadata_job.get_procedures()
-        expected_error_message = (
-            "Procedures metadata is not valid! "
-            "{'message': 'Internal Server Error'}"
+        output = metadata_job.get_procedures()
+        self.assertIsNone(output)
+        mock_warn.assert_called_once_with(
+            "Procedures metadata is not valid! 500"
         )
-        self.assertTrue(expected_error_message in str(e.exception))
 
     @patch("requests.get")
     def test_get_raw_data_description(self, mock_get: MagicMock):
@@ -596,8 +597,8 @@ class TestGatherMetadataJob(unittest.TestCase):
             "  Expected `BreedingInfo` but got `dict`"
             " - serialized value may not be as expected\n"
             "  Expected `Union[AllenInstitute, ColumbiaUniversity,"
-            " HuazhongUniversityOfScienceAndTechnology, JacksonLaboratory,"
-            " NewYorkUniversity, Other]` but got `dict`"
+            " HuazhongUniversityOfScienceAndTechnology, JaneliaResearchCampus,"
+            " JacksonLaboratory, NewYorkUniversity, Other]` but got `dict`"
             " - serialized value may not be as expected"
         )
 
@@ -609,7 +610,10 @@ class TestGatherMetadataJob(unittest.TestCase):
         self.assertEqual("Invalid", main_metadata.metadata_status.value)
         self.assertEqual("632269", main_metadata.subject.subject_id)
 
-    def test_get_main_metadata_with_validation_errors(self):
+    @patch("logging.warning")
+    def test_get_main_metadata_with_validation_errors(
+        self, mock_warn: MagicMock
+    ):
         """Tests get_main_metadata method handles validation errors"""
         job_settings = JobSettings(
             directory_to_write_to=RESOURCES_DIR,
@@ -638,6 +642,7 @@ class TestGatherMetadataJob(unittest.TestCase):
         self.assertIsNotNone(main_metadata.processing)
         self.assertIsNotNone(main_metadata.acquisition)
         self.assertIsNotNone(main_metadata.instrument)
+        mock_warn.assert_called_once()
 
     @patch("builtins.open", new_callable=mock_open())
     @patch("json.dump")
