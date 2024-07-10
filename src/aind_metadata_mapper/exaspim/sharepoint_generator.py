@@ -6,10 +6,9 @@ from typing import List, Optional, Union
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
+import csv
+
 import pandas as pd
-
-
-
 
 
 class JobSettings(BaseSettings):
@@ -24,11 +23,11 @@ class JobSettings(BaseSettings):
 single_sub_raw_headings = [
     "nROID#",
     "roVol#",
-    "roSub#",	
-    "roLot#",	
-    "roGC#",
-    "roVolV#",
-    "roTite#",
+    "roSub#a",	
+    "roLot#a",	
+    "roGC#a",
+    "roVolV#a",
+    "roTite#a",
     "roSub#b",
     "roLot#b",
     "roGC#b",
@@ -61,7 +60,7 @@ relevant_inj_headings = [
 ]
 
 headings_map = {
-    "nROID": "Mouse ID",
+    "nROID#": "Mouse ID",
     "roVol#": "Virus Mix Total Volume injected RO (uL)",
     "roSub#*": "Virus*",
     "roLot#*": "Virus* ID",
@@ -102,6 +101,19 @@ class SharePointGenerator:
         else:
             self.job_settings_model = job_settings
 
+    def run_job(self):
+        """Run the ETL job"""
+
+        self._extract()
+
+        transformed_data = []
+        for idx, subj_id in enumerate(self.job_settings_model.subjects_to_ingest):
+            transformed_data.append(self._transform(self._extract(), subj_id, idx+1))
+
+        combined_data = self._combine(transformed_data)
+
+        self._load(combined_data, self.job_settings_model.output_spreadsheet_path)
+
     def _extract(self):
         """Extract the input spreadsheet"""
 
@@ -124,24 +136,49 @@ class SharePointGenerator:
         
         for header in relevant_sub_headings:
             input_sheet_header = replace_number(headings_map[header], subj_idx)
-            output[header] = subj_row[input_sheet_header]
+            output[replace_number(header, subj_idx)] = subj_row[input_sheet_header].values[0]
 
-        for letter, number in subheadings_map.items():
+        for letter, inj_num in subheadings_map.items():
             for header in relevant_inj_headings:
-                sheet_header = replace_heading_counters(headings_map[header], idx, letter)
+                input_sheet_header = replace_heading_counters(headings_map[header], subj_idx, inj_num)
+                output_header = replace_heading_counters(header, subj_idx, letter)
                 
-                output[
-                    replace_heading_counters(
-                        header,
-                        idx,
-                        letter
-                    )
-                ] = subj_row[
-                    sheet_header + subheadings_map[subheading]
-                ].values[0]
+                output[output_header] = subj_row[input_sheet_header].values[0]
 
-        return output
+        output_expanded = {}
+        for header in self.generate_curr_subj_headings(subj_idx):
+            if header in output.keys(): 
+                output_expanded[header] = output[header]
+            else:
+                output_expanded[header] = None
+        return output_expanded
+    
+    def _combine(self, transformed_data: List):
+        """Combine the transformed data into a single dictionary"""
 
+        combined = {}
+        for data in transformed_data:
+            for key, value in data.items():
+                combined[key] = value
+        return combined
+
+    def _load(self, transformed_data, output_path):
+        """Load the transformed data to a sharepoint metadata file"""
+        if output_path is None:
+            output_path = Path("output_run2.csv")
+
+        
+        with open(output_path, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=transformed_data.keys(), dialect='excel')
+            writer.writeheader()
+            writer.writerow(transformed_data)
+
+    def generate_curr_subj_headings(self, subj_idx):
+        """Generate headings for the current subject"""
+        headings = []
+        for heading in single_sub_raw_headings:
+            headings.append(replace_number(heading, subj_idx))
+        return headings
 
     def generate_headings(self):
         """Generate sharepoint metadata file"""
@@ -153,7 +190,3 @@ class SharePointGenerator:
             headings.extend(new_headings)
 
         return headings
-    
-    def pull_data_from_spreadsheet(self):
-        """Pull data from spreadsheet"""
-        pass
