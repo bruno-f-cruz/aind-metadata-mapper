@@ -48,6 +48,7 @@ class JobSettings(BaseSettings):
         ..., title="Full name of the experimenter"
     )
     mouse_platform_name: str = "disc"
+    optional_output: str = ''
 
 
 class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camstim.Camstim):
@@ -76,20 +77,19 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         super().__init__(job_settings=job_settings_model)
         with open('//allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
             json_settings_camstim = json.load(file)
-        self.session_id = job_settings_model.session_id
-        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, self.session_id, json_settings_camstim, session_fp=job_settings_model.input_source)
-
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, job_settings.session_id, json_settings_camstim, session_fp=job_settings_model.input_source, output_fp=job_settings_model.optional_output)
+    
     def custom_camstim_init(self, session_id: str, json_settings: dict):
         """
         Custom initializer for Camstim within the MesoscopeEtl class context.
         """
-        self.npexp_path = self.input_path
+        self.npexp_path = self.job_settings.input_source
 
-        self.pkl_path = self.npexp_path / f'{self.session_id}.pkl'
+        self.pkl_path = self.npexp_path / f'{self.job_settings.session_id}.pkl'
         self.stim_table_path = (
             self.npexp_path / f"{self.folder}_stim_epochs.csv"
         )
-        self.sync_path = self.npexp_path / f'{self.session_id}*.h5'
+        self.sync_path = self.npexp_path / f'{self.job_settings.session_id}*.h5'
 
         sync_data = sync.load_sync(self.sync_path)
 
@@ -258,7 +258,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
                         stream_modalities=[Modality.BEHAVIOR_VIDEOS],
                     )
                 )
-        stimulus_data = BehaviorStimulusFile.from_file(next(self.job_settings.input_source.glob(f"{self.session_id}*.pkl")))
+        stimulus_data = BehaviorStimulusFile.from_file(next(self.job_settings.input_source.glob(f"{self.job_settings.session_id}*.pkl")))
         return Session(
             experimenter_full_name=self.job_settings.experimenter_full_name,
             session_type=stimulus_data.session_type,

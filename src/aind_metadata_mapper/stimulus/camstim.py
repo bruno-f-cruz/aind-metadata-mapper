@@ -30,6 +30,7 @@ class Camstim:
         session_id: str,
         json_settings: dict,
         session_fp: Path = None,
+        output_fp: Path = None,
     ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
@@ -92,8 +93,12 @@ class Camstim:
             print(f"Session fp: {session_fp}")
             print(f"Session id: {session_id}")
             self.pkl_path = next(session_fp.glob(f'{session_id}*.pkl'))
-            self.stim_table_path = (
-                f'{session_id}_stim_epochs.csv'
+            if output_fp:
+                output_fp = Path(output_fp)
+                self.stim_table_path = output_fp / f'{session_id}_stim_epochs.csv'
+            else:
+                self.stim_table_path = (
+                session_fp / f'{session_id}_stim_epochs.csv'
             )
             self.sync_path = next(session_fp.glob(f'{session_id}*.h5'))
             sync_data = sync.load_sync(self.sync_path)
@@ -316,13 +321,17 @@ class Camstim:
         stim_name, stim_type, or frame) are listed as parameters, and the set
         of values for that column are listed as parameter values.
         """
+        print("STIM_TABLE", stim_table)
         epochs = []
 
+        initial_epoch = [None, 0.0, 0.0, {}, set()]
         current_epoch = [None, 0.0, 0.0, {}, set()]
         epoch_start_idx = 0
         for current_idx, row in stim_table.iterrows():
             # if the stim name changes, summarize current epoch's parameters
             # and start a new epoch
+            # if current_idx == 0:
+            #     current_epoch[0] = row["stim_name"]
             if row["stim_name"] != current_epoch[0]:
                 for column in stim_table:
                     if column not in (
@@ -338,8 +347,10 @@ class Camstim:
                             ].dropna()
                         )
                         current_epoch[3][column] = param_set
-
+                
                 epochs.append(current_epoch)
+                if current_idx == 0:
+                    initial_epoch = epochs
                 epoch_start_idx = current_idx
                 current_epoch = [
                     row["stim_name"],
@@ -348,11 +359,11 @@ class Camstim:
                     {},
                     set(),
                 ]
+            
             # if stim name hasn't changed, we are in the same epoch, keep
             # pushing the stop time
             else:
                 current_epoch[2] = row["stop_time"]
-
             # if this row is a movie or image set, record it's stim name in
             # the epoch's templates entry
             stim_type = row.get("stim_type", "")
@@ -362,8 +373,14 @@ class Camstim:
             if "image" in stim_type.lower() or "movie" in stim_type.lower():
                 current_epoch[4].add(row["stim_name"])
 
+            if current_idx == len(row["stim_name"]) - 1 and epochs == initial_epoch:
+                epochs.append(current_epoch)
+
         # slice off dummy epoch from beginning
-        return epochs[1:]
+        if len(epochs) > 0 and epochs[0][0] is None:
+            return epochs[1:]
+        else:
+            return epochs
 
     def epochs_from_stim_table(self) -> list[session_schema.StimulusEpoch]:
         """
