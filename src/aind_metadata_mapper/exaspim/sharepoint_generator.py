@@ -1,14 +1,13 @@
 """Script to generate a sharepoint-copyable metadata file from the Exaspim Mouse Tracker Spreadsheet"""
 
+import csv
 import json
 from pathlib import Path
 from typing import List, Optional, Union
-from pydantic_settings import BaseSettings
-from pydantic import Field
-
-import csv
 
 import pandas as pd
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class JobSettings(BaseSettings):
@@ -23,8 +22,8 @@ class JobSettings(BaseSettings):
 single_sub_raw_headings = [
     "nROID#",
     "roVol#",
-    "roSub#a",	
-    "roLot#a",	
+    "roSub#a",
+    "roLot#a",
     "roGC#a",
     "roVolV#a",
     "roTite#a",
@@ -44,7 +43,7 @@ single_sub_raw_headings = [
     "roVolV#d",
     "roTite#d",
     "roTube#",
-    "roBox#"
+    "roBox#",
 ]
 
 relevant_sub_headings = [
@@ -74,11 +73,14 @@ subheadings_map = {
     "c": "3",
 }
 
+
 def replace_number(str, idx):
     return str.replace("#", f"{idx}")
 
+
 def replace_letter(str, letter):
     return str.replace("*", f"{letter}")
+
 
 def replace_heading_counters(str, idx, letter):
     return replace_letter(replace_number(str, idx), letter)
@@ -97,7 +99,9 @@ class SharePointGenerator:
         """
 
         if isinstance(job_settings, str):
-            self.job_settings_model = JobSettings.model_validate_json(job_settings)
+            self.job_settings_model = JobSettings.model_validate_json(
+                job_settings
+            )
         else:
             self.job_settings_model = job_settings
 
@@ -107,12 +111,18 @@ class SharePointGenerator:
         self._extract()
 
         transformed_data = []
-        for idx, subj_id in enumerate(self.job_settings_model.subjects_to_ingest):
-            transformed_data.append(self._transform(self._extract(), subj_id, idx+1))
+        for idx, subj_id in enumerate(
+            self.job_settings_model.subjects_to_ingest
+        ):
+            transformed_data.append(
+                self._transform(self._extract(), subj_id, idx + 1)
+            )
 
         combined_data = self._combine(transformed_data)
 
-        self._load(combined_data, self.job_settings_model.output_spreadsheet_path)
+        self._load(
+            combined_data, self.job_settings_model.output_spreadsheet_path
+        )
 
     def _extract(self):
         """Extract the input spreadsheet"""
@@ -121,38 +131,45 @@ class SharePointGenerator:
             self.job_settings_model.input_spreadsheet_path,
             sheet_name=self.job_settings_model.input_spreadsheet_sheet_name,
             header=[0],
-            converters={}
+            converters={},
         )
 
         return materials_sheet
 
-
     def _transform(self, materials_sheet, subj_id, subj_idx):
         """Extract data from the input spreadsheet"""
 
-        subj_row = materials_sheet.loc[materials_sheet["Mouse ID"] == int(subj_id)]
+        subj_row = materials_sheet.loc[
+            materials_sheet["Mouse ID"] == int(subj_id)
+        ]
 
         output = {}
-        
+
         for header in relevant_sub_headings:
             input_sheet_header = replace_number(headings_map[header], subj_idx)
-            output[replace_number(header, subj_idx)] = subj_row[input_sheet_header].values[0]
+            output[replace_number(header, subj_idx)] = subj_row[
+                input_sheet_header
+            ].values[0]
 
         for letter, inj_num in subheadings_map.items():
             for header in relevant_inj_headings:
-                input_sheet_header = replace_heading_counters(headings_map[header], subj_idx, inj_num)
-                output_header = replace_heading_counters(header, subj_idx, letter)
-                
+                input_sheet_header = replace_heading_counters(
+                    headings_map[header], subj_idx, inj_num
+                )
+                output_header = replace_heading_counters(
+                    header, subj_idx, letter
+                )
+
                 output[output_header] = subj_row[input_sheet_header].values[0]
 
         output_expanded = {}
         for header in self.generate_curr_subj_headings(subj_idx):
-            if header in output.keys(): 
+            if header in output.keys():
                 output_expanded[header] = output[header]
             else:
                 output_expanded[header] = None
         return output_expanded
-    
+
     def _combine(self, transformed_data: List):
         """Combine the transformed data into a single dictionary"""
 
@@ -167,9 +184,10 @@ class SharePointGenerator:
         if output_path is None:
             output_path = Path("output_run2.csv")
 
-        
-        with open(output_path, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=transformed_data.keys(), dialect='excel')
+        with open(output_path, "w", newline="") as csvfile:
+            writer = csv.DictWriter(
+                csvfile, fieldnames=transformed_data.keys(), dialect="excel"
+            )
             writer.writeheader()
             writer.writerow(transformed_data)
 
@@ -182,11 +200,16 @@ class SharePointGenerator:
 
     def generate_headings(self):
         """Generate sharepoint metadata file"""
-        
+
         headings = []
 
-        for idx, subj_id in enumerate(self.job_settings_model.subjects_to_ingest):
-            new_headings = [heading.replace("#", f"{idx+1}") for heading in single_sub_raw_headings]
+        for idx, subj_id in enumerate(
+            self.job_settings_model.subjects_to_ingest
+        ):
+            new_headings = [
+                heading.replace("#", f"{idx+1}")
+                for heading in single_sub_raw_headings
+            ]
             headings.extend(new_headings)
 
         return headings
