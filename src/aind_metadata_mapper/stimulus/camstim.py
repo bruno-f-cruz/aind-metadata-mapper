@@ -330,9 +330,9 @@ class Camstim:
         for current_idx, row in stim_table.iterrows():
             # if the stim name changes, summarize current epoch's parameters
             # and start a new epoch
-            # if current_idx == 0:
-            #     current_epoch[0] = row["stim_name"]
-            if row["stim_name"] != current_epoch[0]:
+            if current_idx == 0:
+                 current_epoch[0] = row["stim_name"]
+            if row["stim_name"] != current_epoch[0] or current_idx == stim_table.shape[0] -1:
                 for column in stim_table:
                     if column not in (
                         "start_time",
@@ -347,7 +347,7 @@ class Camstim:
                             ].dropna()
                         )
                         current_epoch[3][column] = param_set
-                
+
                 epochs.append(current_epoch)
                 if current_idx == 0:
                     initial_epoch = epochs
@@ -359,7 +359,7 @@ class Camstim:
                     {},
                     set(),
                 ]
-            
+
             # if stim name hasn't changed, we are in the same epoch, keep
             # pushing the stop time
             else:
