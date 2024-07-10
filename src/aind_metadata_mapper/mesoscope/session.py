@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Union
 import h5py as h5
+from comb.data_files.behavior_stimulus_file import BehaviorStimulusFile
 
 import tifffile
 from aind_data_schema.core.session import FieldOfView, Session, Stream, LaserConfig, LightEmittingDiodeConfig
@@ -73,9 +74,10 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         else:
             job_settings_model = job_settings
         super().__init__(job_settings=job_settings_model)
-        with open('/allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
+        with open('//allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
             json_settings_camstim = json.load(file)
-        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, '1364914325', json_settings_camstim)
+        self.session_id = job_settings_model.session_id
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, self.session_id, json_settings_camstim, session_fp=job_settings_model.input_source)
 
     def custom_camstim_init(self, session_id: str, json_settings: dict):
         """
@@ -83,11 +85,11 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         """
         self.npexp_path = self.input_path
 
-        self.pkl_path = self.npexp_path / r'1219702300.pkl'
+        self.pkl_path = self.npexp_path / f'{self.session_id}.pkl'
         self.stim_table_path = (
             self.npexp_path / f"{self.folder}_stim_epochs.csv"
         )
-        self.sync_path = self.npexp_path / r'1219702300_20221021T122013.h5'
+        self.sync_path = self.npexp_path / f'{self.session_id}*.h5'
 
         sync_data = sync.load_sync(self.sync_path)
 
@@ -97,7 +99,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
 
         print("getting stim epochs")
         self.stim_epochs = self.epochs_from_stim_table()
-
+        
 
     def _read_metadata(self, tiff_path: Path):
         """
@@ -228,6 +230,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
                         ),
                         LightEmittingDiodeConfig(
                             name="Epi lamp",
+                            
                         ),
                     ],
                 stream_start_time=self.job_settings.session_start_time,
@@ -255,25 +258,10 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
                         stream_modalities=[Modality.BEHAVIOR_VIDEOS],
                     )
                 )
-        vasculature_fp = next(
-            self.job_settings.input_source.glob("*vasculature*.tif"), ""
-        )
-        # Pull datetime from vasculature.
-        # Derived from
-        # https://stackoverflow.com/questions/46477712/
-        #   reading-tiff-image-metadata-in-python
-        with Image.open(vasculature_fp) as img:
-            vasculature_dt = [
-                img.tag[key]
-                for key in img.tag.keys()
-                if "DateTime" in TAGS[key]
-            ][0]
-        vasculature_dt = datetime.strptime(
-            vasculature_dt[0], "%Y:%m:%d %H:%M:%S"
-        )
+        stimulus_data = BehaviorStimulusFile.from_file(next(self.job_settings.input_source.glob(f"{self.session_id}*.pkl")))
         return Session(
             experimenter_full_name=self.job_settings.experimenter_full_name,
-            session_type="Mesoscope",
+            session_type=stimulus_data.session_type,
             subject_id=self.job_settings.subject_id,
             iacuc_protocol=self.job_settings.iacuc_protocol,
             session_start_time=self.job_settings.session_start_time,

@@ -26,7 +26,7 @@ dependencies = [
     "bruker2nifti==1.0.4",
     "requests",
     "pillow",
-    "pyaml"
+    "pyaml",
     "h5py",
     "pandas",
     "numpy",
