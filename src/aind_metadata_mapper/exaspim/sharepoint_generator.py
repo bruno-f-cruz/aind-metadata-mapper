@@ -1,7 +1,9 @@
-"""Script to generate a sharepoint-copyable metadata file from the Exaspim Mouse Tracker Spreadsheet"""
+"""
+Script to generate a sharepoint-copyable metadata file
+from the Exaspim Mouse Tracker Spreadsheet
+"""
 
 import csv
-import json
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -75,19 +77,25 @@ subheadings_map = {
 
 
 def replace_number(str, idx):
+    """Replace the # character with the index number"""
     return str.replace("#", f"{idx}")
 
 
 def replace_letter(str, letter):
+    """Replace the * character with the counting letter"""
     return str.replace("*", f"{letter}")
 
 
 def replace_heading_counters(str, idx, letter):
+    """Replace the # and * characters with the index number and counting letter"""
     return replace_letter(replace_number(str, idx), letter)
 
 
 class SharePointGenerator:
-    """Class to generate sharepoint metadata file from Exaspim Mouse Tracker Spreadsheet"""
+    """
+    Class to generate sharepoint metadata file
+    from Exaspim Mouse Tracker Spreadsheet
+    """
 
     def __init__(self, job_settings: Union[JobSettings, str]):
         """
