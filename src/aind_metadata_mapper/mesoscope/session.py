@@ -200,8 +200,10 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         data_streams = []
         for group in imaging_plane_groups:
             for plane in group["imaging_planes"]:
+                
                 fov = FieldOfView(
-                    index=int(group["local_z_stack_tif"].split(".")[0][-1]),
+                    coupled_fov_index=int(group["local_z_stack_tif"].split(".")[0][-1]),
+                    index = plane["scanimage_roi_index"],
                     fov_coordinate_ml=self.job_settings.fov_coordinate_ml,
                     fov_coordinate_ap=self.job_settings.fov_coordinate_ap,
                     fov_reference=self.job_settings.fov_reference,
