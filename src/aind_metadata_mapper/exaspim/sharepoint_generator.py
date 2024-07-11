@@ -210,6 +210,7 @@ class SharePointGenerator:
           500 - There were errors writing the model to output_directory
 
         """
+        print(output_path)
         if output_path is None:
             return transformed_data
 
