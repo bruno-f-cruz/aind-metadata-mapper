@@ -189,8 +189,29 @@ class SharePointGenerator:
 
     def _load(self, transformed_data, output_path):
         """Load the transformed data to a sharepoint metadata file"""
+        """
+        Will write to an output directory if an output_directory is not None.
+        If output_directory is None, then the model will be returned as json
+        in the JobResponse object.
+        Parameters
+        ----------
+        output_model : csv
+          The final spreadsheet that has been constructed.
+        output_directory : Optional[Path]
+          Path to write the model to.
+
+        Returns
+        -------
+        JobResponse
+          The JobResponse object with information about the model. The
+          status_codes are:
+          200 - CSV output without issue
+          406 - There were validation errors on the model
+          500 - There were errors writing the model to output_directory
+
+        """
         if output_path is None:
-            output_path = Path("output_run2.csv")
+            return transformed_data
 
         with open(output_path, "w", newline="") as csvfile:
             writer = csv.DictWriter(
