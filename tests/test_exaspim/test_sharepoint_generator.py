@@ -76,3 +76,110 @@ class TestSharePointGenerator(unittest.TestCase):
             loaded = f.read()
 
         self.assertEqual(combined, loaded)
+
+    def test_generate_curr_subj_headings(self):
+        """Tests the generate_curr_subj_headings method"""
+        generator = SharePointGenerator(job_settings=self.job_settings)
+        generated_headings = generator.generate_curr_subj_headings(1)
+        expected_headings = [
+            "nROID1",
+            "roVol1",
+            "roSub1a",
+            "roLot1a",
+            "roGC1a",
+            "roVolV1a",
+            "roTite1a",
+            "roSub1b",
+            "roLot1b",
+            "roGC1b",
+            "roVolV1b",
+            "roTite1b",
+            "roSub1c",
+            "roLot1c",
+            "roGC1c",
+            "roVolV1c",
+            "roTite1c",
+            "roSub1d",
+            "roLot1d",
+            "roGC1d",
+            "roVolV1d",
+            "roTite1d",
+            "roTube1",
+            "roBox1",
+        ]
+
+        self.assertEqual(generated_headings, expected_headings)
+
+    def test_generate_headings(self):
+        """Tests the generate_headings method"""
+        generator = SharePointGenerator(job_settings=self.job_settings)
+        generated_headings = generator.generate_headings()
+        expected_headings = [
+            "nROID1",
+            "roVol1",
+            "roSub1a",
+            "roLot1a",
+            "roGC1a",
+            "roVolV1a",
+            "roTite1a",
+            "roSub1b",
+            "roLot1b",
+            "roGC1b",
+            "roVolV1b",
+            "roTite1b",
+            "roSub1c",
+            "roLot1c",
+            "roGC1c",
+            "roVolV1c",
+            "roTite1c",
+            "roSub1d",
+            "roLot1d",
+            "roGC1d",
+            "roVolV1d",
+            "roTite1d",
+            "roTube1",
+            "roBox1",
+            "nROID2",
+            "roVol2",
+            "roSub2a",
+            "roLot2a",
+            "roGC2a",
+            "roVolV2a",
+            "roTite2a",
+            "roSub2b",
+            "roLot2b",
+            "roGC2b",
+            "roVolV2b",
+            "roTite2b",
+            "roSub2c",
+            "roLot2c",
+            "roGC2c",
+            "roVolV2c",
+            "roTite2c",
+            "roSub2d",
+            "roLot2d",
+            "roGC2d",
+            "roVolV2d",
+            "roTite2d",
+            "roTube2",
+            "roBox2",
+            "nROID3",
+            "roVol3",
+            "roSub3a",
+            "roLot3a",
+            "roGC3a",
+            "roVolV3a",
+            "roTite3a",
+            "roSub3b",
+            "roLot3b",
+            "roGC3b",
+            "roVolV3b",
+            "roTite3b",
+            "roSub3c",
+            "roLot3c",
+            "roGC3c",
+            "roVolV3c",
+            "roTite3c",
+        ]
+
+        self.assertEqual(generated_headings, expected_headings)
