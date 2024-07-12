@@ -1,6 +1,6 @@
 {
    "describedBy": "https://raw.githubusercontent.com/AllenNeuralDynamics/aind-data-schema/main/src/aind_data_schema/core/session.py",
-   "schema_version": "0.2.6",
+   "schema_version": "0.3.1",
    "protocol_id": [],
    "experimenter_full_name": [
       "John Doe"
@@ -8,6 +8,7 @@
    "session_start_time": "2024-02-22T15:30:00Z",
    "session_end_time": "2024-02-22T17:30:00Z",
    "session_type": "Mesoscope",
+   "headframe_registration": None,
    "iacuc_protocol": "12345",
    "rig_id": "MESO.1",
    "calibrations": [],
