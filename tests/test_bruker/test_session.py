@@ -124,8 +124,6 @@ class TestMRIWriter(unittest.TestCase):
         job_response = etl.run_job()
         actual_session = json.loads(job_response.data)
         self.assertEqual(job_response.status_code, 200)
-        print("EXPECTED: ", self.expected_session)
-        print("ACTUAL: ", actual_session)
         self.assertEqual(self.expected_session, actual_session)
 
     def test_get_subj_position(self) -> None:

@@ -1155,7 +1155,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
                 stimulus_parameters=[photostim],
                 # opticalBCI class to be added in future
                 stimulus_device_names=self.job_settings.stimulus_device_names,
-                light_source_config=LaserConfig(
+                light_source_config=[LaserConfig(
                     # from rig json
                     name=self.job_settings.photostim_laser_name,
                     wavelength=self.job_settings.photostim_laser_wavelength,
@@ -1163,7 +1163,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
                     excitation_power=np.nanmean(group_powers),
                     # from tiff header,
                     excitation_power_unit=PowerUnit.PERCENT,
-                ),
+                )],
                 output_parameters={
                     "tiff_files": tiff_list,
                     "tiff_stem": tiff_stem,
