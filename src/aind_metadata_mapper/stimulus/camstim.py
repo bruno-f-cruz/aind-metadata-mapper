@@ -4,13 +4,13 @@ File containing Camstim class
 
 import datetime
 import functools
-
+from typing import Union
 import aind_data_schema
+
 import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
 from pathlib import Path
-import pickle
 
 import aind_metadata_mapper.open_ephys.utils.constants as constants
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
@@ -29,8 +29,8 @@ class Camstim:
         self,
         session_id: str,
         json_settings: dict,
-        session_fp: Path = None,
-        output_fp: Path = None,
+        input_directory: Union[str, Path],
+        output_directory: Union[str, Path]
     ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
@@ -90,28 +90,29 @@ class Camstim:
             if self.opto_table_path.exists():
                 self.stim_epochs.append(self.epoch_from_opto_table())
         except Exception:
-            print(f"Session fp: {session_fp}")
-            print(f"Session id: {session_id}")
-            self.pkl_path = next(session_fp.glob(f'{session_id}*.pkl'))
-            if output_fp:
-                output_fp = Path(output_fp)
-                self.stim_table_path = output_fp / f'{session_id}_stim_epochs.csv'
-            else:
-                self.stim_table_path = (
-                session_fp / f'{session_id}_stim_epochs.csv'
+            self.npexp_path = input_directory
+            if isinstance(input_directory, str):
+                self.npexp_path = Path(input_directory)
+            self.pkl_path = next(self.npexp_path.glob("*.pkl"))
+            stim_table_path = output_directory / f"{session_id}_behavior"
+            stim_table_path.mkdir(exist_ok=True)
+            self.stim_table_path = (
+                stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
             )
-            self.sync_path = next(session_fp.glob(f'{session_id}*.h5'))
+            self.sync_path = next(file for file in self.npexp_path.glob("*.h5") if "full_field" not in file.name)
+            print("SYNC PATH", self.sync_path)
             sync_data = sync.load_sync(self.sync_path)
 
             self.session_start = sync.get_start_time(sync_data)
             self.session_end = sync.get_stop_time(sync_data)
-            with open(self.pkl_path, 'rb') as f:
-                pkl_data = pickle.load(f, encoding="latin1")
-            if "behavior" in pkl_data['items'].keys():
+
+            pkl_data = pkl.load_pkl(self.pkl_path)
+            is_behavior = pkl.check_if_behavior(pkl_data)
+            if is_behavior:
                 self.build_behavior_table()
             else:
                 self.build_stimulus_table()
-            
+            # self.build_behavior_table()
 
             print("getting stim epochs")
             self.stim_epochs = self.epochs_from_stim_table()
@@ -322,6 +323,10 @@ class Camstim:
         of values for that column are listed as parameter values.
         """
         print("STIM_TABLE", stim_table)
+        placeholder_row = {col: "Nil" for col in stim_table.columns}
+        placeholder_row["stim_name"] = "Placeholder"
+        stim_table = pd.concat([stim_table, pd.DataFrame([placeholder_row])], ignore_index=True)
+
         epochs = []
 
         initial_epoch = [None, 0.0, 0.0, {}, set()]
@@ -332,13 +337,16 @@ class Camstim:
             # and start a new epoch
             if current_idx == 0:
                  current_epoch[0] = row["stim_name"]
-            if row["stim_name"] != current_epoch[0] or current_idx == stim_table.shape[0] -1:
+            if row["stim_name"] != current_epoch[0]:
                 for column in stim_table:
                     if column not in (
                         "start_time",
                         "stop_time",
                         "stim_name",
                         "stim_type",
+                        "duration",
+                        "start_frame",
+                        "end_frame",
                         "frame",
                     ):
                         param_set = set(
@@ -346,7 +354,6 @@ class Camstim:
                                 epoch_start_idx:current_idx
                             ].dropna()
                         )
-                        current_epoch[3][column] = param_set
 
                 epochs.append(current_epoch)
                 if current_idx == 0:
@@ -373,8 +380,10 @@ class Camstim:
             if "image" in stim_type.lower() or "movie" in stim_type.lower():
                 current_epoch[4].add(row["stim_name"])
 
+
             if current_idx == len(row["stim_name"]) - 1 and epochs == initial_epoch:
                 epochs.append(current_epoch)
+
 
         # slice off dummy epoch from beginning
         if len(epochs) > 0 and epochs[0][0] is None:
@@ -403,6 +412,7 @@ class Camstim:
             url='test',
         )
 
+        print("STIM PATH", self.stim_table_path)
         schema_epochs = []
         for (
             epoch_name,
