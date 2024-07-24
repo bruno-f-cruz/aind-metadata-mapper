@@ -77,7 +77,7 @@ class MesoscopeEtl(GenericEtl[JobSettings], aind_metadata_mapper.stimulus.camsti
         super().__init__(job_settings=job_settings_model)
         with open('//allen/programs/mindscope/workgroups/openscope/ahad/medata-mapper/aind-metadata-mapper/tests/resources/open_ephys/camstim_ephys_session.json', 'r') as file:
             json_settings_camstim = json.load(file)
-        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, job_settings.session_id, json_settings_camstim, session_fp=job_settings_model.input_source, output_fp=job_settings_model.optional_output)
+        aind_metadata_mapper.stimulus.camstim.Camstim.__init__(self, job_settings.session_id, json_settings_camstim, input_directory=job_settings_model.input_source, output_directory=job_settings_model.optional_output)
     
     def custom_camstim_init(self, session_id: str, json_settings: dict):
         """

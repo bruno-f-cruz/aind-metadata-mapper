@@ -93,6 +93,8 @@ class Camstim:
             self.npexp_path = input_directory
             if isinstance(input_directory, str):
                 self.npexp_path = Path(input_directory)
+            if isinstance(output_directory, str):
+                output_directory = Path(output_directory)
             self.pkl_path = next(self.npexp_path.glob("*.pkl"))
             stim_table_path = output_directory / f"{session_id}_behavior"
             stim_table_path.mkdir(exist_ok=True)
@@ -100,19 +102,16 @@ class Camstim:
                 stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
             )
             self.sync_path = next(file for file in self.npexp_path.glob("*.h5") if "full_field" not in file.name)
-            print("SYNC PATH", self.sync_path)
             sync_data = sync.load_sync(self.sync_path)
 
             self.session_start = sync.get_start_time(sync_data)
             self.session_end = sync.get_stop_time(sync_data)
 
             pkl_data = pkl.load_pkl(self.pkl_path)
-            is_behavior = pkl.check_if_behavior(pkl_data)
-            if is_behavior:
+            if pkl_data["items"].get("behavior", None):
                 self.build_behavior_table()
             else:
                 self.build_stimulus_table()
-            # self.build_behavior_table()
 
             print("getting stim epochs")
             self.stim_epochs = self.epochs_from_stim_table()
