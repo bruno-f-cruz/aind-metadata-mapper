@@ -4,20 +4,20 @@ File containing Camstim class
 
 import datetime
 import functools
+from pathlib import Path
 from typing import Union
-import aind_data_schema
 
+import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
-from pathlib import Path
 
+import aind_metadata_mapper.open_ephys.utils.behavior_utils as behavior
 import aind_metadata_mapper.open_ephys.utils.constants as constants
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
 import aind_metadata_mapper.open_ephys.utils.stim_utils as stim
 import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
-import aind_metadata_mapper.open_ephys.utils.behavior_utils as behavior
 
 
 class Camstim:
@@ -30,7 +30,7 @@ class Camstim:
         session_id: str,
         json_settings: dict,
         input_directory: Union[str, Path],
-        output_directory: Union[str, Path]
+        output_directory: Union[str, Path],
     ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
@@ -56,12 +56,8 @@ class Camstim:
             self.folder = session_inst.folder
             self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
             self.opto_pkl_path = self.npexp_path / f"{self.folder}.opto.pkl"
-            self.opto_table_path = (
-                self.npexp_path / f"{self.folder}_opto_epochs.csv"
-            )
-            self.stim_table_path = (
-                self.npexp_path / f"{self.folder}_stim_epochs.csv"
-            )
+            self.opto_table_path = self.npexp_path / f"{self.folder}_opto_epochs.csv"
+            self.stim_table_path = self.npexp_path / f"{self.folder}_stim_epochs.csv"
             self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
             sync_data = sync.load_sync(self.sync_path)
@@ -101,7 +97,11 @@ class Camstim:
             self.stim_table_path = (
                 stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
             )
-            self.sync_path = next(file for file in self.npexp_path.glob("*.h5") if "full_field" not in file.name)
+            self.sync_path = next(
+                file
+                for file in self.npexp_path.glob("*.h5")
+                if "full_field" not in file.name
+            )
             sync_data = sync.load_sync(self.sync_path)
 
             self.session_start = sync.get_start_time(sync_data)
@@ -116,17 +116,12 @@ class Camstim:
             print("getting stim epochs")
             self.stim_epochs = self.epochs_from_stim_table()
 
-
-    def build_behavior_table(
-            self
-    ):
+    def build_behavior_table(self):
         stim_file = self.pkl_path
         sync_file = sync.load_sync(self.sync_path)
         timestamps = sync.get_ophys_stimulus_timestamps(sync_file, stim_file)
         behavior_table = behavior.from_stimulus_file(stim_file, timestamps)
         behavior_table[0].to_csv(self.stim_table_path, index=False)
-
-
 
     def build_stimulus_table(
         self,
@@ -188,12 +183,8 @@ class Camstim:
 
         stim_table_seconds = names.collapse_columns(stim_table_seconds)
         stim_table_seconds = names.drop_empty_columns(stim_table_seconds)
-        stim_table_seconds = names.standardize_movie_numbers(
-            stim_table_seconds
-        )
-        stim_table_seconds = names.add_number_to_shuffled_movie(
-            stim_table_seconds
-        )
+        stim_table_seconds = names.standardize_movie_numbers(stim_table_seconds)
+        stim_table_seconds = names.add_number_to_shuffled_movie(stim_table_seconds)
         stim_table_seconds = names.map_stimulus_names(
             stim_table_seconds, stimulus_name_map
         )
@@ -241,9 +232,7 @@ class Camstim:
                 "level": levels,
             }
         )
-        optotagging_table = optotagging_table.sort_values(
-            by="start_time", axis=0
-        )
+        optotagging_table = optotagging_table.sort_values(by="start_time", axis=0)
 
         stop_times = []
         names = []
@@ -324,7 +313,9 @@ class Camstim:
         print("STIM_TABLE", stim_table)
         placeholder_row = {col: "Nil" for col in stim_table.columns}
         placeholder_row["stim_name"] = "Placeholder"
-        stim_table = pd.concat([stim_table, pd.DataFrame([placeholder_row])], ignore_index=True)
+        stim_table = pd.concat(
+            [stim_table, pd.DataFrame([placeholder_row])], ignore_index=True
+        )
 
         epochs = []
 
@@ -335,7 +326,7 @@ class Camstim:
             # if the stim name changes, summarize current epoch's parameters
             # and start a new epoch
             if current_idx == 0:
-                 current_epoch[0] = row["stim_name"]
+                current_epoch[0] = row["stim_name"]
             if row["stim_name"] != current_epoch[0]:
                 for column in stim_table:
                     if column not in (
@@ -349,9 +340,7 @@ class Camstim:
                         "frame",
                     ):
                         param_set = set(
-                            stim_table[column][
-                                epoch_start_idx:current_idx
-                            ].dropna()
+                            stim_table[column][epoch_start_idx:current_idx].dropna()
                         )
 
                 epochs.append(current_epoch)
@@ -379,10 +368,8 @@ class Camstim:
             if "image" in stim_type.lower() or "movie" in stim_type.lower():
                 current_epoch[4].add(row["stim_name"])
 
-
             if current_idx == len(row["stim_name"]) - 1 and epochs == initial_epoch:
                 epochs.append(current_epoch)
-
 
         # slice off dummy epoch from beginning
         if len(epochs) > 0 and epochs[0][0] is None:
@@ -408,7 +395,7 @@ class Camstim:
         script_obj = aind_data_schema.components.devices.Software(
             name="test",
             version="1.0",
-            url='test',
+            url="test",
         )
 
         print("STIM PATH", self.stim_table_path)
