@@ -92,7 +92,7 @@ class Camstim:
             if isinstance(output_directory, str):
                 output_directory = Path(output_directory)
             self.pkl_path = next(self.npexp_path.glob("*.pkl"))
-            stim_table_path = output_directory / f"{session_id}_behavior"
+            stim_table_path = output_directory
             stim_table_path.mkdir(exist_ok=True)
             self.stim_table_path = (
                 stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
