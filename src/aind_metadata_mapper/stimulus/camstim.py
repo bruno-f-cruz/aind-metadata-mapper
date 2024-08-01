@@ -91,11 +91,13 @@ class Camstim:
                 self.npexp_path = Path(input_directory)
             if isinstance(output_directory, str):
                 output_directory = Path(output_directory)
+            print("OUTPUTDIRECTORY")
+            print(output_directory)
             self.pkl_path = next(self.npexp_path.glob("*.pkl"))
             stim_table_path = output_directory
             stim_table_path.mkdir(exist_ok=True)
             self.stim_table_path = (
-                stim_table_path / f"{self.pkl_path.stem}_stim_table.csv"
+                stim_table_path / f"{self.pkl_path.stem}_table.csv"
             )
             self.sync_path = next(
                 file

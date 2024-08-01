@@ -18,7 +18,6 @@ from aind_data_schema.core.session import (
     Stream,
 )
 from aind_data_schema_models.modalities import Modality
-from aind_data_schema_models.organizations import CoherentScientific
 from aind_data_schema_models.units import SizeUnit
 from comb.data_files.behavior_stimulus_file import BehaviorStimulusFile
 from PIL import Image
@@ -52,7 +51,7 @@ class JobSettings(BaseSettings):
     fov_reference: str = "Bregma"
     experimenter_full_name: List[str] = Field(..., title="Full name of the experimenter")
     mouse_platform_name: str = "disc"
-    optional_output: str = ""
+    optional_output: Union[str | Path] = ""
 
 
 class MesoscopeEtl(
@@ -208,11 +207,12 @@ class MesoscopeEtl(
             meta = self._read_h5_metadata(str(timeseries))
         fovs = []
         data_streams = []
+        count = 0
         for group in imaging_plane_groups:
             for plane in group["imaging_planes"]:
                 fov = FieldOfView(
                     coupled_fov_index=int(group["local_z_stack_tif"].split(".")[0][-1]),
-                    index=plane["scanimage_roi_index"],
+                    index=count,
                     fov_coordinate_ml=self.job_settings.fov_coordinate_ml,
                     fov_coordinate_ap=self.job_settings.fov_coordinate_ap,
                     fov_reference=self.job_settings.fov_reference,
@@ -229,6 +229,7 @@ class MesoscopeEtl(
                     scanfield_z=plane["scanimage_scanfield_z"],
                     power=float(plane["scanimage_power"]),
                 )
+                count += 1
                 fovs.append(fov)
         data_streams.append(
             Stream(
