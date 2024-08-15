@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aind-metadata-mapper"
 description = "Generated from aind-library-template"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 authors = [
     {name = "Allen Institute for Neural Dynamics"}
 ]
@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "aind-metadata-mapper[all]",
+    "aind-metadata-mapper[all] ; python_version >= '3.9'",
     "black",
     "coverage",
     "flake8",
@@ -32,14 +32,14 @@ dev = [
     "isort",
     "Sphinx",
     "furo",
-    "pyyaml>=6.0.0",
 ]
 
 all = [
     "aind-metadata-mapper[bergamo]",
     "aind-metadata-mapper[bruker]",
     "aind-metadata-mapper[mesoscope]",
-    "aind-metadata-mapper[openephys]"
+    "aind-metadata-mapper[openephys]",
+    "aind-metadata-mapper[dynamicrouting]",
 ]
 
 bergamo = [
@@ -64,6 +64,10 @@ openephys = [
     "scipy",
     "pandas",
     "numpy",
+]
+
+dynamicrouting = [
+    "pyyaml>=6.0.0",
 ]
 
 [tool.setuptools.packages.find]
