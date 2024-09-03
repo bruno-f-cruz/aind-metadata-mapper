@@ -1,7 +1,7 @@
 {
    "describedBy": "https://raw.githubusercontent.com/AllenNeuralDynamics/aind-data-schema/main/src/aind_data_schema/core/rig.py",
-   "schema_version": "0.3.8",
-   "rig_id": "327_NP2_240401",
+   "schema_version": "1.0.0",
+   "rig_id": "327_NP2_20240401",
    "modification_date": "2024-04-01",
    "mouse_platform": {
       "device_type": "Disc",
@@ -233,7 +233,7 @@
             "data_interface": "Ethernet",
             "cooling": "None",
             "computer_name": "127.0.0.1",
-            "max_frame_rate": "102",
+            "frame_rate": "102",
             "frame_rate_unit": "hertz",
             "immersion": null,
             "chroma": "Monochrome",
@@ -248,6 +248,8 @@
             "bin_height": null,
             "bin_unit": "pixel",
             "gain": null,
+            "crop_offset_x": null,
+            "crop_offset_y": null,
             "crop_width": null,
             "crop_height": null,
             "crop_unit": "pixel",
@@ -380,7 +382,7 @@
             "data_interface": "Ethernet",
             "cooling": "None",
             "computer_name": "127.0.0.1",
-            "max_frame_rate": "102",
+            "frame_rate": "102",
             "frame_rate_unit": "hertz",
             "immersion": null,
             "chroma": "Monochrome",
@@ -395,6 +397,8 @@
             "bin_height": null,
             "bin_unit": "pixel",
             "gain": null,
+            "crop_offset_x": null,
+            "crop_offset_y": null,
             "crop_width": null,
             "crop_height": null,
             "crop_unit": "pixel",
@@ -524,7 +528,7 @@
             "data_interface": "Ethernet",
             "cooling": "None",
             "computer_name": "127.0.0.1",
-            "max_frame_rate": "102",
+            "frame_rate": "102",
             "frame_rate_unit": "hertz",
             "immersion": null,
             "chroma": "Monochrome",
@@ -539,6 +543,8 @@
             "bin_height": null,
             "bin_unit": "pixel",
             "gain": null,
+            "crop_offset_x": null,
+            "crop_offset_y": null,
             "crop_width": null,
             "crop_height": null,
             "crop_unit": "pixel",
@@ -952,7 +958,9 @@
          "additional_settings": {},
          "notes": null,
          "wavelength": 740,
-         "wavelength_unit": "nanometer"
+         "wavelength_unit": "nanometer",
+         "bandwidth": null,
+         "bandwidth_unit": "nanometer"
       },
       {
          "device_type": "Light emitting diode",
@@ -970,7 +978,9 @@
          "additional_settings": {},
          "notes": null,
          "wavelength": 740,
-         "wavelength_unit": "nanometer"
+         "wavelength_unit": "nanometer",
+         "bandwidth": null,
+         "bandwidth_unit": "nanometer"
       },
       {
          "device_type": "Light emitting diode",
@@ -991,7 +1001,9 @@
          "additional_settings": {},
          "notes": null,
          "wavelength": 850,
-         "wavelength_unit": "nanometer"
+         "wavelength_unit": "nanometer",
+         "bandwidth": null,
+         "bandwidth_unit": "nanometer"
       },
       {
          "device_type": "Laser",
@@ -1065,7 +1077,7 @@
          "data_interface": "Other",
          "cooling": "Air",
          "computer_name": null,
-         "max_frame_rate": null,
+         "frame_rate": null,
          "frame_rate_unit": "hertz",
          "immersion": null,
          "chroma": null,
@@ -1080,6 +1092,8 @@
          "bin_height": null,
          "bin_unit": "pixel",
          "gain": null,
+         "crop_offset_x": null,
+         "crop_offset_y": null,
          "crop_width": null,
          "crop_height": null,
          "crop_unit": "pixel",

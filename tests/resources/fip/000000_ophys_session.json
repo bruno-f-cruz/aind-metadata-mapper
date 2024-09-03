@@ -1,6 +1,6 @@
 {
    "describedBy": "https://raw.githubusercontent.com/AllenNeuralDynamics/aind-data-schema/main/src/aind_data_schema/core/session.py",
-   "schema_version": "0.2.6",
+   "schema_version": "1.0.0",
    "protocol_id": [],
    "experimenter_full_name": [
       "Don Key"
@@ -16,6 +16,7 @@
    "animal_weight_prior": null,
    "animal_weight_post": null,
    "weight_unit": "gram",
+   "anaesthesia": null,
    "data_streams": [
       {
          "stream_start_time": "1999-10-04T00:00:00Z",
@@ -24,19 +25,19 @@
          "camera_names": [],
          "light_sources": [
             {
-               "device_type": "LightEmittingDiode",
+               "device_type": "Light emitting diode",
                "name": "470nm LED",
                "excitation_power": "0.02",
                "excitation_power_unit": "milliwatt"
             },
             {
-               "device_type": "LightEmittingDiode",
+               "device_type": "Light emitting diode",
                "name": "415nm LED",
                "excitation_power": "0.02",
                "excitation_power_unit": "milliwatt"
             },
             {
-               "device_type": "LightEmittingDiode",
+               "device_type": "Light emitting diode",
                "name": "565nm LED",
                "excitation_power": "0.02",
                "excitation_power_unit": "milliwatt"
@@ -63,14 +64,16 @@
          ],
          "fiber_modules": [],
          "ophys_fovs": [],
-         "slap_fovs": null,
+         "slap_fovs": [],
          "stack_parameters": null,
+         "mri_scans": [],
          "stream_modalities": [
             {
                "name": "Fiber photometry",
                "abbreviation": "fib"
             }
          ],
+         "software": [],
          "notes": null
       }
    ],
@@ -116,7 +119,7 @@
          ],
          "stimulus_device_names": [],
          "speaker_config": null,
-         "light_source_config": null,
+         "light_source_config": [],
          "output_parameters": {},
          "reward_consumed_during_epoch": null,
          "reward_consumed_unit": "microliter",
@@ -128,8 +131,9 @@
    ],
    "mouse_platform_name": "Disc",
    "active_mouse_platform": false,
+   "headframe_registration": null,
    "reward_delivery": null,
    "reward_consumed_total": null,
-   "reward_consumed_unit": "microliter",
+   "reward_consumed_unit": "milliliter",
    "notes": "brabrabrabra...."
 }
