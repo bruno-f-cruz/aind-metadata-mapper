@@ -116,7 +116,7 @@ class JobSettings(BaseJobSettings):
     processing_settings: Optional[ProcessingSettings] = None
     metadata_settings: Optional[MetadataSettings] = None
     directory_to_write_to: Path
-    metadata_dir: Optional[Path] = Field(
+    metadata_dir: Optional[Union[Path, str]] = Field(
         default=None,
         description="Optional path where user defined metadata files might be",
     )
