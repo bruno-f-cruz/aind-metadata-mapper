@@ -52,6 +52,9 @@ class GatherMetadataJob:
         settings : JobSettings
         """
         self.settings = settings
+        # convert metadata_str to Path object
+        if isinstance(self.settings.metadata_dir, str):
+            self.settings.metadata_dir = Path(self.settings.metadata_dir)
 
     def _does_file_exist_in_user_defined_dir(self, file_name: str) -> bool:
         """
