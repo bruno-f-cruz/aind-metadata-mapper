@@ -136,7 +136,7 @@ class JsonConfigSettingsSource(PydanticBaseSettingsSource):
 class BaseJobSettings(BaseSettings):
     """Parent class for generating settings from a config file."""
 
-    user_settings_config_file: Optional[Path] = Field(
+    user_settings_config_file: Optional[Union[Path, str]] = Field(
         default=None,
         repr=False,
         description="Optionally pull settings from a local config file.",
