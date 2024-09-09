@@ -136,9 +136,7 @@ class TestStimUtils(unittest.TestCase):
         """
         Creating a sample pkl dictionary with a "stimuli" block key
         """
-        sample_pkl = {
-            "stimuli": ["image1.jpg", "image2.jpg", "image3.jpg"],
-            "other_key": "other_value",
+        sample_pkl = {["image1.jpg", "image2.jpg", "image3.jpg"]
         }
 
         # Calling the function with the sample pkl dictionary
