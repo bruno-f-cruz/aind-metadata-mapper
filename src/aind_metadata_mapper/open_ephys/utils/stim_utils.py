@@ -352,7 +352,7 @@ def make_spontaneous_activity_tables(
     return [spon_sweeps]
 
 
-def extract_blocks_from_stim(stims)
+def extract_blocks_from_stim(stims):
     """
     Extracts the blocks from a stim with multiple blocks
 

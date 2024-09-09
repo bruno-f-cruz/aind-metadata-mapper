@@ -132,7 +132,6 @@ class TestStimUtils(unittest.TestCase):
         result_df = stim.enforce_df_column_order(empty_df, column_order)
         pd.testing.assert_frame_equal(result_df, empty_df)
 
-
     def test_extract_blocks_from_stim(self):
         """
         Creating a sample pkl dictionary with a "stimuli" block key
@@ -147,7 +146,6 @@ class TestStimUtils(unittest.TestCase):
 
         # Asserting that the result is the "stimuli" key
         self.assertEqual(result, sample_pkl["stimuli"])
-
 
     def test_seconds_to_frames(self):
         """
