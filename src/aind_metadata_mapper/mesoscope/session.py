@@ -206,7 +206,6 @@ class MesoscopeEtl(
             timeseries = next(experiment_dir.glob(f"{experiment_id}.h5"))
             meta = self._read_h5_metadata(str(timeseries))
         fovs = []
-        data_streams = []
         count = 0
         for group in imaging_plane_groups:
             for plane in group["imaging_planes"]:
@@ -232,7 +231,7 @@ class MesoscopeEtl(
                 )
                 count += 1
                 fovs.append(fov)
-        data_streams.append(
+        data_streams = [
             Stream(
                 light_sources=[
                     LaserConfig(
@@ -249,27 +248,14 @@ class MesoscopeEtl(
                 stream_end_time=self.job_settings.session_end_time,
                 ophys_fovs=fovs,
                 stream_modalities=[Modality.POPHYS],
+                camera_names=[
+                    "Mesoscope",
+                    "Eye",
+                    "Face",
+                    "Behavior",
+                ]
             )
-        )
-        for camera in extracted_source.keys():
-            if camera != "platform":
-                start_time = datetime.strptime(
-                    extracted_source[camera]["RecordingReport"]["TimeStart"],
-                    "%Y-%m-%dT%H:%M:%SZ",
-                )
-                end_time = datetime.strptime(
-                    extracted_source[camera]["RecordingReport"]["TimeEnd"],
-                    "%Y-%m-%dT%H:%M:%SZ",
-                )
-                camera_name = camera.split("_")[1]
-                data_streams.append(
-                    Stream(
-                        camera_names=[camera_name],
-                        stream_start_time=start_time,
-                        stream_end_time=end_time,
-                        stream_modalities=[Modality.BEHAVIOR_VIDEOS],
-                    )
-                )
+        ]
         stimulus_data = BehaviorStimulusFile.from_file(
             next(
                 self.job_settings.input_source.glob(
