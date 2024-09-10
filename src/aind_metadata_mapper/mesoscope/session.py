@@ -227,7 +227,8 @@ class MesoscopeEtl(
                     fov_height=meta[0]["SI.hRoiManager.linesPerFrame"],
                     frame_rate=group["acquisition_framerate_Hz"],
                     scanfield_z=plane["scanimage_scanfield_z"],
-                    power=float(plane["scanimage_power"]),
+                    power=float(group["scanimage_power_percent"]),
+                    power_ratio=float(group["scanimage_split_percent"])
                 )
                 count += 1
                 fovs.append(fov)
