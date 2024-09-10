@@ -93,25 +93,6 @@ class MesoscopeEtl(
             output_directory=job_settings_model.optional_output,
         )
 
-    def custom_camstim_init(self, session_id: str, json_settings: dict):
-        """
-        Custom initializer for Camstim within the MesoscopeEtl class context.
-        """
-        self.npexp_path = self.job_settings.input_source
-
-        self.pkl_path = self.npexp_path / f"{self.job_settings.session_id}.pkl"
-        self.stim_table_path = self.npexp_path / f"{self.folder}_stim_epochs.csv"
-        self.sync_path = self.npexp_path / f"{self.job_settings.session_id}*.h5"
-
-        sync_data = sync.load_sync(self.sync_path)
-
-        if not self.stim_table_path.exists():
-            print("building stim table")
-            self.build_stimulus_table()
-
-        print("getting stim epochs")
-        self.stim_epochs = self.epochs_from_stim_table()
-
     def _read_metadata(self, tiff_path: Path):
         """
         Calls tifffile.read_scanimage_metadata on the specified
