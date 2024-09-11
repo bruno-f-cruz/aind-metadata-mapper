@@ -5,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import h5py as h5
 import tifffile
@@ -18,38 +18,12 @@ from aind_data_schema.core.session import (
     Stream
 )
 from aind_data_schema_models.modalities import Modality
-from aind_data_schema_models.units import SizeUnit
-from comb.data_files.behavior_stimulus_file import BehaviorStimulusFile
-from aind_data_schema_models.organizations import Organization
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from PIL import Image
+from PIL.TiffTags import TAGS
 
 import aind_metadata_mapper.stimulus.camstim
 from aind_metadata_mapper.core import GenericEtl
-
-
-class JobSettings(BaseSettings):
-    """Data to be entered by the user."""
-
-    # TODO: for now this will need to be directly input by the user.
-    #  In the future, the workflow sequencing engine should be able to put
-    #  this in a json or we can extract it from SLIMS
-    input_source: Path
-    behavior_source: Path
-    output_directory: Path
-    session_id: str
-    session_start_time: datetime
-    session_end_time: datetime
-    subject_id: str
-    project: str
-    iacuc_protocol: str = "2115"
-    magnification: str = "16x"
-    fov_coordinate_ml: float = 1.5
-    fov_coordinate_ap: float = 1.5
-    fov_reference: str = "Bregma"
-    experimenter_full_name: List[str] = Field(..., title="Full name of the experimenter")
-    mouse_platform_name: str = "disc"
-    optional_output: Union[str | Path] = ""
+from aind_metadata_mapper.mesoscope.models import JobSettings
 
 
 class MesoscopeEtl(
