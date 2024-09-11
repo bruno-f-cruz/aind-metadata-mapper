@@ -9,23 +9,21 @@ from typing import List, Union
 
 import h5py as h5
 import tifffile
-from aind_data_schema.components.devices import Lamp
+from aind_data_schema.components.devices import Camera, DetectorType, DataInterface
 from aind_data_schema.core.session import (
     FieldOfView,
     LaserConfig,
     LightEmittingDiodeConfig,
     Session,
-    Stream,
+    Stream
 )
 from aind_data_schema_models.modalities import Modality
 from aind_data_schema_models.units import SizeUnit
 from comb.data_files.behavior_stimulus_file import BehaviorStimulusFile
-from PIL import Image
-from PIL.TiffTags import TAGS
+from aind_data_schema_models.organizations import Organization
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-import aind_metadata_mapper.open_ephys.utils.sync_utils as sync
 import aind_metadata_mapper.stimulus.camstim
 from aind_metadata_mapper.core import GenericEtl
 
@@ -221,9 +219,6 @@ class MesoscopeEtl(
                         wavelength=920,
                         wavelength_unit=SizeUnit.NM,
                     ),
-                    LightEmittingDiodeConfig(
-                        name="Epi lamp",
-                    ),
                 ],
                 stream_start_time=self.job_settings.session_start_time,
                 stream_end_time=self.job_settings.session_end_time,
@@ -231,9 +226,9 @@ class MesoscopeEtl(
                 stream_modalities=[Modality.POPHYS],
                 camera_names=[
                     "Mesoscope",
+                    "Behavior",
                     "Eye",
                     "Face",
-                    "Behavior",
                 ]
             )
         ]
