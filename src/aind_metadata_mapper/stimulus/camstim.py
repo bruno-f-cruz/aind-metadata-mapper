@@ -332,6 +332,9 @@ class Camstim:
                         "stop_time",
                         "stim_name",
                         "stim_type",
+                        "duration",
+                        "start_frame",
+                        "end_frame",
                         "frame",
                     ):
                         param_set = set(
