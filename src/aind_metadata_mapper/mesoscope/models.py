@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic import Field
 
@@ -14,6 +14,7 @@ class JobSettings(BaseJobSettings):
 
     job_settings_name: Literal["Mesoscope"] = "Mesoscope"
     input_source: Path
+    session_id: str
     behavior_source: Path
     output_directory: Path
     session_start_time: datetime
@@ -29,3 +30,4 @@ class JobSettings(BaseJobSettings):
         ..., title="Full name of the experimenter"
     )
     mouse_platform_name: str = "disc"
+    optional_output: Optional[Path] = None

@@ -9,7 +9,10 @@ import aind_data_schema
 import aind_data_schema.core.session as session_schema
 import np_session
 import pandas as pd
+from pathlib import Path
+from typing import Union
 
+import aind_metadata_mapper.open_ephys.utils.behavior_utils as behavior
 import aind_metadata_mapper.open_ephys.utils.constants as constants
 import aind_metadata_mapper.open_ephys.utils.naming_utils as names
 import aind_metadata_mapper.open_ephys.utils.pkl_utils as pkl
@@ -26,6 +29,8 @@ class Camstim:
         self,
         session_id: str,
         json_settings: dict,
+        input_directory: Union[str, Path],
+        output_directory: Union[str, Path],
     ) -> None:
         """
         Determine needed input filepaths from np-exp and lims, get session
@@ -37,52 +42,86 @@ class Camstim:
         Otherwise, the default is used from naming_utils.
         """
         if json_settings.get("opto_conditions_map", None) is None:
-            self.opto_conditions_map = names.DEFAULT_OPTO_CONDITIONS
+            self.opto_conditions_map = constants.DEFAULT_OPTO_CONDITIONS
         else:
             self.opto_conditions_map = json_settings["opto_conditions_map"]
         overwrite_tables = json_settings.get("overwrite_tables", False)
 
-        self.json_settings = json_settings
-        session_inst = np_session.Session(session_id)
-        self.mtrain = session_inst.mtrain
-        self.npexp_path = session_inst.npexp_path
-        self.folder = session_inst.folder
+        try:
+            session_inst = np_session.Session(session_id)
+            self.mtrain = session_inst.mtrain
+            self.npexp_path = session_inst.npexp_path
+            self.folder = session_inst.folder
+            self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
+            self.opto_pkl_path = self.npexp_path / f"{self.folder}.opto.pkl"
+            self.opto_table_path = self.npexp_path / f"{self.folder}_opto_epochs.csv"
+            self.stim_table_path = self.npexp_path / f"{self.folder}_stim_epochs.csv"
+            self.sync_path = self.npexp_path / f"{self.folder}.sync"
 
-        self.pkl_path = self.npexp_path / f"{self.folder}.stim.pkl"
-        self.opto_pkl_path = self.npexp_path / f"{self.folder}.opto.pkl"
-        self.opto_table_path = (
-            self.npexp_path / f"{self.folder}_opto_epochs.csv"
-        )
-        self.stim_table_path = (
-            self.npexp_path / f"{self.folder}_stim_epochs.csv"
-        )
-        self.sync_path = self.npexp_path / f"{self.folder}.sync"
+            sync_data = sync.load_sync(self.sync_path)
+            self.session_start = sync.get_start_time(sync_data)
+            self.session_end = sync.get_stop_time(sync_data)
+            print(
+                "session start : session end\n",
+                self.session_start,
+                ":",
+                self.session_end,
+            )
 
-        sync_data = sync.load_sync(self.sync_path)
-        self.session_start = sync.get_start_time(sync_data)
-        self.session_end = sync.get_stop_time(sync_data)
-        print(
-            "session start : session end\n",
-            self.session_start,
-            ":",
-            self.session_end,
-        )
+            if not self.stim_table_path.exists() or overwrite_tables:
+                print("building stim table")
+                self.build_stimulus_table()
+            if (
+                self.opto_pkl_path.exists()
+                and not self.opto_table_path.exists()
+                or overwrite_tables
+            ):
+                print("building opto table")
+                self.build_optogenetics_table()
 
-        if not self.stim_table_path.exists() or overwrite_tables:
-            print("building stim table")
-            self.build_stimulus_table()
-        if (
-            self.opto_pkl_path.exists()
-            and not self.opto_table_path.exists()
-            or overwrite_tables
-        ):
-            print("building opto table")
-            self.build_optogenetics_table()
+            print("getting stim epochs")
+            self.stim_epochs = self.epochs_from_stim_table()
+            if self.opto_table_path.exists():
+                self.stim_epochs.append(self.epoch_from_opto_table())
+        except Exception:
+            self.npexp_path = input_directory
+            if isinstance(input_directory, str):
+                self.npexp_path = Path(input_directory)
+            if isinstance(output_directory, str):
+                output_directory = Path(output_directory)
+            print("OUTPUTDIRECTORY")
+            print(output_directory)
+            self.pkl_path = next(self.npexp_path.glob("*.pkl"))
+            stim_table_path = output_directory
+            stim_table_path.mkdir(exist_ok=True)
+            self.stim_table_path = (
+                stim_table_path / f"{self.pkl_path.stem}_table.csv"
+            )
+            self.sync_path = next(
+                file
+                for file in self.npexp_path.glob("*.h5")
+                if "full_field" not in file.name
+            )
+            sync_data = sync.load_sync(self.sync_path)
 
-        print("getting stim epochs")
-        self.stim_epochs = self.epochs_from_stim_table()
-        if self.opto_table_path.exists():
-            self.stim_epochs.append(self.epoch_from_opto_table())
+            self.session_start = sync.get_start_time(sync_data)
+            self.session_end = sync.get_stop_time(sync_data)
+
+            pkl_data = pkl.load_pkl(self.pkl_path)
+            if pkl_data["items"].get("behavior", None):
+                self.build_behavior_table()
+            else:
+                self.build_stimulus_table()
+
+            print("getting stim epochs")
+            self.stim_epochs = self.epochs_from_stim_table()
+
+    def build_behavior_table(self):
+        stim_file = self.pkl_path
+        sync_file = sync.load_sync(self.sync_path)
+        timestamps = sync.get_ophys_stimulus_timestamps(sync_file, stim_file)
+        behavior_table = behavior.from_stimulus_file(stim_file, timestamps)
+        behavior_table[0].to_csv(self.stim_table_path, index=False)
 
     def build_stimulus_table(
         self,
@@ -339,18 +378,17 @@ class Camstim:
 
         software_obj = aind_data_schema.components.devices.Software(
             name="camstim",
-            version=pkl.load_pkl(self.pkl_path)["platform"]["camstim"].split(
-                "+"
-            )[0],
+            version="1.0",
             url="https://eng-gitlab.corp.alleninstitute.org/braintv/camstim",
         )
 
         script_obj = aind_data_schema.components.devices.Software(
-            name=self.mtrain["regimen"]["name"],
+            name="test",
             version="1.0",
-            url=self.mtrain["regimen"]["script"],
+            url="test",
         )
 
+        print("STIM PATH", self.stim_table_path)
         schema_epochs = []
         for (
             epoch_name,
