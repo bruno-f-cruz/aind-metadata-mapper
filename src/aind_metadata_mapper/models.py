@@ -1,12 +1,10 @@
 """Module to define models for Gather Metadata Job"""
-
 from pathlib import Path
 from typing import List, Literal, Optional, Union
 
-from aind_data_schema.core.processing import PipelineProcess
 from aind_data_schema_models.modalities import Modality
 from aind_data_schema_models.organizations import Organization
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings
 from typing_extensions import Annotated
 
@@ -25,15 +23,6 @@ from aind_metadata_mapper.mesoscope.models import (
 from aind_metadata_mapper.smartspim.models import (
     JobSettings as SmartSpimAcquisitionJobSettings,
 )
-
-
-class JobResponse(BaseModel):
-    """Standard model of a JobResponse."""
-
-    model_config = ConfigDict(extra="forbid")
-    status_code: int
-    message: Optional[str] = Field(None)
-    data: Optional[str] = Field(None)
 
 
 class SessionSettings(BaseSettings):
@@ -85,7 +74,13 @@ class RawDataDescriptionSettings(BaseSettings):
 class ProcessingSettings(BaseSettings):
     """Fields needed to retrieve processing metadata"""
 
-    pipeline_process: PipelineProcess
+    pipeline_process: dict = Field(
+        ...,
+        description=(
+            "Pipeline processes as a dict object. Will be converted to "
+            "PipelineProcess model downstream."
+        ),
+    )
 
 
 class MetadataSettings(BaseSettings):
