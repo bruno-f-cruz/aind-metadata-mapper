@@ -47,6 +47,7 @@ class Camstim:
             self.opto_conditions_map = json_settings["opto_conditions_map"]
         overwrite_tables = json_settings.get("overwrite_tables", False)
 
+        self.json_settings = json_settings
         try:
             session_inst = np_session.Session(session_id)
             self.mtrain = session_inst.mtrain
@@ -320,11 +321,14 @@ class Camstim:
         """
         epochs = []
 
+        initial_epoch = [None, 0.0, 0.0, {}, set()]
         current_epoch = [None, 0.0, 0.0, {}, set()]
         epoch_start_idx = 0
         for current_idx, row in stim_table.iterrows():
             # if the stim name changes, summarize current epoch's parameters
             # and start a new epoch
+            if current_idx == 0:
+                 current_epoch[0] = row["stim_name"]
             if row["stim_name"] != current_epoch[0]:
                 for column in stim_table:
                     if column not in (
@@ -345,6 +349,8 @@ class Camstim:
                         current_epoch[3][column] = param_set
 
                 epochs.append(current_epoch)
+                if current_idx == 0:
+                    initial_epoch = epochs
                 epoch_start_idx = current_idx
                 current_epoch = [
                     row["stim_name"],
@@ -368,8 +374,11 @@ class Camstim:
                 current_epoch[4].add(row["stim_name"])
 
         # slice off dummy epoch from beginning
-        return epochs[1:]
-
+        # if there is one
+        if len(epochs) > 0 and epochs[0][0] is None:
+            return epochs[1:]
+        else:
+            return epochs
     def epochs_from_stim_table(self) -> list[session_schema.StimulusEpoch]:
         """
         From the stimulus epochs table, return a list of schema stimulus
