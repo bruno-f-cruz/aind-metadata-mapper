@@ -80,10 +80,8 @@ class RawImageInfo:
 class BergamoEtl(GenericEtl[JobSettings]):
     """Class to manage transforming bergamo data files into a Session object"""
 
-    def __init__(
-        self,
-        job_settings: Union[JobSettings, str],
-    ):
+    # TODO: Deprecate this constructor. Use GenericEtl constructor instead
+    def __init__(self, job_settings: Union[JobSettings, str]):
         """
         Class constructor for Base etl class.
         Parameters
@@ -91,6 +89,7 @@ class BergamoEtl(GenericEtl[JobSettings]):
         job_settings: Union[JobSettings, str]
           Variables for a particular session
         """
+
         if isinstance(job_settings, str):
             job_settings_model = JobSettings.model_validate_json(job_settings)
         else:
@@ -1169,5 +1168,6 @@ class BergamoEtl(GenericEtl[JobSettings]):
 
 if __name__ == "__main__":
     sys_args = sys.argv[1:]
-    etl = BergamoEtl.from_args(sys_args)
+    main_job_settings = JobSettings.from_args(sys_args)
+    etl = BergamoEtl(job_settings=main_job_settings)
     etl.run_job()

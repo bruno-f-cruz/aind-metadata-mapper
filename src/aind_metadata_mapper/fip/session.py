@@ -1,6 +1,7 @@
 """Module to write valid OptoStim and Subject schemas"""
 
 import re
+import sys
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Union
@@ -46,10 +47,8 @@ class FIBEtl(GenericEtl[JobSettings]):
     interval_regex = re.compile(r"OptoInterval\(s\):\s*([0-9.]+)")
     base_regex = re.compile(r"OptoBase\(s\):\s*([0-9.]+)")
 
-    def __init__(
-        self,
-        job_settings: Union[JobSettings, str],
-    ):
+    # TODO: Deprecate this constructor. Use GenericEtl constructor instead
+    def __init__(self, job_settings: Union[JobSettings, str]):
         """
         Class constructor for Base etl class.
         Parameters
@@ -57,6 +56,7 @@ class FIBEtl(GenericEtl[JobSettings]):
         job_settings: Union[JobSettings, str]
           Variables for a particular session
         """
+
         if isinstance(job_settings, str):
             job_settings_model = JobSettings.model_validate_json(job_settings)
         else:
@@ -213,3 +213,10 @@ class FIBEtl(GenericEtl[JobSettings]):
             transformed, self.job_settings.output_directory
         )
         return job_response
+
+
+if __name__ == "__main__":
+    sys_args = sys.argv[1:]
+    main_job_settings = JobSettings.from_args(sys_args)
+    etl = FIBEtl(job_settings=main_job_settings)
+    etl.run_job()
